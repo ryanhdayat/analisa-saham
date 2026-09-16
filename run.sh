@@ -1,0 +1,1 @@
+bun run src/cli.ts ; bun run src/scan.ts --tanpa-idx

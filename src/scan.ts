@@ -24,7 +24,8 @@ const USAGE = `Pakai: bun run src/scan.ts [KODE...] [opsi]
   --min-rr N               Ambang risk/reward (bawaan 2).
   --hari-idx N             Hari bursa riwayat aliran asing (bawaan 60).
   --tanpa-idx              Lewati lapisan IDX; jalankan 9 metrik Yahoo saja.
-  --out DIR                Direktori keluaran (bawaan out).
+  --out DIR                Direktori keluaran JSON per emiten (bawaan out).
+  --report-dir DIR         Direktori laporan CSV/Excel (bawaan report).
   --watchlist BERKAS       Daftar kode (bawaan watchlist.txt).`
 
 async function resolveCodes(args: ScanArgs): Promise<string[] | null> {
@@ -55,6 +56,7 @@ async function main(): Promise<number> {
   if (!codes) return 1
 
   await mkdir(args.outDir, { recursive: true })
+  await mkdir(args.reportDir, { recursive: true })
   const range = `${Math.ceil((args.days + WARMUP_BARS) / 250) + 1}y`
 
   // IHSG dulu: tanpa ini metrik kekuatan relatif tidak bisa dihitung untuk siapa pun.
@@ -115,8 +117,8 @@ async function main(): Promise<number> {
   console.log(renderTable(passed, skipped))
 
   const tanggal = rows[0]?.date ?? new Date().toISOString().slice(0, 10)
-  const csvPath = join(args.outDir, `scan-${tanggal}.csv`)
-  const xlsxPath = join(args.outDir, `scan-${tanggal}.xlsx`)
+  const csvPath = join(args.reportDir, `scan-${tanggal}.csv`)
+  const xlsxPath = join(args.reportDir, `scan-${tanggal}.xlsx`)
   await writeFile(csvPath, toCsv([...passed, ...skipped]))
   await writeXlsx(passed, skipped, xlsxPath)
 

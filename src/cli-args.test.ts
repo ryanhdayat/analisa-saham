@@ -117,4 +117,24 @@ describe('parseScanArgs', () => {
   test('opsi tak dikenal ditolak, bukan dianggap kode emiten', () => {
     expect(() => parseScanArgs(['--ngawur'])).toThrow(/--ngawur/)
   })
+
+  test('laporan CSV/Excel punya direktori sendiri, terpisah dari --out', () => {
+    const a = parseScanArgs([])
+    expect(a.reportDir).toBe('report')
+    expect(a.outDir).toBe('out')
+  })
+
+  test('--report-dir mengatur direktori laporan', () => {
+    expect(parseScanArgs(['--report-dir', 'hasil']).reportDir).toBe('hasil')
+  })
+
+  test('--report-dir tidak menggeser direktori keluaran JSON/PNG', () => {
+    const a = parseScanArgs(['--report-dir', 'hasil'])
+    expect(a.outDir).toBe('out')
+  })
+
+  test('--report-dir tanpa nilai ditolak', () => {
+    expect(() => parseScanArgs(['--report-dir'])).toThrow(/--report-dir butuh nilai/)
+    expect(() => parseScanArgs(['--report-dir', '--days'])).toThrow(/--report-dir butuh nilai/)
+  })
 })

@@ -89,6 +89,8 @@ export interface ScanArgs {
   codes: string[]
   days: number
   outDir: string
+  /** Laporan CSV/Excel terpisah dari outDir supaya tidak tenggelam di antara PNG/JSON per emiten. */
+  reportDir: string
   watchlist: string
   /** Ambang likuiditas dalam RUPIAH (masukannya miliar). */
   minValue: number
@@ -103,6 +105,7 @@ export const SCAN_DEFAULTS: ScanArgs = {
   codes: [],
   days: 250,
   outDir: 'out',
+  reportDir: 'report',
   watchlist: 'watchlist.txt',
   minValue: 5e9,
   minRatio: 2,
@@ -140,6 +143,9 @@ export function parseScanArgs(argv: string[]): ScanArgs {
         break
       case '--out':
         args.outDir = value('--out', argv[++i])
+        break
+      case '--report-dir':
+        args.reportDir = value('--report-dir', argv[++i])
         break
       case '--watchlist':
         args.watchlist = value('--watchlist', argv[++i])
