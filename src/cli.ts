@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { parseArgs, parseWatchlist } from './cli-args.ts'
 import { fetchBars } from './yahoo.ts'
+import { historyRange, MARKET_IDS } from './market.ts'
 import { buildChartInput, WARMUP_BARS } from './chart.ts'
 import { renderSvg, CANVAS } from './render.ts'
 import { SvgShooter } from './png.ts'
@@ -15,6 +16,7 @@ const USAGE = `Pakai: bun run src/cli.ts [KODE...] [opsi]
   --days N             Panjang jendela tampil dalam bar (bawaan 250).
   --rows N             Jumlah baris profil volume (bawaan 24).
   --out DIR            Direktori keluaran (bawaan out).
+  --market PASAR       Pasar: ${MARKET_IDS.join(' atau ')} (bawaan idx).
   --watchlist BERKAS   Daftar kode, satu per baris (bawaan watchlist.txt).
   --svg                Simpan juga SVG-nya di samping PNG.`
 
@@ -49,7 +51,8 @@ async function main(): Promise<number> {
 
   // Ambil lebih panjang dari yang digambar supaya MA 200 sudah bernilai sejak
   // candle pertama. Lihat WARMUP_BARS di chart.ts.
-  const range = `${Math.ceil((args.days + WARMUP_BARS) / 250) + 1}y`
+  const market = args.market
+  const range = historyRange(args.days, WARMUP_BARS, market)
 
   const shooter = new SvgShooter()
   let failed = 0
@@ -57,9 +60,9 @@ async function main(): Promise<number> {
   try {
     for (const code of codes) {
       try {
-        const data = await fetchBars(code, { range, rawDir: RAW_DIR })
+        const data = await fetchBars(code, { range, rawDir: RAW_DIR, market })
         const input = buildChartInput(data, args.days, args.rows)
-        const svg = renderSvg(input)
+        const svg = renderSvg(input, market)
 
         const pngPath = join(args.outDir, `${code}.png`)
         await shooter.shoot(svg, pngPath, CANVAS.width, CANVAS.height)

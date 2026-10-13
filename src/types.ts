@@ -35,6 +35,13 @@ export interface VolumeProfile {
 /** Semua yang dibutuhkan render untuk menggambar satu emiten. */
 export interface ChartInput {
   code: string
+  /**
+   * Simbol Yahoo hasil resolusi, apa adanya — `BBCA.JK`, `BTC-USD`.
+   *
+   * Dipisah dari `code` karena footer grafik menyebut SUMBER datanya: menempelkan
+   * `.JK` ke simbol yang sudah lengkap membuat footer itu berbohong.
+   */
+  symbol: string
   /** Nama panjang emiten untuk legenda. */
   name: string
   /** Bar yang benar-benar digambar (sudah dipotong ke jendela tampil). */

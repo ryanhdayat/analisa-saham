@@ -1,5 +1,6 @@
 import { expect, test, describe } from 'bun:test'
 import { parseChartResponse, toLots, toSymbol } from './yahoo.ts'
+import { CRYPTO, IDX } from './market.ts'
 
 /** Bentuk balasan Yahoo yang dipangkas seperlunya. */
 function response(
@@ -111,5 +112,16 @@ describe('toSymbol', () => {
 
   test('kode yang sudah bersufiks dibiarkan', () => {
     expect(toSymbol('BBCA.JK')).toBe('BBCA.JK')
+  })
+
+  test('tanpa pasar disebut, perilakunya tetap IDX', () => {
+    // Bawaan IDX menjaga pemanggil lama tidak berubah artinya.
+    expect(toSymbol('bbca')).toBe(toSymbol('bbca', IDX))
+  })
+
+  test('pasar crypto tidak menambah sufiks .JK', () => {
+    // BTC-USD.JK tidak ada; inilah satu-satunya penghalang nyata untuk crypto.
+    expect(toSymbol('BTC-USD', CRYPTO)).toBe('BTC-USD')
+    expect(toSymbol('eth-usd', CRYPTO)).toBe('ETH-USD')
   })
 })

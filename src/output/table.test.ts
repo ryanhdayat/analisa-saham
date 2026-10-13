@@ -1,6 +1,7 @@
 import { expect, test, describe } from 'bun:test'
 import { renderTable } from './table.ts'
 import type { ScanRow } from '../analysis/report.ts'
+import { CRYPTO, IDX } from '../market.ts'
 
 function row(over: Partial<ScanRow> = {}): ScanRow {
   const m = (value: unknown, available = true) => ({
@@ -68,5 +69,86 @@ describe('renderTable', () => {
 
   test('daftar kosong tetap mencetak sesuatu yang bisa dibaca', () => {
     expect(renderTable([], []).length).toBeGreaterThan(0)
+  })
+})
+
+describe('renderTable — per pasar', () => {
+  test('crypto tidak memberi spanduk hanya karena asing kosong', () => {
+    // Baris yang sama terdegradasi di IDX, tapi TIDAK di crypto: asing memang
+    // tidak punya padanan di sana. Kalau spanduknya tetap muncul, peringatan itu
+    // menyala di setiap run dan berhenti berarti.
+    expect(renderTable([row()], [], IDX).toLowerCase()).toContain('terdegradasi')
+    expect(renderTable([row()], [], CRYPTO).toLowerCase()).not.toContain('terdegradasi')
+  })
+
+  test('crypto tetap memberi spanduk kalau kolom yang diharapkan hilang', () => {
+    const kurang = row({
+      rank: { score: 0.5, columns: { trend: 0.8, rs60: null, rvol: 0.7, asing: null }, used: ['trend', 'rvol'], degraded: true },
+    })
+    const out = renderTable([kurang], [], CRYPTO)
+    expect(out.toLowerCase()).toContain('terdegradasi')
+    expect(out).toContain('rs60')
+    expect(out).not.toContain('asing,')
+  })
+
+  test('nilai harian dicetak dalam mata uang pasarnya', () => {
+    // Fixture bawaannya angka rupiah (4,6 triliun), jadi pakai besaran yang wajar
+    // untuk crypto supaya pernyataannya benar-benar menguji satuannya.
+    expect(renderTable([row()], [], IDX)).toContain('Rp4600.0M')
+
+    const m = (value: unknown) => ({ value, verdict: 'v', confidence: 'sedang' as const, evidence: [], available: true })
+    const coin = row({
+      metrics: { ...row().metrics, liquidity: m({ avgDailyValue: 3e10, passesGate: true, freeFloatPct: null }) },
+    } as Partial<ScanRow>)
+    const out = renderTable([coin], [], CRYPTO)
+    expect(out).toContain('$30.0B')
+    expect(out).not.toContain('Rp')
+  })
+})
+
+describe('renderTable — kebersihan keluaran crypto', () => {
+  test('kode panjang tidak terpotong', () => {
+    // 'BTC-USD' terpotong jadi 'BTC-US' pada lebar 6 — ambigu dan salah.
+    const coin = row({ code: 'BTC-USD' })
+    const out = renderTable([coin], [], CRYPTO)
+    expect(out).toContain('BTC-USD')
+    expect(out).not.toMatch(/BTC-US[^D]/)
+  })
+
+  test('kode panjang tetap utuh di daftar tersaring keluar', () => {
+    const coin = row({ code: 'RENDER-USD', gates: { passed: false, failures: ['R:R TIPIS'] } })
+    expect(renderTable([], [coin], CRYPTO)).toContain('RENDER-USD')
+  })
+
+  test('kolom ASING20 tidak dicetak di pasar tanpa lapisan IDX', () => {
+    expect(renderTable([row()], [], IDX)).toContain('ASING20')
+    expect(renderTable([row()], [], CRYPTO)).not.toContain('ASING20')
+  })
+
+  test('catatan soal aliran asing hanya muncul di pasar yang punya datanya', () => {
+    expect(renderTable([row()], [], IDX)).toContain('estimasi rupiah')
+    expect(renderTable([row()], [], CRYPTO)).not.toContain('estimasi rupiah')
+    // Catatan heuristik Wyckoff/VPA tetap relevan di kedua pasar.
+    expect(renderTable([row()], [], CRYPTO)).toContain('heuristik')
+  })
+})
+
+describe('renderTable — lebar kolom kode mengikuti isinya', () => {
+  test('kode sepanjang apa pun tidak terpotong', () => {
+    // Ticker crypto yang dibedakan Yahoo bisa 18 karakter (BABYSHARK37672-USD).
+    // Lebar tetap apa pun akhirnya kurang; jadi diukur dari barisnya.
+    const panjang = row({ code: 'BABYSHARK37672-USD' })
+    expect(renderTable([panjang], [], CRYPTO)).toContain('BABYSHARK37672-USD')
+  })
+
+  test('juga di daftar tersaring keluar', () => {
+    const panjang = row({ code: 'BROCCOLI35753-USD', gates: { passed: false, failures: ['R:R TIPIS'] } })
+    expect(renderTable([], [panjang], CRYPTO)).toContain('BROCCOLI35753-USD')
+  })
+
+  test('kode pendek tidak mengecilkan kolom di bawah lebar minimum pasarnya', () => {
+    // IDX empat huruf dengan minimum 6 — perataannya harus tetap seperti semula.
+    const out = renderTable([row({ code: 'BBCA' })], [], IDX)
+    expect(out).toContain('KODE  ')
   })
 })

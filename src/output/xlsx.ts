@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs'
-import { COLUMNS } from './columns.ts'
-import { RANK_COLUMNS } from '../analysis/report.ts'
+import { columnsFor } from './columns.ts'
+import { IDX, type Market } from '../market.ts'
 import type { ScanRow } from '../analysis/report.ts'
 import type { Metric } from '../analysis/metric.ts'
 
@@ -24,7 +24,13 @@ function sheetName(raw: string): string {
  * disortir dan difilter di Excel. Yang memang tidak tersedia ditulis `n/a`
  * sebagai teks, sehingga tidak pernah ikut terhitung sebagai nol.
  */
-export async function writeXlsx(rows: ScanRow[], skipped: ScanRow[], path: string): Promise<void> {
+export async function writeXlsx(
+  rows: ScanRow[],
+  skipped: ScanRow[],
+  path: string,
+  market: Market = IDX,
+): Promise<void> {
+  const COLUMNS = columnsFor(market)
   const wb = new ExcelJS.Workbook()
   wb.created = new Date()
 
@@ -55,7 +61,9 @@ export async function writeXlsx(rows: ScanRow[], skipped: ScanRow[], path: strin
   // Peringatan degradasi ditulis DI DALAM workbook, bukan hanya di terminal —
   // berkas ini akan dibuka lagi besok, jauh dari konteks run-nya.
   const hilang = new Set<string>()
-  for (const r of rows) for (const c of RANK_COLUMNS) if (!r.rank.used.includes(c)) hilang.add(c)
+  // Diukur terhadap kolom yang DIHARAPKAN pasar ini, bukan selalu keempatnya:
+  // crypto tidak punya padanan asing, dan spanduk yang menyala tiap run tidak berarti.
+  for (const r of rows) for (const c of market.rankColumns) if (!r.rank.used.includes(c)) hilang.add(c)
   if (hilang.size > 0) {
     const note = ws.addRow({})
     note.getCell(1).value =

@@ -1,4 +1,5 @@
-import { COLUMNS } from './columns.ts'
+import { columnsFor } from './columns.ts'
+import { IDX, type Market } from '../market.ts'
 import type { ScanRow } from '../analysis/report.ts'
 
 /**
@@ -26,7 +27,8 @@ function quote(field: string): string {
  * berkasnya dipisah koma, seluruh baris masuk ke kolom A dan berkasnya praktis
  * tidak terpakai — jadi ini bukan selera, melainkan syarat supaya bisa dibuka.
  */
-export function toCsv(rows: ScanRow[]): string {
+export function toCsv(rows: ScanRow[], market: Market = IDX): string {
+  const COLUMNS = columnsFor(market)
   const lines = [COLUMNS.map((c) => quote(c.header)).join(';')]
 
   for (const row of rows) {

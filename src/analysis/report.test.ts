@@ -146,3 +146,71 @@ describe('buildRow — kelengkapan', () => {
     expect(row.close).toBeGreaterThan(0)
   })
 })
+
+describe('buildRow — kolom peringkat per pasar', () => {
+  // Pasar crypto tidak punya padanan aliran asing. Tanpa himpunan kolom yang
+  // diharapkan, SETIAP baris crypto akan ditandai terdegradasi selamanya dan
+  // spanduk PERINGATAN di Excel berubah jadi derau yang diabaikan.
+  const CRYPTO_COLUMNS = ['trend', 'rs60', 'rvol'] as const
+
+  test('tanpa opsi, ambangnya tetap seluruh RANK_COLUMNS', () => {
+    const row = buildRow(input())
+    expect(row.rank.degraded).toBe(true) // asing kosong, 3 dari 4
+  })
+
+  test('run crypto lengkap TIDAK terdegradasi meski asing kosong', () => {
+    const row = buildRow(input(), { rankColumns: CRYPTO_COLUMNS })
+    expect(row.rank.used).toEqual(['trend', 'rs60', 'rvol'])
+    expect(row.rank.degraded).toBe(false)
+  })
+
+  test('kolom di luar himpunan pasar tidak ikut dipakai walau datanya ada', () => {
+    const row = buildRow(input({ foreignDays: foreign(1_000_000) }), { rankColumns: CRYPTO_COLUMNS })
+    expect(row.rank.used).not.toContain('asing')
+    expect(row.rank.used).toHaveLength(3)
+  })
+
+  test('skor crypto dirata-ratakan hanya dari kolom yang diharapkan', () => {
+    // Diturunkan dari kolom yang DISEBUT, bukan dari rank.used — kalau dari
+    // rank.used, pernyataannya selalu benar dengan sendirinya dan tidak menguji apa pun.
+    const row = buildRow(input({ foreignDays: foreign(1_000_000) }), { rankColumns: CRYPTO_COLUMNS })
+    const c = row.rank.columns
+    expect(row.rank.score).toBeCloseTo((c.trend! + c.rs60! + c.rvol!) / 3, 9)
+
+    // Dan skornya memang berbeda dari IDX, yang ikut menghitung asing.
+    //
+    // Pakai asing JUAL: dengan asing beli, keempat kolom mentok 1,0 sehingga
+    // rata-rata 3 kolom sama dengan rata-rata 4 kolom dan bedanya tak terlihat.
+    const jual = { foreignDays: foreign(-1_000_000) }
+    const cryptoJual = buildRow(input(jual), { rankColumns: CRYPTO_COLUMNS })
+    const idxJual = buildRow(input(jual))
+    expect(idxJual.rank.used).toContain('asing')
+    expect(idxJual.rank.score).not.toBeCloseTo(cryptoJual.rank.score, 9)
+  })
+
+  test('kolom yang benar-benar hilang tetap menandai terdegradasi', () => {
+    // Tanpa bar patokan, rs60 tidak bisa dihitung: 2 dari 3 yang diharapkan.
+    const row = buildRow(input({ indexBars: [] }), { rankColumns: CRYPTO_COLUMNS })
+    expect(row.rank.used).not.toContain('rs60')
+    expect(row.rank.degraded).toBe(true)
+  })
+})
+
+describe('buildRow — mata uang diteruskan', () => {
+  test('formatter pasar dipakai di bukti likuiditas', () => {
+    const row = buildRow(input(), { money: (v) => `$${(v / 1e6).toFixed(1)}M` })
+    expect(row.metrics.liquidity.verdict).toContain('$')
+    expect(row.metrics.liquidity.verdict).not.toContain('Rp')
+  })
+})
+
+describe('buildRow — konvensi nilai harian diteruskan', () => {
+  test('pasar yang volumenya sudah bernilai uang tidak dikalikan harga lagi', () => {
+    const row = buildRow(input(), { dailyValue: (b) => b.volume })
+    const bawaan = buildRow(input())
+    expect(row.metrics.liquidity.value!.avgDailyValue).toBeLessThan(
+      bawaan.metrics.liquidity.value!.avgDailyValue,
+    )
+    expect(row.metrics.liquidity.value!.avgDailyValue).toBeCloseTo(20_000_000, -3)
+  })
+})

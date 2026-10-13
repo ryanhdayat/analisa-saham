@@ -1,3 +1,4 @@
+import { IDX, marketById, type Market } from './market.ts'
 export interface Args {
   /** Kode emiten dari argumen posisional. Kosong berarti pakai watchlist. */
   codes: string[]
@@ -9,16 +10,23 @@ export interface Args {
   watchlist: string
   /** Simpan juga SVG-nya, berguna untuk memeriksa tata letak. */
   keepSvg: boolean
+  /** Pasar yang digambar. Menentukan bawaan watchlist dan direktori keluaran. */
+  market: Market
 }
 
-export const DEFAULTS: Args = {
-  codes: [],
-  days: 250,
-  rows: 24,
-  outDir: 'out',
-  watchlist: 'watchlist.txt',
-  keepSvg: false,
+export function defaultsFor(market: Market): Args {
+  return {
+    codes: [],
+    days: 250,
+    rows: 24,
+    outDir: market.outDir,
+    watchlist: market.watchlist,
+    keepSvg: false,
+    market,
+  }
 }
+
+export const DEFAULTS: Args = defaultsFor(IDX)
 
 /**
  * Satu kode emiten per baris. `#` memulai komentar, di awal baris maupun di ujungnya.
@@ -38,7 +46,8 @@ export function parseWatchlist(text: string): string[] {
 }
 
 export function parseArgs(argv: string[]): Args {
-  const args: Args = { ...DEFAULTS, codes: [] }
+  const market = findMarket(argv)
+  const args: Args = { ...defaultsFor(market), codes: [] }
 
   const value = (flag: string, next: string | undefined): string => {
     if (next === undefined || next.startsWith('--')) {
@@ -73,6 +82,10 @@ export function parseArgs(argv: string[]): Args {
       case '--svg':
         args.keepSvg = true
         break
+      case '--market':
+        // Sudah dibaca findMarket(); di sini hanya nilainya yang dilewati.
+        i++
+        break
       default:
         // Opsi tak dikenal harus berisik. Kalau diam-diam diperlakukan sebagai kode
         // emiten, salah ketik `--dyas 120` berubah jadi permintaan emiten "--DYAS"
@@ -92,29 +105,53 @@ export interface ScanArgs {
   /** Laporan CSV/Excel terpisah dari outDir supaya tidak tenggelam di antara PNG/JSON per emiten. */
   reportDir: string
   watchlist: string
-  /** Ambang likuiditas dalam RUPIAH (masukannya miliar). */
+  /** Ambang likuiditas dalam mata uang pasar (masukannya lihat `market.minValueUnit`). */
   minValue: number
   minRatio: number
   /** Lapisan pengaya IDX menyala. */
   useIdx: boolean
   /** Hari bursa riwayat aliran asing yang ditarik. */
   idxDays: number
+  /** Pasar yang dipindai. Menentukan bawaan seluruh medan di atas. */
+  market: Market
 }
 
-export const SCAN_DEFAULTS: ScanArgs = {
-  codes: [],
-  days: 250,
-  outDir: 'out',
-  reportDir: 'report',
-  watchlist: 'watchlist.txt',
-  minValue: 5e9,
-  minRatio: 2,
-  useIdx: true,
-  idxDays: 60,
+/** Bawaan yang diturunkan dari pasar — bukan angka lepas yang harus dijaga selaras. */
+export function scanDefaultsFor(market: Market): ScanArgs {
+  return {
+    codes: [],
+    days: 250,
+    outDir: market.outDir,
+    reportDir: market.reportDir,
+    watchlist: market.watchlist,
+    minValue: market.minValue,
+    minRatio: 2,
+    useIdx: market.hasIdxLayer,
+    idxDays: 60,
+    market,
+  }
+}
+
+export const SCAN_DEFAULTS: ScanArgs = scanDefaultsFor(IDX)
+
+/**
+ * Pasar dibaca lebih dulu, sebelum flag lain diproses.
+ *
+ * Seluruh bawaan lain diturunkan darinya, jadi posisi `--market` di baris
+ * perintah tidak boleh berpengaruh — `--watchlist x --market crypto` harus sama
+ * artinya dengan urutan sebaliknya.
+ */
+function findMarket(argv: string[]): Market {
+  const i = argv.indexOf('--market')
+  if (i === -1) return IDX
+  const raw = argv[i + 1]
+  if (raw === undefined || raw.startsWith('--')) throw new Error('Opsi --market butuh nilai.')
+  return marketById(raw)
 }
 
 export function parseScanArgs(argv: string[]): ScanArgs {
-  const args: ScanArgs = { ...SCAN_DEFAULTS, codes: [] }
+  const market = findMarket(argv)
+  const args: ScanArgs = { ...scanDefaultsFor(market), codes: [] }
 
   const value = (flag: string, next: string | undefined): string => {
     if (next === undefined || next.startsWith('--')) throw new Error(`Opsi ${flag} butuh nilai.`)
@@ -147,13 +184,19 @@ export function parseScanArgs(argv: string[]): ScanArgs {
       case '--report-dir':
         args.reportDir = value('--report-dir', argv[++i])
         break
+      case '--market':
+        // Sudah dibaca findMarket(); di sini hanya nilainya yang dilewati.
+        i++
+        break
       case '--watchlist':
         args.watchlist = value('--watchlist', argv[++i])
         break
       case '--min-likuiditas':
-        // Dimasukkan dalam miliar karena itu satuan yang dipakai saat bicara
-        // likuiditas IDX; disimpan dalam rupiah supaya tidak ada konversi tersembunyi.
-        args.minValue = positive('--min-likuiditas', value('--min-likuiditas', argv[++i])) * 1e9
+        // Satuan masukannya ikut pasar: miliar rupiah untuk IDX, juta dolar untuk
+        // crypto — satuan yang wajar diucapkan di masing-masing. Disimpan dalam
+        // mata uang penuh supaya tidak ada konversi tersembunyi di hilir.
+        args.minValue =
+          positive('--min-likuiditas', value('--min-likuiditas', argv[++i])) * market.minValueScale
         break
       case '--min-rr':
         args.minRatio = positive('--min-rr', value('--min-rr', argv[++i]))

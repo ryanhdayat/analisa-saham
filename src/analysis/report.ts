@@ -43,6 +43,18 @@ export interface ScanInput {
 export interface ScanOptions {
   minValue?: number
   minRatio?: number
+  /**
+   * Kolom peringkat yang DIHARAPKAN ada di run ini. Bawaannya seluruh RANK_COLUMNS.
+   *
+   * Dipakai pasar yang memang tidak bisa menghasilkan sebagian kolom — crypto
+   * tidak punya padanan aliran asing. Tanpa ini, `degraded` menyala di setiap
+   * baris crypto dan peringatannya berhenti berarti.
+   */
+  rankColumns?: readonly RankColumn[]
+  /** Format nilai uang untuk string bukti likuiditas. Bawaannya rupiah. */
+  money?: (v: number) => string
+  /** Nilai transaksi satu bar. Bawaannya `close x volume` (konvensi saham). */
+  dailyValue?: (bar: Bar) => number
 }
 
 export interface ScanRow {
@@ -96,7 +108,13 @@ export function buildRow(input: ScanInput, options: ScanOptions = {}): ScanRow {
   const volume = analyzeVolume(displayBars)
   const structure = analyzeStructure(displayBars, toWeekly(displayBars))
   const levels = findLevels(displayBars, profile, atrValue)
-  const liquidity = analyzeLiquidity(displayBars, options.minValue, input.freeFloat)
+  const liquidity = analyzeLiquidity(
+    displayBars,
+    options.minValue,
+    input.freeFloat,
+    options.money,
+    options.dailyValue,
+  )
   const filters = analyzeFilters(bars)
   const strength = analyzeStrength(bars, input.indexBars, input.sectorBars)
 
@@ -127,7 +145,9 @@ export function buildRow(input: ScanInput, options: ScanOptions = {}): ScanRow {
     rvol: volume.value?.confirmationScore ?? null,
     asing: flow.value?.flowScore ?? null,
   }
-  const used = RANK_COLUMNS.filter((c) => columns[c] !== null)
+  // Ambangnya himpunan yang DIHARAPKAN pasar ini, bukan selalu keempatnya.
+  const expected = options.rankColumns ?? RANK_COLUMNS
+  const used = expected.filter((c) => columns[c] !== null)
   const score = used.length > 0 ? used.reduce((a, c) => a + columns[c]!, 0) / used.length : 0
 
   return {
@@ -137,6 +157,6 @@ export function buildRow(input: ScanInput, options: ScanOptions = {}): ScanRow {
     date: last.date,
     metrics: { volume, structure, levels, liquidity, vpa, wyckoff, flow, strength, filters, volatility, riskReward },
     gates: { passed: failures.length === 0, failures },
-    rank: { score, columns, used: [...used], degraded: used.length < RANK_COLUMNS.length },
+    rank: { score, columns, used: [...used], degraded: used.length < expected.length },
   }
 }

@@ -1,5 +1,6 @@
 import { expect, test, describe } from 'bun:test'
 import { parseArgs, parseScanArgs, parseWatchlist } from './cli-args.ts'
+import { CRYPTO, IDX } from './market.ts'
 
 describe('parseWatchlist', () => {
   test('satu kode per baris, huruf besar', () => {
@@ -136,5 +137,78 @@ describe('parseScanArgs', () => {
   test('--report-dir tanpa nilai ditolak', () => {
     expect(() => parseScanArgs(['--report-dir'])).toThrow(/--report-dir butuh nilai/)
     expect(() => parseScanArgs(['--report-dir', '--days'])).toThrow(/--report-dir butuh nilai/)
+  })
+})
+
+describe('parseScanArgs — pasar', () => {
+  test('bawaannya IDX, dan seluruh bawaan lain ikut dari sana', () => {
+    const a = parseScanArgs([])
+    expect(a.market).toBe(IDX)
+    expect(a.watchlist).toBe('watchlist.txt')
+    expect(a.outDir).toBe('out')
+    expect(a.reportDir).toBe('report')
+    expect(a.minValue).toBe(5e9)
+  })
+
+  test('--market crypto memindahkan seluruh bawaan ke pasar itu', () => {
+    const a = parseScanArgs(['--market', 'crypto'])
+    expect(a.market).toBe(CRYPTO)
+    expect(a.watchlist).toBe('crypto-watchlist.txt')
+    // Direktori terpisah: laporan kedua pasar sama-sama bernama scan-<tanggal>.csv.
+    expect(a.outDir).toBe('out/crypto')
+    expect(a.reportDir).toBe('report/crypto')
+    expect(a.minValue).toBe(10e6)
+  })
+
+  test('flag eksplisit menang atas bawaan pasar', () => {
+    const a = parseScanArgs(['--market', 'crypto', '--watchlist', 'lain.txt', '--report-dir', 'hasil'])
+    expect(a.watchlist).toBe('lain.txt')
+    expect(a.reportDir).toBe('hasil')
+    expect(a.outDir).toBe('out/crypto') // yang tidak disebut tetap dari pasar
+  })
+
+  test('urutan flag tidak berpengaruh', () => {
+    const depan = parseScanArgs(['--market', 'crypto', '--watchlist', 'x.txt'])
+    const belakang = parseScanArgs(['--watchlist', 'x.txt', '--market', 'crypto'])
+    expect(belakang.watchlist).toBe('x.txt')
+    expect(belakang.market).toBe(CRYPTO)
+    expect(belakang.outDir).toBe(depan.outDir)
+  })
+
+  test('ambang likuiditas dibaca dalam satuan pasarnya', () => {
+    expect(parseScanArgs(['--min-likuiditas', '5']).minValue).toBe(5e9)
+    expect(parseScanArgs(['--market', 'crypto', '--min-likuiditas', '5']).minValue).toBe(5e6)
+  })
+
+  test('pasar tak dikenal ditolak dan menyebut nilainya', () => {
+    expect(() => parseScanArgs(['--market', 'ngawur'])).toThrow(/ngawur/)
+  })
+
+  test('--market tanpa nilai ditolak', () => {
+    expect(() => parseScanArgs(['--market'])).toThrow(/--market butuh nilai/)
+  })
+})
+
+describe('parseArgs — pasar', () => {
+  test('bawaannya IDX', () => {
+    const a = parseArgs([])
+    expect(a.market).toBe(IDX)
+    expect(a.outDir).toBe('out')
+    expect(a.watchlist).toBe('watchlist.txt')
+  })
+
+  test('--market crypto memindahkan bawaan grafik ke pasar itu', () => {
+    const a = parseArgs(['--market', 'crypto'])
+    expect(a.market).toBe(CRYPTO)
+    expect(a.outDir).toBe('out/crypto')
+    expect(a.watchlist).toBe('crypto-watchlist.txt')
+  })
+
+  test('flag eksplisit tetap menang', () => {
+    expect(parseArgs(['--market', 'crypto', '--out', 'gambar']).outDir).toBe('gambar')
+  })
+
+  test('pasar tak dikenal ditolak', () => {
+    expect(() => parseArgs(['--market', 'ngawur'])).toThrow(/ngawur/)
   })
 })

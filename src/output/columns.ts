@@ -1,4 +1,5 @@
 import type { ScanRow } from '../analysis/report.ts'
+import { IDX, type Market } from '../market.ts'
 
 /**
  * Definisi kolom dipakai bersama oleh tabel terminal, CSV, dan Excel — supaya
@@ -15,7 +16,12 @@ export interface Column {
 
 const v = <T,>(m: { value: T | null; available: boolean }) => (m.available ? m.value : null)
 
-export const COLUMNS: Column[] = [
+/**
+ * Kolom untuk satu pasar. Header yang membawa satuan uang ikut mata uang pasarnya —
+ * CSV yang melabeli dolar sebagai rupiah adalah kesalahan yang paling sulit terlihat.
+ */
+export function columnsFor(market: Market): Column[] {
+  return [
   { header: 'KODE', value: (r) => r.code, width: 6 },
   { header: 'NAMA', value: (r) => r.name, width: 28 },
   { header: 'TANGGAL', value: (r) => r.date, width: 10 },
@@ -36,7 +42,7 @@ export const COLUMNS: Column[] = [
   { header: 'MA_TERSUSUN', value: (r) => (v(r.metrics.filters) ? (v(r.metrics.filters)!.stacked ? 'ya' : 'tidak') : null), width: 11 },
   { header: 'DIVERGENSI_OBV', value: (r) => v(r.metrics.filters)?.obvDivergence ?? null, width: 14 },
   { header: 'ATR_PERSEN', value: (r) => v(r.metrics.volatility)?.atrPct ?? null, decimals: 2, width: 10 },
-  { header: 'NILAI_HARIAN_RP', value: (r) => v(r.metrics.liquidity)?.avgDailyValue ?? null, decimals: 0, width: 15 },
+  { header: `NILAI_HARIAN_${market.currencyCode}`, value: (r) => v(r.metrics.liquidity)?.avgDailyValue ?? null, decimals: 0, width: 15 },
   { header: 'FREE_FLOAT_PERSEN', value: (r) => v(r.metrics.liquidity)?.freeFloatPct ?? null, decimals: 1, width: 17 },
   { header: 'ENTRY', value: (r) => v(r.metrics.riskReward)?.entry ?? null, decimals: 0, width: 8 },
   { header: 'STOP', value: (r) => v(r.metrics.riskReward)?.stop ?? null, decimals: 0, width: 8 },
@@ -49,4 +55,8 @@ export const COLUMNS: Column[] = [
   { header: 'ASING20_RP_ESTIMASI', value: (r) => v(r.metrics.flow)?.value20 ?? null, decimals: 0, width: 19 },
   { header: 'ASING_UMUR_HARI', value: (r) => r.metrics.flow.staleness?.daysOld ?? null, decimals: 0, width: 15 },
   { header: 'GERBANG', value: (r) => (r.gates.passed ? 'lolos' : r.gates.failures.join(' | ')), width: 40 },
-]
+  ]
+}
+
+/** Bawaan IDX, supaya pemanggil yang belum menyebut pasar tidak berubah artinya. */
+export const COLUMNS: Column[] = columnsFor(IDX)

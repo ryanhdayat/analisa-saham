@@ -1,5 +1,5 @@
 import { MA_PERIODS, VOLUME_MA_PERIOD } from './chart.ts'
-import { SHARES_PER_LOT } from './yahoo.ts'
+import { IDX, type Market } from './market.ts'
 import type { ChartInput } from './types.ts'
 
 /** Tema gelap TradingView, diambil dari BBCA.png. */
@@ -114,7 +114,7 @@ function declutter<T extends { y: number }>(items: T[], minGap: number, top: num
  * Gambar satu emiten sebagai SVG mandiri — tanpa font eksternal, tanpa skrip, tanpa
  * gambar tertaut — supaya bisa dibuka langsung maupun ditangkap jadi PNG.
  */
-export function renderSvg(input: ChartInput): string {
+export function renderSvg(input: ChartInput, market: Market = IDX): string {
   const { bars, priceMA, volumeMA, profile } = input
   const count = bars.length
   if (count === 0) throw new Error(`Tidak ada bar untuk digambar pada ${input.code}.`)
@@ -145,7 +145,7 @@ export function renderSvg(input: ChartInput): string {
   const x = (i: number) => plotL + (i + 0.5) * step
   const bodyW = Math.max(1, Math.min(14, step * 0.64))
 
-  const lots = bars.map((b) => b.volume / SHARES_PER_LOT)
+  const lots = bars.map((b) => market.toDisplayVolume(b.volume))
   const volMax = Math.max(...lots, 1)
   const vy = (v: number) => volBot - (v / volMax) * L.volH
 
@@ -193,7 +193,7 @@ export function renderSvg(input: ChartInput): string {
     )
   }
   const volMaPoints = volumeMA
-    .map((v, i) => (v == null ? null : `${n2(x(i))},${n2(vy(v / SHARES_PER_LOT))}`))
+    .map((v, i) => (v == null ? null : `${n2(x(i))},${n2(vy(market.toDisplayVolume(v)))}`))
     .filter((p): p is string => p !== null)
     .join(' ')
   if (volMaPoints) {
@@ -278,8 +278,8 @@ export function renderSvg(input: ChartInput): string {
   const volBadges: Array<{ y: number; text: string; fill: string; cls: string }> = []
   if (lastVolMA != null) {
     volBadges.push({
-      y: vy(lastVolMA / SHARES_PER_LOT),
-      text: formatVolume(lastVolMA / SHARES_PER_LOT),
+      y: vy(market.toDisplayVolume(lastVolMA)),
+      text: formatVolume(market.toDisplayVolume(lastVolMA)),
       fill: C.volMA,
       cls: 'vol-ma-badge',
     })
@@ -307,7 +307,7 @@ export function renderSvg(input: ChartInput): string {
   let ly = L.priceTop + 18
   parts.push(
     `<text x="${plotL + 6}" y="${ly}" font-size="15" fill="${C.text}">` +
-      `${esc(input.name)}, 1D, IDX  ` +
+      `${esc(input.name)}, 1D, ${esc(market.exchangeLabel)}  ` +
       `<tspan fill="${C.textDim}">O</tspan><tspan fill="${changeColor}">${formatPrice(last.open)}</tspan>  ` +
       `<tspan fill="${C.textDim}">H</tspan><tspan fill="${changeColor}">${formatPrice(last.high)}</tspan>  ` +
       `<tspan fill="${C.textDim}">L</tspan><tspan fill="${changeColor}">${formatPrice(last.low)}</tspan>  ` +
@@ -329,7 +329,7 @@ export function renderSvg(input: ChartInput): string {
   }
 
   parts.push(
-    `<text x="${plotL + 6}" y="${volTop + 18}" font-size="14" fill="${C.text}">Volume (${VOLUME_MA_PERIOD}) — lot  ${formatVolume(lastLots)}</text>`,
+    `<text x="${plotL + 6}" y="${volTop + 18}" font-size="14" fill="${C.text}">Volume (${VOLUME_MA_PERIOD}) — ${esc(market.volumeUnit)}  ${formatVolume(lastLots)}</text>`,
   )
 
   // ── Garis pemisah panel dan catatan kaki ──────────────────────────────────
@@ -342,7 +342,7 @@ export function renderSvg(input: ChartInput): string {
     `<text x="${plotL + 6}" y="${L.h - 14}" font-size="12.5" fill="${C.textDim}">` +
       `Profil volume adalah APROKSIMASI: volume tiap hari disebar rata pada rentang low–high hari itu, ` +
       `karena bar harian tidak membawa distribusi intraday. Menunjukkan area konsolidasi, bukan level presisi. ` +
-      `Sumber: Yahoo Finance ${esc(input.code)}.JK · ${bars[0]!.date} s.d. ${last.date} (${count} bar).` +
+      `Sumber: Yahoo Finance ${esc(input.symbol)} · ${bars[0]!.date} s.d. ${last.date} (${count} bar).` +
       `</text>`,
   )
 

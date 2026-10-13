@@ -2,6 +2,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { Bar } from './types.ts'
 
+import { IDX, SHARES_PER_LOT, type Market } from './market.ts'
+
 const ENDPOINT = 'https://query1.finance.yahoo.com/v8/finance/chart'
 
 /**
@@ -12,7 +14,6 @@ const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36'
 
 /** IDX memperdagangkan 100 lembar per lot. */
-export const SHARES_PER_LOT = 100
 
 export interface ChartData {
   /** Nama panjang emiten untuk legenda, mis. "Bank Central Asia Tbk.". */
@@ -32,15 +33,15 @@ export function toLots(shares: number): number {
 }
 
 /**
- * `BBCA` → `BBCA.JK`. Yang sudah bersufiks dibiarkan.
+ * Kode watchlist → simbol Yahoo, menurut aturan pasarnya.
  *
- * Simbol indeks berawalan `^` (mis. `^JKSE` untuk IHSG) TIDAK diberi sufiks —
- * `^JKSE.JK` tidak ada, dan menambahkannya membuat IHSG selalu balik 404.
+ * Aturannya tinggal di deskriptor pasar (`market.ts`), bukan di sini: `BBCA` →
+ * `BBCA.JK` untuk IDX, sementara `BTC-USD` dibiarkan utuh untuk crypto.
+ *
+ * Pasar bawaannya IDX supaya pemanggil yang sudah ada tidak berubah artinya.
  */
-export function toSymbol(code: string): string {
-  const upper = code.trim().toUpperCase()
-  if (upper.startsWith('^')) return upper
-  return upper.includes('.') ? upper : `${upper}.JK`
+export function toSymbol(code: string, market: Market = IDX): string {
+  return market.toSymbol(code)
 }
 
 /**
@@ -115,11 +116,13 @@ export interface FetchOptions {
   range: string
   /** Direktori cache balasan mentah. Kosongkan untuk tidak menyimpan. */
   rawDir?: string
+  /** Pasar yang menentukan pemetaan simbol. Bawaannya IDX. */
+  market?: Market
 }
 
 /** Ambil bar harian satu emiten, dan simpan balasan mentahnya untuk jejak audit. */
 export async function fetchBars(code: string, options: FetchOptions): Promise<ChartData> {
-  const symbol = toSymbol(code)
+  const symbol = toSymbol(code, options.market ?? IDX)
   const url = `${ENDPOINT}/${encodeURIComponent(symbol)}?interval=1d&range=${encodeURIComponent(options.range)}`
 
   const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })

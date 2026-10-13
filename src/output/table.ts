@@ -1,10 +1,16 @@
 import { csvNumber } from './csv.ts'
-import { RANK_COLUMNS } from '../analysis/report.ts'
 import type { ScanRow } from '../analysis/report.ts'
+import { IDX, type Market } from '../market.ts'
+
+interface Kolom {
+  head: string
+  width: number
+  get: (r: ScanRow) => string
+}
 
 /** Kolom yang muat di terminal. Berkas CSV/Excel membawa selengkapnya. */
-const KOLOM: Array<{ head: string; width: number; get: (r: ScanRow) => string }> = [
-  { head: 'KODE', width: 6, get: (r) => r.code },
+const kolomFor = (market: Market, codeWidth: number): Kolom[] => [
+  { head: 'KODE', width: codeWidth, get: (r) => r.code },
   { head: 'CLOSE', width: 9, get: (r) => csvNumber(r.close, 0) },
   { head: 'SKOR', width: 6, get: (r) => csvNumber(r.rank.score, 2) },
   { head: 'RVOL', width: 6, get: (r) => csvNumber(r.metrics.volume.value?.rvol ?? null, 2) },
@@ -19,7 +25,9 @@ const KOLOM: Array<{ head: string; width: number; get: (r: ScanRow) => string }>
   { head: 'FASE', width: 9, get: (r) => r.metrics.structure.value?.daily.phase ?? 'n/a' },
   { head: 'MA', width: 6, get: (r) => (r.metrics.filters.value?.stacked ? 'susun' : '—') },
   { head: 'RS60', width: 7, get: (r) => csvNumber(r.metrics.strength.value?.rs60 ?? null, 1) },
-  {
+  // Kolom khas IDX: dihilangkan di pasar yang tidak punya datanya, bukan
+  // dicetak kosong terus-menerus.
+  ...(market.hasIdxLayer ? ([{
     head: 'ASING20',
     width: 14,
     get: (r) => {
@@ -29,13 +37,13 @@ const KOLOM: Array<{ head: string; width: number; get: (r: ScanRow) => string }>
       // Umur cache dicetak DI SEL, bukan cuma di header — spanduk gampang terlewat.
       return f.staleness ? `${rp} (${f.staleness.daysOld}h)` : rp
     },
-  },
+  }] as Kolom[]) : []),
   {
     head: 'NILAI/HR',
     width: 11,
     get: (r) => {
       const v = r.metrics.liquidity.value?.avgDailyValue
-      return v == null ? 'n/a' : `Rp${(v / 1e9).toFixed(1)}M`
+      return v == null ? 'n/a' : market.moneyCompact(v)
     },
   },
   { head: 'R:R', width: 7, get: (r) => {
@@ -48,7 +56,15 @@ const KOLOM: Array<{ head: string; width: number; get: (r: ScanRow) => string }>
 
 const pad = (s: string, w: number) => (s.length >= w ? s.slice(0, w) : s.padEnd(w))
 
-export function renderTable(rows: ScanRow[], skipped: ScanRow[]): string {
+export function renderTable(rows: ScanRow[], skipped: ScanRow[], market: Market = IDX): string {
+  // Diukur dari baris yang benar-benar ada, dengan lebar pasar sebagai LANTAI.
+  // Lebar tetap apa pun akhirnya kurang: ticker crypto yang dibedakan Yahoo bisa
+  // 18 karakter, dan kode yang terpotong itu ambigu soal instrumen apa yang dibaca.
+  const codeWidth = Math.max(
+    market.codeWidth,
+    ...[...rows, ...skipped].map((r) => r.code.length),
+  )
+  const KOLOM = kolomFor(market, codeWidth)
   const out: string[] = []
   const tanggal = rows[0]?.date ?? skipped[0]?.date ?? '—'
 
@@ -58,7 +74,7 @@ export function renderTable(rows: ScanRow[], skipped: ScanRow[]): string {
   // Degradasi harus terlihat: peringkat yang tersusun dari kolom berbeda tidak
   // sebanding antar-run, dan itu tidak boleh diketahui belakangan.
   const hilang = new Set<string>()
-  for (const r of rows) for (const c of RANK_COLUMNS) if (!r.rank.used.includes(c)) hilang.add(c)
+  for (const r of rows) for (const c of market.rankColumns) if (!r.rank.used.includes(c)) hilang.add(c)
   if (hilang.size > 0) {
     out.push('')
     out.push(
@@ -79,14 +95,16 @@ export function renderTable(rows: ScanRow[], skipped: ScanRow[]): string {
     out.push('')
     out.push('TERSARING KELUAR')
     for (const r of skipped) {
-      out.push(`${pad(r.code, 6)} ${r.gates.failures.join(' | ')}`)
+      out.push(`${pad(r.code, codeWidth)} ${r.gates.failures.join(' | ')}`)
     }
   }
 
   out.push('')
   out.push(
-    'Catatan: Wyckoff dan VPA adalah tafsir heuristik dan TIDAK ikut memeringkat. ' +
-      'Nilai asing adalah estimasi rupiah dari data lembar IDX.',
+    'Catatan: Wyckoff dan VPA adalah tafsir heuristik dan TIDAK ikut memeringkat.' +
+      (market.hasIdxLayer
+        ? ' Nilai asing adalah estimasi rupiah dari data lembar IDX.'
+        : ''),
   )
 
   return out.join('\n')

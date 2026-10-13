@@ -2,6 +2,7 @@ import { expect, test, describe } from 'bun:test'
 import { formatVolume, formatPrice, renderSvg, VOLUME_PANEL } from './render.ts'
 import { buildChartInput } from './chart.ts'
 import type { Bar } from './types.ts'
+import { CRYPTO, IDX } from './market.ts'
 
 describe('formatVolume', () => {
   test('ribuan lot pakai K dengan dua desimal', () => {
@@ -138,5 +139,57 @@ describe('label nilai terakhir pada panel volume', () => {
       expect(yy).toBeGreaterThanOrEqual(VOLUME_PANEL.top)
       expect(yy + 18).toBeLessThanOrEqual(VOLUME_PANEL.bottom)
     }
+  })
+})
+
+describe('footer sumber data', () => {
+  const bars = (n = 30): Bar[] =>
+    Array.from({ length: n }, (_, i) => ({
+      date: `2026-09-${String((i % 28) + 1).padStart(2, '0')}`,
+      open: 100, high: 105, low: 95, close: 100 + i, volume: 1_000_000,
+    }))
+
+  test('emiten IDX tetap dicetak dengan sufiks .JK', () => {
+    const input = buildChartInput({ symbol: 'BBCA.JK', name: 'Bank Central Asia Tbk.', bars: bars() }, 30, 24)
+    expect(renderSvg(input)).toContain('Yahoo Finance BBCA.JK')
+  })
+
+  test('pasangan crypto TIDAK dicetak dengan sufiks .JK', () => {
+    // Simbolnya sudah lengkap; menempelkan .JK membuat footer berbohong soal sumbernya.
+    const input = buildChartInput({ symbol: 'BTC-USD', name: 'Bitcoin USD', bars: bars() }, 30, 24)
+    const svg = renderSvg(input)
+    expect(svg).toContain('Yahoo Finance BTC-USD')
+    expect(svg).not.toContain('BTC-USD.JK')
+  })
+})
+
+describe('panel volume mengikuti satuan pasar', () => {
+  const bars30 = (): Bar[] =>
+    Array.from({ length: 30 }, (_, i) => ({
+      date: `2026-09-${String((i % 28) + 1).padStart(2, '0')}`,
+      open: 100, high: 105, low: 95, close: 100 + i, volume: 1_000_000,
+    }))
+
+  test('IDX membagi volume jadi lot dan menyebutnya lot', () => {
+    const svg = renderSvg(buildChartInput({ symbol: 'BBCA.JK', name: 'BCA', bars: bars30() }, 30, 24), IDX)
+    expect(svg).toContain('— lot')
+    expect(svg).toContain('10K') // 1.000.000 lembar = 10.000 lot
+  })
+
+  test('crypto memakai volume USD apa adanya, bar dan MA satu skala', () => {
+    // Kalau MA volume masih dibagi 100 sementara batangnya tidak, garisnya jatuh
+    // 100x di bawah batang — salah yang langsung terlihat begitu digambar.
+    const svg = renderSvg(buildChartInput({ symbol: 'BTC-USD', name: 'Bitcoin USD', bars: bars30() }, 30, 24), CRYPTO)
+    expect(svg).toContain('— USD')
+    expect(svg).toContain('1M')
+    expect(svg).not.toContain('10K')
+  })
+
+  test('judul memakai label bursa pasarnya', () => {
+    const idx = renderSvg(buildChartInput({ symbol: 'BBCA.JK', name: 'BCA', bars: bars30() }, 30, 24), IDX)
+    const coin = renderSvg(buildChartInput({ symbol: 'BTC-USD', name: 'Bitcoin USD', bars: bars30() }, 30, 24), CRYPTO)
+    expect(idx).toContain('1D, IDX')
+    expect(coin).toContain('1D, CRYPTO')
+    expect(coin).not.toContain('1D, IDX')
   })
 })

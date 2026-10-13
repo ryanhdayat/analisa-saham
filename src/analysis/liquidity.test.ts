@@ -66,3 +66,40 @@ describe('analyzeLiquidity', () => {
     expect(m.value!.freeFloatPct).toBeNull()
   })
 })
+
+describe('analyzeLiquidity — mata uang', () => {
+  const dollar = (v: number) => `$${(v / 1e6).toFixed(2)}M`
+
+  test('bawaannya tetap rupiah', () => {
+    const m = analyzeLiquidity(bars(1000, 10_000_000))
+    expect(m.verdict).toContain('Rp')
+    expect(m.evidence.join(' ')).toContain('Rp')
+  })
+
+  test('formatter yang disuntikkan dipakai di putusan dan bukti', () => {
+    // CSV yang melabeli dolar sebagai rupiah adalah kesalahan diam — persis
+    // jenis yang paling sulit terlihat dan paling mahal kalau dipercaya.
+    const m = analyzeLiquidity(bars(100, 500_000), 10e6, undefined, dollar)
+    expect(m.verdict).toContain('$')
+    expect(m.verdict).not.toContain('Rp')
+    expect(m.evidence.join(' ')).not.toContain('Rp')
+  })
+
+  test('ambang dolar dinilai dengan formatter dolar juga', () => {
+    const m = analyzeLiquidity(bars(100, 50_000), 10e6, undefined, dollar)
+    expect(m.value!.passesGate).toBe(false)
+    expect(m.verdict).toContain('$10.00M') // ambangnya, bukan Rp
+  })
+})
+
+describe('analyzeLiquidity — konvensi nilai harian', () => {
+  test('bawaannya close x volume', () => {
+    expect(analyzeLiquidity(bars(1000, 10_000_000)).value!.avgDailyValue).toBeCloseTo(10e9, -3)
+  })
+
+  test('nilai harian bisa diambil langsung dari volume', () => {
+    // Pasar yang volumenya sudah dalam mata uang kuotasi (crypto di Yahoo).
+    const m = analyzeLiquidity(bars(80_000, 28e9), 10e6, undefined, undefined, (b) => b.volume)
+    expect(m.value!.avgDailyValue).toBeCloseTo(28e9, -6)
+  })
+})

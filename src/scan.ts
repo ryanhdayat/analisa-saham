@@ -11,10 +11,10 @@ import { renderTable } from './output/table.ts'
 import { toCsv } from './output/csv.ts'
 import { writeXlsx } from './output/xlsx.ts'
 import { toJson } from './output/json.ts'
+import { historyRange, MARKET_IDS } from './market.ts'
 
 const RAW_DIR = 'raw'
 const PROFILE_ROWS = 24
-const IHSG = '^JKSE'
 
 const USAGE = `Pakai: bun run src/scan.ts [KODE...] [opsi]
 
@@ -26,6 +26,9 @@ const USAGE = `Pakai: bun run src/scan.ts [KODE...] [opsi]
   --tanpa-idx              Lewati lapisan IDX; jalankan 9 metrik Yahoo saja.
   --out DIR                Direktori keluaran JSON per emiten (bawaan out).
   --report-dir DIR         Direktori laporan CSV/Excel (bawaan report).
+  --market PASAR           Pasar yang dipindai: ${MARKET_IDS.join(' atau ')} (bawaan idx).
+                           Pasar menentukan bawaan watchlist, direktori, patokan,
+                           dan satuan --min-likuiditas.
   --watchlist BERKAS       Daftar kode (bawaan watchlist.txt).`
 
 async function resolveCodes(args: ScanArgs): Promise<string[] | null> {
@@ -57,14 +60,17 @@ async function main(): Promise<number> {
 
   await mkdir(args.outDir, { recursive: true })
   await mkdir(args.reportDir, { recursive: true })
-  const range = `${Math.ceil((args.days + WARMUP_BARS) / 250) + 1}y`
+  const market = args.market
+  const range = historyRange(args.days, WARMUP_BARS, market)
 
   // IHSG dulu: tanpa ini metrik kekuatan relatif tidak bisa dihitung untuk siapa pun.
   let indexBars: Bar[]
   try {
-    indexBars = (await fetchBars(IHSG, { range, rawDir: RAW_DIR })).bars
+    indexBars = (await fetchBars(market.benchmark, { range, rawDir: RAW_DIR, market })).bars
   } catch (err) {
-    console.error(`Gagal mengambil IHSG (${IHSG}): ${err instanceof Error ? err.message : String(err)}`)
+    console.error(
+      `Gagal mengambil patokan (${market.benchmark}): ${err instanceof Error ? err.message : String(err)}`,
+    )
     console.error('Kekuatan relatif tidak bisa dihitung; scan dilanjutkan tanpa metrik itu.')
     indexBars = []
   }
@@ -76,7 +82,9 @@ async function main(): Promise<number> {
         foreignByCode: new Map(),
         freeFloatByCode: new Map(),
         sectorBarsByCode: new Map(),
-        note: 'Lapisan IDX dimatikan lewat --tanpa-idx.',
+        note: market.hasIdxLayer
+          ? 'Lapisan IDX dimatikan lewat --tanpa-idx.'
+          : `Lapisan IDX tidak berlaku di pasar ${market.id}; 3 metrik khas IDX dilewati.`,
       }
   if (enrichment.note) console.error(`[idx] ${enrichment.note}`)
 
@@ -85,7 +93,7 @@ async function main(): Promise<number> {
 
   for (const code of codes) {
     try {
-      const data = await fetchBars(code, { range, rawDir: RAW_DIR })
+      const data = await fetchBars(code, { range, rawDir: RAW_DIR, market })
       const displayBars = data.bars.slice(-args.days)
       const row = buildRow(
         {
@@ -100,7 +108,13 @@ async function main(): Promise<number> {
           foreignStaleness: enrichment.staleness,
           freeFloat: enrichment.freeFloatByCode.get(code),
         },
-        { minValue: args.minValue, minRatio: args.minRatio },
+        {
+          minValue: args.minValue,
+          minRatio: args.minRatio,
+          rankColumns: market.rankColumns,
+          money: market.money,
+          dailyValue: market.dailyValue,
+        },
       )
       rows.push(row)
       await writeFile(join(args.outDir, `${code}.json`), toJson(row))
@@ -114,13 +128,13 @@ async function main(): Promise<number> {
   const skipped = rows.filter((r) => !r.gates.passed)
 
   console.log('')
-  console.log(renderTable(passed, skipped))
+  console.log(renderTable(passed, skipped, market))
 
   const tanggal = rows[0]?.date ?? new Date().toISOString().slice(0, 10)
   const csvPath = join(args.reportDir, `scan-${tanggal}.csv`)
   const xlsxPath = join(args.reportDir, `scan-${tanggal}.xlsx`)
-  await writeFile(csvPath, toCsv([...passed, ...skipped]))
-  await writeXlsx(passed, skipped, xlsxPath)
+  await writeFile(csvPath, toCsv([...passed, ...skipped], market))
+  await writeXlsx(passed, skipped, xlsxPath, market)
 
   console.log('')
   console.log(`CSV  : ${csvPath}`)

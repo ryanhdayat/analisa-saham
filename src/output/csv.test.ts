@@ -1,6 +1,7 @@
 import { expect, test, describe } from 'bun:test'
 import { toCsv, csvNumber } from './csv.ts'
 import type { ScanRow } from '../analysis/report.ts'
+import { CRYPTO, IDX } from '../market.ts'
 
 function row(over: Partial<ScanRow> = {}): ScanRow {
   const m = (value: unknown, available = true) => ({
@@ -90,5 +91,22 @@ describe('toCsv', () => {
 
   test('daftar kosong tetap menghasilkan header', () => {
     expect(toCsv([]).split('\n')[0]).toContain('KODE')
+  })
+})
+
+describe('toCsv — header mata uang', () => {
+  test('IDX melabeli nilai harian sebagai rupiah', () => {
+    expect(toCsv([row()], IDX).split('\n')[0]).toContain('NILAI_HARIAN_RP')
+  })
+
+  test('crypto melabeli nilai harian sebagai dolar', () => {
+    // CSV yang melabeli dolar sebagai rupiah adalah kesalahan diam.
+    const header = toCsv([row()], CRYPTO).split('\n')[0]!
+    expect(header).toContain('NILAI_HARIAN_USD')
+    expect(header).not.toContain('NILAI_HARIAN_RP')
+  })
+
+  test('tanpa pasar disebut, bawaannya IDX', () => {
+    expect(toCsv([row()]).split('\n')[0]).toBe(toCsv([row()], IDX).split('\n')[0])
   })
 })

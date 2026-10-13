@@ -27,17 +27,20 @@ export interface LiquidityRead {
   freeFloatPct: number | null
 }
 
+/** Bawaan IDX. Pasar lain menyuntik formatternya sendiri lewat parameter `money`. */
 const miliar = (v: number) => `Rp ${(v / 1e9).toFixed(2)} M`
 
 export function analyzeLiquidity(
   bars: Bar[],
   minValue = MIN_VALUE_DEFAULT,
   freeFloat?: FreeFloatInput,
+  money: (v: number) => string = miliar,
+  dailyValue: (bar: Bar) => number = (bar) => bar.close * bar.volume,
 ): Metric<LiquidityRead> {
   if (bars.length === 0) return unavailable('Tidak ada bar untuk menghitung likuiditas.')
 
   const window = bars.slice(-PERIOD)
-  const avgDailyValue = window.reduce((a, b) => a + b.close * b.volume, 0) / window.length
+  const avgDailyValue = window.reduce((a, b) => a + dailyValue(b), 0) / window.length
   const passesGate = avgDailyValue >= minValue
 
   // Free float nol lembar bukan "0%", melainkan data yang tidak masuk akal.
@@ -47,15 +50,15 @@ export function analyzeLiquidity(
       : null
 
   const evidence = [
-    `Nilai transaksi rata-rata ${window.length} hari: ${miliar(avgDailyValue)} per hari.`,
+    `Nilai transaksi rata-rata ${window.length} hari: ${money(avgDailyValue)} per hari.`,
     freeFloatPct === null
       ? 'Free float: tidak tersedia (butuh data IDX).'
       : `Free float: ${freeFloatPct.toFixed(1)}% dari saham tercatat.`,
   ]
 
   const verdict = passesGate
-    ? `likuid — ${miliar(avgDailyValue)} per hari, di atas ambang ${miliar(minValue)}`
-    : `TIDAK LIKUID — ${miliar(avgDailyValue)} per hari, di bawah ambang ${miliar(minValue)}`
+    ? `likuid — ${money(avgDailyValue)} per hari, di atas ambang ${money(minValue)}`
+    : `TIDAK LIKUID — ${money(avgDailyValue)} per hari, di bawah ambang ${money(minValue)}`
 
   return metric({ avgDailyValue, passesGate, freeFloatPct }, verdict, 'tinggi', evidence)
 }

@@ -43,6 +43,7 @@ export function buildChartInput(
 
   return {
     code: data.symbol.replace(/\.JK$/, ''),
+    symbol: data.symbol,
     name: data.name,
     bars,
     priceMA,
