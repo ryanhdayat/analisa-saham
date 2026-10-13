@@ -3,3 +3,4 @@ out/
 raw/
 .DS_Store
 report/
+*.bak
