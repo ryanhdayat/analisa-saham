@@ -253,6 +253,34 @@ berikut tanggal dan angkanya supaya bisa dicek ulang, keyakinan Wyckoff dibatasi
 maksimal `sedang` kecuali seluruh syarat sejalan, dan sekali lagi: keduanya tidak
 ikut memeringkat.
 
+## Terbit otomatis ke analisa-saham.mhamzah.id
+
+cron menjalankan scan per pasar lalu menyalin halaman screenernya ke situs statis
+yang disajikan nginx:
+
+| Alamat | Isi |
+|---|---|
+| `/` | Halaman depan (`deploy/web/index.html`) dengan tanggal data tiap pasar |
+| `/idx/` | Screener IDX terbaru |
+| `/crypto/` | Screener crypto terbaru |
+
+Jadwal dan opsi scan ada di `deploy/jadwal.conf` (format cron, jam WIB). Bawaannya
+IDX Selasa–Sabtu 05:00 — data penutupan hari bursa sebelumnya, jadi Jumat tetap
+tayang sepanjang akhir pekan — dan crypto tiap hari 21:00. Setelah mengubahnya:
+
+```bash
+deploy/pasang-cron.sh           # tulis ulang blok analisa-saham di crontab
+deploy/terbit.sh idx            # terbitkan sekarang juga, tanpa menunggu jadwal
+```
+
+- `deploy/terbit.sh` mengganti terbitan secara atomik: `/idx` dan `/crypto` adalah
+  symlink ke `rilis/<pasar>-<waktu>/`, dua rilis terakhir disimpan. Kalau halaman
+  tidak tertulis atau semua emiten gagal diambil, terbitan lama tetap tayang.
+  Sebagian emiten gagal itu biasa dan tetap diterbitkan.
+- Log run ada di `logs/terbit-<pasar>.log`.
+- Konfigurasi nginx: `deploy/nginx/analisa-saham.mhamzah.id.conf` (HTTPS lewat certbot).
+- Folder `report/` tetap terisi tiap run dan tidak dibersihkan otomatis.
+
 ## Struktur
 
 | Berkas | Tanggung jawab |
