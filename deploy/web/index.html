@@ -26,7 +26,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
-.wrap { max-width: 880px; margin: 0 auto; padding: 48px 16px; display: grid; gap: 28px; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 48px 16px; display: grid; gap: 28px; }
 .eyebrow { font: 600 11px/1 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 h1 { font-family: var(--font-display); font-stretch: 80%; font-weight: 800; font-size: clamp(32px, 6vw, 48px); line-height: 1; margin: 8px 0 0; letter-spacing: -.01em; }
 .lede { color: var(--muted); margin: 10px 0 0; max-width: 60ch; }
@@ -65,6 +65,13 @@ footer { color: var(--muted); font-size: 12px; }
       <p>Diperbarui tiap hari pukul 21.00 WIB.</p>
       <span class="go">Buka screener →</span>
     </a>
+    <a class="card" href="hasil/">
+      <div class="eyebrow">Rekam jejak</div>
+      <h2>Hasil Analisa</h2>
+      <div class="meta" data-pasar="hasil">Memuat…</div>
+      <p>Berapa pilihan yang kena target, kena cut loss, dan masih terbuka. Dinilai ulang tiap hari pukul 18.00 WIB.</p>
+      <span class="go">Lihat hasil →</span>
+    </a>
   </div>
 
   <footer>Bukan rekomendasi jual/beli. Data dari Yahoo Finance; periksa kembali sebelum bertransaksi.</footer>
@@ -76,7 +83,10 @@ for (const el of document.querySelectorAll('[data-pasar]')) {
   fetch(`${el.dataset.pasar}/terbit.json`, { cache: 'no-cache' })
     .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
     .then((t) => {
-      el.textContent = `Data ${fmtTanggal.format(new Date(t.tanggal))} · terbit ${fmtWaktu.format(new Date(t.diterbitkan))} WIB`
+      const waktu = `${fmtWaktu.format(new Date(t.diterbitkan))} WIB`
+      el.textContent = el.dataset.pasar === 'hasil'
+        ? `Dinilai ${waktu}`
+        : `Data ${fmtTanggal.format(new Date(t.tanggal))} · terbit ${waktu}`
     })
     .catch(() => {
       el.textContent = 'Belum ada terbitan.'

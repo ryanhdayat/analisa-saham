@@ -106,9 +106,9 @@ const json = (x: unknown) => JSON.stringify(x)
  * JSON yang aman ditanam di dalam <script>: `</script>` di sebuah nama emiten
  * atau string bukti tidak boleh bisa menutup tag lebih awal.
  */
-const inlineJson = (x: unknown) => json(x).replace(/</g, '\\u003c')
+export const inlineJson = (x: unknown) => json(x).replace(/</g, '\\u003c')
 
-function jakartaStamp(now: Date): string {
+export function jakartaStamp(now: Date): string {
   const t = new Date(now.getTime() + 7 * 3600_000).toISOString()
   return `${t.slice(0, 10)} ${t.slice(11, 16)} WIB`
 }

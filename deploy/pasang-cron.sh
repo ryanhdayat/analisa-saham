@@ -16,6 +16,7 @@ SELESAI="# <<< analisa-saham <<<"
 blok="$MULAI
 $IDX_JADWAL $REPO/deploy/terbit.sh idx >> $REPO/logs/terbit-idx.log 2>&1
 $CRYPTO_JADWAL $REPO/deploy/terbit.sh crypto >> $REPO/logs/terbit-crypto.log 2>&1
+$HASIL_JADWAL $REPO/deploy/terbit.sh hasil >> $REPO/logs/terbit-hasil.log 2>&1
 $SELESAI"
 
 {

@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
-# Jalankan scan satu pasar lalu terbitkan halaman screenernya ke WEB_ROOT.
+# Jalankan scan satu pasar (atau penilaian hasil) lalu terbitkan halamannya ke WEB_ROOT.
 #
 #   deploy/terbit.sh idx
 #   deploy/terbit.sh crypto
 #   deploy/terbit.sh crypto BTC ETH   # argumen sisanya diteruskan ke scan.ts
+#   deploy/terbit.sh hasil            # rekam jejak pilihan kedua pasar (src/hasil.ts)
 #
-# Terbitan diganti secara atomik: <WEB_ROOT>/<pasar> adalah symlink ke folder
+# Terbitan diganti secara atomik: <WEB_ROOT>/<nama> adalah symlink ke folder
 # rilis, dan baru dipindah setelah rilis baru tersalin utuh. Kalau scan gagal
 # menulis halaman, terbitan lama tetap tayang.
 set -euo pipefail
 
 PASAR="${1:-}"
 case "$PASAR" in
-  idx | crypto) ;;
-  *) echo "Pakai: $0 idx|crypto" >&2; exit 2 ;;
+  idx | crypto | hasil) ;;
+  *) echo "Pakai: $0 idx|crypto|hasil" >&2; exit 2 ;;
 esac
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -32,11 +33,16 @@ log="$(mktemp)"
 trap 'rm -f "$log"' EXIT
 
 opsi_var="${PASAR^^}_OPSI"
-# scan.ts keluar 1 kalau ada emiten yang gagal diambil. Itu biasa — halamannya
-# tetap ditulis — jadi yang diperiksa adalah keluarannya, bukan exit code-nya.
+if [[ "$PASAR" == hasil ]]; then
+  perintah=(bun run src/hasil.ts)
+else
+  perintah=(bun run src/scan.ts --market "$PASAR")
+fi
+# scan.ts dan hasil.ts keluar 1 kalau ada emiten yang gagal diambil. Itu biasa —
+# halamannya tetap ditulis — jadi yang diperiksa adalah keluarannya, bukan exit code-nya.
 set +e
 # shellcheck disable=SC2086 # opsi sengaja dipecah per kata
-bun run src/scan.ts --market "$PASAR" ${!opsi_var} "${@:2}" 2>&1 | tee "$log"
+"${perintah[@]}" ${!opsi_var:-} "${@:2}" 2>&1 | tee "$log"
 status=${PIPESTATUS[0]}
 set -e
 echo "scan selesai, exit $status"
@@ -52,7 +58,8 @@ if grep -qE '^([0-9]+) dari \1 emiten gagal' "$log"; then
 fi
 
 sumber="$(dirname "$html")"
-tanggal="${sumber##*screener-}"
+tanggal="?"
+[[ "$sumber" =~ ([0-9]{4}-[0-9]{2}-[0-9]{2})$ ]] && tanggal="${BASH_REMATCH[1]}"
 nama="$PASAR-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$WEB_ROOT/rilis"
 cp -r "$sumber" "$WEB_ROOT/rilis/$nama.tmp"

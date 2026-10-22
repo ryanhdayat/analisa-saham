@@ -263,10 +263,12 @@ yang disajikan nginx:
 | `/` | Halaman depan (`deploy/web/index.html`) dengan tanggal data tiap pasar |
 | `/idx/` | Screener IDX terbaru |
 | `/crypto/` | Screener crypto terbaru |
+| `/hasil/` | Rekam jejak: pilihan yang kena target, kena cut loss, dan masih terbuka |
 
 Jadwal dan opsi scan ada di `deploy/jadwal.conf` (format cron, jam WIB). Bawaannya
 IDX Selasa–Sabtu 05:00 — data penutupan hari bursa sebelumnya, jadi Jumat tetap
-tayang sepanjang akhir pekan — dan crypto tiap hari 21:00. Setelah mengubahnya:
+tayang sepanjang akhir pekan — crypto tiap hari 21:00, dan penilaian hasil tiap
+hari 18:00. Setelah mengubahnya:
 
 ```bash
 deploy/pasang-cron.sh           # tulis ulang blok analisa-saham di crontab
@@ -279,7 +281,30 @@ deploy/terbit.sh idx            # terbitkan sekarang juga, tanpa menunggu jadwal
   Sebagian emiten gagal itu biasa dan tetap diterbitkan.
 - Log run ada di `logs/terbit-<pasar>.log`.
 - Konfigurasi nginx: `deploy/nginx/analisa-saham.mhamzah.id.conf` (HTTPS lewat certbot).
-- Folder `report/` tetap terisi tiap run dan tidak dibersihkan otomatis.
+- Folder `report/` tetap terisi tiap run dan tidak dibersihkan otomatis. Berkas
+  `pilihan-<TANGGAL>.json` di dalamnya adalah sumber rekam jejak — **jangan dihapus**.
+
+### Rekam jejak (`src/hasil.ts`)
+
+Tiap run scan watchlist penuh yang final (bukan DRAFT) menulis
+`report/[crypto/]pilihan-<TANGGAL>.json`: emiten yang lolos gerbang beserta
+entry/stop/target utuh (CSV membulatkannya, dan untuk koin seharga $0,0003 itu
+berarti nol). Scan beberapa kode saja tidak menulisnya, supaya catatan hari itu
+tidak tertimpa.
+
+`bun run src/hasil.ts` membaca semua berkas itu, mengambil bar terbaru, lalu menulis
+`report/hasil-<TANGGAL>/index.html` dan `hasil.json`. Aturannya:
+
+- Satu pilihan per emiten, dibuka pada close hari scan. Selama masih terbuka,
+  emiten itu tidak dihitung lagi walau lolos lagi.
+- **Cut loss** = stop analisa yang dijepit ke 5–10% di bawah entry.
+- High menyentuh target → **kena target**. Low menyentuh cut loss → **kena cut
+  loss**. Keduanya di hari yang sama dihitung cut loss; gap turun melewati cut loss
+  keluar di harga buka. Bar hari scan sendiri tidak dihitung.
+- Yang masih terbuka dinilai dari close terakhir. **Benar** = harganya naik dari
+  entry. Pilihan yang belum melewati satu hari bursa pun tidak ikut persentase.
+- Tidak ada status yang disimpan: semuanya dinilai ulang dari bar tiap run, jadi
+  run yang terlewat atau diulang tidak menggeser hasil.
 
 ## Struktur
 
@@ -295,11 +320,13 @@ deploy/terbit.sh idx            # terbitkan sekarang juga, tanpa menunggu jadwal
 | `src/idx.ts` | Lapisan pengaya IDX — tidak pernah melempar |
 | `src/output/` | Tabel, CSV, Excel, JSON, dan halaman screener HTML dari satu definisi kolom |
 | `src/scan.ts` | CLI scan |
+| `src/hasil/nilai.ts` | Murni: cut loss, penilaian pilihan, ringkasan rekam jejak |
+| `src/hasil.ts` | CLI rekam jejak |
 
 `indicators.ts`, `chart.ts`, dan `render.ts` tidak menyentuh jaringan maupun berkas.
 
 ```bash
-bun test        # 369 test
+bun test        # 392 test
 bun run typecheck
 ```
 

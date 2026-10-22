@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hasil Analisa</title>
+<meta name="description" content="Rekam jejak pilihan screener: berapa yang kena target, kena cut loss, dan masih terbuka.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: rekam jejak — ringkasan per pasar, lalu tabel pilihan terbuka dan tabel yang sudah selesai. Token sama dengan screener-template.html. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --sunk: #f6f8fa; --ink: #15202b; --muted: #5a6876; --line: #d9e0e7;
+  --accent: #0d6670; --accent-soft: #dcefef;
+  --up: #12805c; --up-soft: #ddf1e8; --down: #c0392b; --down-soft: #f8e1de; --warn: #a56a12; --warn-soft: #f6ead3;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
+  --accent: #56b8c0; --accent-soft: #163338;
+  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
+  --accent: #56b8c0; --accent-soft: #163338;
+  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 18px; }
+.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+.eyebrow { font: 600 11px/1 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.eyebrow a { color: inherit; text-decoration: none; }
+.eyebrow a:hover { color: var(--accent); }
+h1 { font-family: var(--font-display); font-stretch: 80%; font-weight: 800; font-size: clamp(26px, 4vw, 38px); line-height: 1; margin: 6px 0 0; letter-spacing: -.01em; }
+h2 { font-family: var(--font-display); font-stretch: 85%; font-weight: 700; font-size: 20px; margin: 0; }
+.sub { color: var(--muted); margin: 6px 0 0; }
+
+.bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--surface); }
+.tabs button { border: 0; background: none; padding: 8px 14px; font: 500 13px var(--font-body); color: var(--muted); cursor: pointer; }
+.tabs button + button { border-left: 1px solid var(--line); }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--surface); }
+input[type=search] { font: 13px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; width: 220px; max-width: 100%; }
+button:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.stat b { display: block; font: 600 24px/1.1 var(--font-data); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat.up b { color: var(--up); }
+.stat.down b { color: var(--down); }
+
+.banner { padding: 10px 14px; border-radius: 6px; font-size: 13px; border: 1px solid; }
+.banner.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+details.rules { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; color: var(--muted); font-size: 13px; }
+details.rules summary { cursor: pointer; color: var(--ink); font-weight: 500; }
+details.rules ul { margin: 8px 0 0; padding-left: 18px; }
+
+section { display: grid; gap: 10px; }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+th { font: 600 11px/1.2 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--sunk); position: sticky; top: 0; }
+td.n, th.n { text-align: right; }
+td.n { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+tbody tr:last-child td { border-bottom: 0; }
+.code { font: 600 13px var(--font-data); }
+.name { display: block; font-size: 12px; color: var(--muted); max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.pos { color: var(--up); }
+.neg { color: var(--down); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+.badge.target { background: var(--up-soft); color: var(--up); }
+.badge.cut { background: var(--down-soft); color: var(--down); }
+.meter { display: grid; gap: 4px; min-width: 150px; }
+.meter .track { position: relative; height: 6px; background: var(--sunk); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+.meter .fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 99px; }
+.meter .fill.pos { background: var(--up); }
+.meter .fill.neg { background: var(--down); }
+.meter small { font-size: 12px; color: var(--muted); }
+.empty { padding: 18px; color: var(--muted); text-align: center; }
+
+/* Ponsel: sembilan kolom tidak muat, dan yang tersembunyi di kanan justru return dan posisinya.
+   Tiap baris jadi kartu dua kolom; label kolom dibawa sel lewat data-l. */
+@media (max-width: 640px) {
+  .scroll { overflow: visible; background: none; border: 0; border-radius: 0; }
+  table, tbody { display: block; }
+  thead { display: none; }
+  tbody tr { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  td { display: block; padding: 0; border: 0; white-space: normal; min-width: 0; }
+  td.n { text-align: left; }
+  td[data-l]::before { content: attr(data-l); display: block; font: 600 10px/1.4 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  td.full, td.empty { grid-column: 1 / -1; }
+  .name { max-width: none; }
+  .meter { min-width: 0; }
+  input[type=search] { width: 100%; }
+}
+footer { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <div class="eyebrow"><a href="../">← Analisa Saham</a></div>
+    <h1>Hasil Analisa</h1>
+    <p class="sub">Apakah emiten yang lolos gerbang screener benar-benar naik. Diperbarui <span id="dibuat" class="num"></span>.</p>
+  </header>
+
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <input type="search" id="cari" placeholder="Cari kode atau nama…" aria-label="Cari emiten">
+  </div>
+
+  <div id="banners"></div>
+  <div class="stats" id="stats"></div>
+
+  <details class="rules">
+    <summary>Cara menilai</summary>
+    <ul>
+      <li>Emiten yang lolos gerbang menjadi satu <b>pilihan</b>, dibuka pada harga penutupan hari scan. Selama pilihannya masih terbuka, emiten itu tidak dihitung lagi walau lolos lagi.</li>
+      <li><b>Target</b> adalah target dari analisa. <b>Cut loss</b> adalah stop analisa yang dijepit ke 5–10% di bawah entry.</li>
+      <li>High harian menyentuh target → <b>kena target</b> (benar). Low harian menyentuh cut loss → <b>kena cut loss</b> (salah). Keduanya di hari yang sama dihitung cut loss. Gap turun melewati cut loss dihitung di harga buka.</li>
+      <li>Pilihan yang masih terbuka dinilai dari harga penutupan terakhir. <b>Benar</b> berarti harganya naik dari entry. Pilihan yang belum melewati satu hari bursa pun sejak scan belum ikut dihitung.</li>
+    </ul>
+  </details>
+
+  <section>
+    <h2>Masih terbuka</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Emiten</th><th>Tgl scan</th><th class="n">Entry</th><th class="n">Target</th><th class="n">Cut loss</th><th class="n">Terakhir</th><th class="n">Return</th><th>Posisi</th><th class="n">Hari</th></tr></thead>
+      <tbody id="terbuka"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Selesai</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Emiten</th><th>Tgl scan</th><th class="n">Entry</th><th>Hasil</th><th>Tgl selesai</th><th class="n">Keluar</th><th class="n">Return</th><th class="n">Hari</th></tr></thead>
+      <tbody id="selesai"></tbody>
+    </table></div>
+  </section>
+
+  <footer>Bukan rekomendasi jual/beli. Data harga dari Yahoo Finance.</footer>
+</main>
+<script>
+const DATA = /*__DATA__*/{};
+
+const $ = (id) => document.getElementById(id)
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const idr = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
+const usd2 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const usdSig = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 4 })
+const pct = (x, d = 1) => `${x > 0 ? '+' : ''}${(x * 100).toFixed(d).replace('.', ',')}%`
+const tgl = (d) => (d ? new Date(d + 'T00:00:00Z').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'UTC' }) : '—')
+
+let pasar = DATA.pasar[0]
+try { const t = localStorage.getItem('hasil-tab'); pasar = DATA.pasar.find((p) => p.id === t) ?? pasar } catch {}
+
+function price(v) {
+  if (v == null) return '—'
+  if (pasar.currency === 'IDR') return idr.format(v)
+  return '$' + (Math.abs(v) >= 1 ? usd2.format(v) : usdSig.format(v))
+}
+const signCls = (x) => (x > 0 ? 'pos' : x < 0 ? 'neg' : '')
+const emiten = (h) => `<span class="code">${esc(h.code)}</span><span class="name" title="${esc(h.name)}">${esc(h.name)}</span>`
+
+function meter(h) {
+  // Di atas entry: jarak tempuh menuju target. Di bawah: seberapa dekat ke cut loss.
+  if (h.ret >= 0) {
+    const f = Math.min(1, Math.max(0, h.progress))
+    return `<div class="meter"><div class="track"><div class="fill pos" style="width:${f * 100}%"></div></div><small>${Math.round(h.progress * 100)}% menuju target</small></div>`
+  }
+  const price = h.last ? h.last.close : h.entry
+  const f = Math.min(1, (h.entry - price) / (h.entry - h.cut))
+  return `<div class="meter"><div class="track"><div class="fill neg" style="width:${f * 100}%"></div></div><small>${Math.round(f * 100)}% menuju cut loss</small></div>`
+}
+
+function render() {
+  const q = $('cari').value.trim().toLowerCase()
+  const match = (h) => !q || h.code.toLowerCase().includes(q) || h.name.toLowerCase().includes(q)
+  const r = pasar.ringkasan
+
+  $('tabs').innerHTML = DATA.pasar.map((p) =>
+    `<button role="tab" aria-selected="${p.id === pasar.id}" data-id="${p.id}">${esc(p.label)}</button>`).join('')
+
+  $('banners').innerHTML = pasar.gagal.length
+    ? `<div class="banner warn">Harga ${pasar.gagal.length} emiten tidak bisa diambil di run ini, jadi pilihannya dinilai dari data seadanya: ${pasar.gagal.map(esc).join(', ')}.</div>`
+    : ''
+
+  const benarPct = r.dinilai ? Math.round((r.benar / r.dinilai) * 100) + '%' : '—'
+  const belum = r.total - r.dinilai
+  $('stats').innerHTML = [
+    ['', r.total, 'pilihan'],
+    ['up', r.target, 'kena target'],
+    ['down', r.cut, 'kena cut loss'],
+    ['', r.open, 'masih terbuka'],
+    [!r.dinilai ? '' : r.benar / r.dinilai >= 0.5 ? 'up' : 'down', benarPct,
+      `benar (naik) — ${r.benar} dari ${r.dinilai}${belum ? `; ${belum} belum ada hari bursa sejak scan` : ''}`],
+    [r.avgReturn > 0 ? 'up' : r.avgReturn < 0 ? 'down' : '', r.dinilai ? pct(r.avgReturn) : '—', 'rata-rata return per pilihan'],
+  ].map(([cls, v, label]) => `<div class="stat ${cls}"><b>${v}</b><span>${label}</span></div>`).join('')
+
+  const open = pasar.picks.filter((h) => h.status === 'open' && match(h))
+  $('terbuka').innerHTML = open.length
+    ? open.map((h) => `<tr>
+        <td class="full">${emiten(h)}</td><td data-l="Tgl scan">${tgl(h.date)}</td>
+        <td class="n" data-l="Entry">${price(h.entry)}</td><td class="n" data-l="Target">${price(h.target)}</td><td class="n" data-l="Cut loss">${price(h.cut)}</td>
+        <td class="n" data-l="Terakhir">${h.last ? price(h.last.close) : '—'}</td>
+        <td class="n ${signCls(h.ret)}" data-l="Return">${pct(h.ret)}</td>
+        <td class="full">${meter(h)}</td><td class="n" data-l="Hari">${h.days}</td></tr>`).join('')
+    : `<tr><td colspan="9" class="empty">${q ? 'Tidak ada yang cocok.' : 'Belum ada pilihan terbuka.'}</td></tr>`
+
+  const done = pasar.picks.filter((h) => h.status !== 'open' && match(h))
+    .sort((a, b) => b.settled.localeCompare(a.settled))
+  $('selesai').innerHTML = done.length
+    ? done.map((h) => `<tr>
+        <td class="full">${emiten(h)}</td><td data-l="Tgl scan">${tgl(h.date)}</td><td class="n" data-l="Entry">${price(h.entry)}</td>
+        <td data-l="Hasil"><span class="badge ${h.status}">${h.status === 'target' ? 'Kena target' : 'Kena cut loss'}</span></td>
+        <td data-l="Tgl selesai">${tgl(h.settled)}</td><td class="n" data-l="Keluar">${price(h.exit)}</td>
+        <td class="n ${signCls(h.ret)}" data-l="Return">${pct(h.ret)}</td><td class="n" data-l="Hari">${h.days}</td></tr>`).join('')
+    : `<tr><td colspan="8" class="empty">${q ? 'Tidak ada yang cocok.' : 'Belum ada pilihan yang selesai.'}</td></tr>`
+}
+
+$('dibuat').textContent = DATA.dibuat
+$('tabs').addEventListener('click', (e) => {
+  const id = e.target.closest('button')?.dataset.id
+  if (!id) return
+  pasar = DATA.pasar.find((p) => p.id === id)
+  try { localStorage.setItem('hasil-tab', id) } catch {}
+  render()
+})
+$('cari').addEventListener('input', render)
+render()
+</script>
+</body>
+</html>

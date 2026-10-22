@@ -12,6 +12,7 @@ import { toCsv } from './output/csv.ts'
 import { writeXlsx } from './output/xlsx.ts'
 import { toJson } from './output/json.ts'
 import { isIntraday, writeScreener } from './output/screener.ts'
+import { pilihanFromRows } from './hasil/nilai.ts'
 import { historyRange, MARKET_IDS } from './market.ts'
 
 const RAW_DIR = 'raw'
@@ -143,10 +144,19 @@ async function main(): Promise<number> {
   await writeFile(csvPath, toCsv([...passed, ...skipped], market))
   await writeXlsx(passed, skipped, xlsxPath, market)
 
+  const draft = args.draft ?? isIntraday(tanggal, market)
+
+  // Catatan pilihan untuk src/hasil.ts. Hanya run watchlist penuh yang final:
+  // scan beberapa kode tidak boleh menimpa catatan hari itu, dan entry bar
+  // intraday adalah close yang belum final.
+  let pilihanPath: string | null = null
+  if (args.codes.length === 0 && !draft) {
+    pilihanPath = join(args.reportDir, `pilihan-${tanggal}.json`)
+    await writeFile(pilihanPath, JSON.stringify(pilihanFromRows(passed), null, 1))
+  }
+
   let htmlPath: string | null = null
-  let draft = false
   if (args.html) {
-    draft = args.draft ?? isIntraday(tanggal, market)
     htmlPath = await writeScreener(join(args.reportDir, `screener-${tanggal}`), [...passed, ...skipped], barsByCode, market, {
       draft,
       minValue: args.minValue,
@@ -157,6 +167,7 @@ async function main(): Promise<number> {
   console.log('')
   console.log(`CSV  : ${csvPath}`)
   console.log(`Excel: ${xlsxPath}`)
+  if (pilihanPath) console.log(`Pilihan: ${pilihanPath}`)
   if (htmlPath) console.log(`HTML : ${htmlPath}${draft ? '  (DRAFT — bar hari ini belum final)' : ''}`)
   console.log(`JSON : ${args.outDir}/<KODE>.json`)
 
