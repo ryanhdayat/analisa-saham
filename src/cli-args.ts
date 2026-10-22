@@ -114,6 +114,13 @@ export interface ScanArgs {
   idxDays: number
   /** Pasar yang dipindai. Menentukan bawaan seluruh medan di atas. */
   market: Market
+  /** Tulis halaman screener HTML di samping CSV/Excel. */
+  html: boolean
+  /**
+   * Tandai halaman sebagai DRAFT intraday. null = tentukan sendiri dari jam bursa
+   * (hanya IDX: hari kerja, bar hari ini, sebelum 16:15 WIB).
+   */
+  draft: boolean | null
 }
 
 /** Bawaan yang diturunkan dari pasar — bukan angka lepas yang harus dijaga selaras. */
@@ -129,6 +136,8 @@ export function scanDefaultsFor(market: Market): ScanArgs {
     useIdx: market.hasIdxLayer,
     idxDays: 60,
     market,
+    html: true,
+    draft: null,
   }
 }
 
@@ -206,6 +215,15 @@ export function parseScanArgs(argv: string[]): ScanArgs {
         break
       case '--tanpa-idx':
         args.useIdx = false
+        break
+      case '--tanpa-html':
+        args.html = false
+        break
+      case '--draft':
+        args.draft = true
+        break
+      case '--final':
+        args.draft = false
         break
       default:
         if (arg.startsWith('-')) throw new Error(`Opsi tidak dikenal: ${arg}`)

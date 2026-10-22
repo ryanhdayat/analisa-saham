@@ -97,6 +97,21 @@ describe('parseScanArgs', () => {
     expect(parseScanArgs(['--tanpa-idx']).useIdx).toBe(false)
   })
 
+  test('halaman HTML menyala bawaan, draft ditentukan otomatis', () => {
+    const a = parseScanArgs([])
+    expect(a.html).toBe(true)
+    expect(a.draft).toBeNull()
+  })
+
+  test('--tanpa-html mematikan halaman screener', () => {
+    expect(parseScanArgs(['--tanpa-html']).html).toBe(false)
+  })
+
+  test('--draft dan --final memaksa tanda draft', () => {
+    expect(parseScanArgs(['--draft']).draft).toBe(true)
+    expect(parseScanArgs(['--final']).draft).toBe(false)
+  })
+
   test('--hari-idx mengatur panjang riwayat aliran asing', () => {
     expect(parseScanArgs(['--hari-idx', '30']).idxDays).toBe(30)
   })

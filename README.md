@@ -53,11 +53,12 @@ bun run src/scan.ts                     # semua kode di watchlist.txt
 bun run src/scan.ts BBCA BBRI           # beberapa emiten
 bun run src/scan.ts --min-likuiditas 20 # ambang likuiditas Rp 20 miliar
 bun run src/scan.ts --tanpa-idx         # lewati IDX, jalankan 9 metrik Yahoo saja
+bun run src/scan.ts --tanpa-html        # tanpa halaman screener HTML
 ```
 
-Keluaran sekaligus empat rupa: tabel terminal, `out/scan-<TANGGAL>.csv`,
-`out/scan-<TANGGAL>.xlsx`, dan `out/<KODE>.json` berisi detail penuh tiap metrik
-beserta buktinya.
+Keluaran sekaligus lima rupa: tabel terminal, `report/scan-<TANGGAL>.csv`,
+`report/scan-<TANGGAL>.xlsx`, halaman `report/screener-<TANGGAL>/index.html`,
+dan `out/<KODE>.json` berisi detail penuh tiap metrik beserta buktinya.
 
 | Opsi | Arti | Bawaan |
 |---|---|---|
@@ -66,6 +67,31 @@ beserta buktinya.
 | `--min-rr N` | Ambang risk/reward | 2 |
 | `--hari-idx N` | Hari bursa riwayat aliran asing | 60 |
 | `--tanpa-idx` | Matikan lapisan IDX | menyala |
+| `--tanpa-html` | Jangan tulis halaman screener HTML | menyala |
+| `--draft` / `--final` | Paksa tanda DRAFT intraday di halaman HTML | otomatis |
+
+### Halaman screener HTML
+
+`report/screener-<TANGGAL>/` berisi `index.html` dan folder `data/`. Isinya dari
+baris yang sama dengan CSV/Excel, jadi tidak pernah berbeda angka.
+
+- Tabel semua emiten (tab **Lolos / Tersaring / Semua**), bisa diurutkan per
+  kolom, dicari, dan disaring per fase, Wyckoff, tanpa peringatan, likuid saja.
+- Klik kode emiten untuk membuka laci: rencana entry/stop/target, alasan
+  gerbang, grafik 180 bar (candle, MA20/50/200, volume, garis support/resistance,
+  penanda VPA), dan vonis + bukti tiap metrik. `index.html#KODE` langsung
+  membuka emiten itu.
+- Tabel ditanam utuh di `index.html` (~0,8 MB untuk ~900 emiten). Detail dan bar
+  dipecah per 60 emiten ke `data/detail-N.json` dan `data/bars-N.json` (~15 MB
+  total) dan baru dimuat saat kode diklik — **sajikan foldernya lewat server**
+  (`python3 -m http.server -d report/screener-<TANGGAL>`), karena peramban
+  menolak `fetch` dari `file://`.
+- Spanduk **DRAFT** muncul otomatis untuk IDX kalau bar terakhir bertanggal hari
+  ini dan scan dijalankan sebelum 16:15 WIB (volume hari itu belum lengkap).
+  Paksa dengan `--draft` atau `--final`. Spanduk **terdegradasi** muncul kalau
+  ada kolom peringkat yang hilang.
+- Ambang gerbang, satuan uang, dan satuan volume ikut pasar dan opsi run
+  (`--market crypto` menampilkan dolar dan volume USD).
 
 ### Isi berkas Excel
 
@@ -239,13 +265,13 @@ ikut memeringkat.
 | `src/cli.ts` | Baca watchlist, ulang per kode, satu browser per run |
 | `src/analysis/` | 11 modul metrik, seluruhnya murni |
 | `src/idx.ts` | Lapisan pengaya IDX — tidak pernah melempar |
-| `src/output/` | Tabel, CSV, Excel, JSON dari satu definisi kolom |
+| `src/output/` | Tabel, CSV, Excel, JSON, dan halaman screener HTML dari satu definisi kolom |
 | `src/scan.ts` | CLI scan |
 
 `indicators.ts`, `chart.ts`, dan `render.ts` tidak menyentuh jaringan maupun berkas.
 
 ```bash
-bun test        # 252 test
+bun test        # 369 test
 bun run typecheck
 ```
 

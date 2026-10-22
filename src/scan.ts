@@ -11,6 +11,7 @@ import { renderTable } from './output/table.ts'
 import { toCsv } from './output/csv.ts'
 import { writeXlsx } from './output/xlsx.ts'
 import { toJson } from './output/json.ts'
+import { isIntraday, writeScreener } from './output/screener.ts'
 import { historyRange, MARKET_IDS } from './market.ts'
 
 const RAW_DIR = 'raw'
@@ -29,7 +30,11 @@ const USAGE = `Pakai: bun run src/scan.ts [KODE...] [opsi]
   --market PASAR           Pasar yang dipindai: ${MARKET_IDS.join(' atau ')} (bawaan idx).
                            Pasar menentukan bawaan watchlist, direktori, patokan,
                            dan satuan --min-likuiditas.
-  --watchlist BERKAS       Daftar kode (bawaan watchlist.txt).`
+  --watchlist BERKAS       Daftar kode (bawaan watchlist.txt).
+  --tanpa-html             Jangan tulis halaman screener HTML.
+  --draft | --final        Paksa tanda DRAFT intraday di halaman HTML. Tanpa
+                           keduanya, IDX ditandai draft otomatis kalau bar
+                           terakhir bertanggal hari ini sebelum 16:15 WIB.`
 
 async function resolveCodes(args: ScanArgs): Promise<string[] | null> {
   if (args.codes.length > 0) return args.codes
@@ -89,6 +94,7 @@ async function main(): Promise<number> {
   if (enrichment.note) console.error(`[idx] ${enrichment.note}`)
 
   const rows: ScanRow[] = []
+  const barsByCode = new Map<string, Bar[]>()
   let failed = 0
 
   for (const code of codes) {
@@ -117,6 +123,7 @@ async function main(): Promise<number> {
         },
       )
       rows.push(row)
+      if (args.html) barsByCode.set(code, data.bars)
       await writeFile(join(args.outDir, `${code}.json`), toJson(row))
     } catch (err) {
       failed++
@@ -136,9 +143,21 @@ async function main(): Promise<number> {
   await writeFile(csvPath, toCsv([...passed, ...skipped], market))
   await writeXlsx(passed, skipped, xlsxPath, market)
 
+  let htmlPath: string | null = null
+  let draft = false
+  if (args.html) {
+    draft = args.draft ?? isIntraday(tanggal, market)
+    htmlPath = await writeScreener(join(args.reportDir, `screener-${tanggal}`), [...passed, ...skipped], barsByCode, market, {
+      draft,
+      minValue: args.minValue,
+      minRatio: args.minRatio,
+    })
+  }
+
   console.log('')
   console.log(`CSV  : ${csvPath}`)
   console.log(`Excel: ${xlsxPath}`)
+  if (htmlPath) console.log(`HTML : ${htmlPath}${draft ? '  (DRAFT — bar hari ini belum final)' : ''}`)
   console.log(`JSON : ${args.outDir}/<KODE>.json`)
 
   if (failed > 0) console.error(`\n${failed} dari ${codes.length} emiten gagal diambil.`)
