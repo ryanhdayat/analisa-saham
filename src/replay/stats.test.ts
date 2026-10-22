@@ -1,12 +1,14 @@
 import { expect, test, describe } from 'bun:test'
-import { bucketize, forwardReturn, rankColumns, sampleIndices, summarizeBucket, type Sample } from './stats.ts'
+import {
+  bucketize, capTarget, evaluateFilter, forwardReturn, rankColumns, sampleIndices, summarizeBucket, type Outcome, type Sample,
+} from './stats.ts'
 import type { Bar } from '../types.ts'
 
 const bars = (closes: number[]): Bar[] =>
   closes.map((c, i) => ({ date: `2026-01-${String(i + 1).padStart(2, '0')}`, open: c, high: c, low: c, close: c, volume: 1 }))
 
-const sample = (values: Sample['values'], fwd: number | null, outcome: Sample['outcome'] = null): Sample => ({
-  code: 'X', date: '2026-01-01', values, fwd, outcome,
+const sample = (values: Sample['values'], fwd: number | null, outcome: Outcome | null = null, date = '2026-01-01'): Sample => ({
+  code: 'X', date, values, fwd, trades: outcome ? { analisa: outcome } : {},
 })
 
 describe('forwardReturn', () => {
@@ -107,5 +109,41 @@ describe('rankColumns', () => {
       sample({ A: 'langka' }, -0.1),
     ]
     expect(rankColumns(s, ['A'], 10)[0]!.spread).toBe(0)
+  })
+})
+
+describe('capTarget', () => {
+  test('target analisa yang lebih jauh dari batas dipotong ke entry + batas', () => {
+    expect(capTarget(1000, 1500, 0.1)).toBeCloseTo(1100, 9)
+  })
+
+  test('target yang sudah lebih dekat dibiarkan', () => {
+    expect(capTarget(1000, 1050, 0.1)).toBe(1050)
+  })
+})
+
+describe('evaluateFilter', () => {
+  const s = [
+    sample({}, 0.1, { status: 'target', ret: 0.1 }, '2025-01-10'),
+    sample({}, -0.1, { status: 'cut', ret: -0.05 }, '2025-02-10'),
+    sample({}, 0.2, null, '2025-08-10'),
+    sample({}, 0.3, null, '2025-09-10'),
+  ]
+  s[0]!.trades.maks10 = { status: 'target', ret: 0.1 }
+  s[1]!.trades.maks10 = { status: 'open', ret: 0.01 }
+
+  test('persen naik dipisah per paruh waktu supaya efek yang hanya muncul sekali terlihat', () => {
+    const r = evaluateFilter('uji', s, '2025-06-01', ['analisa', 'maks10'])
+    expect(r).toMatchObject({ label: 'uji', n: 4 })
+    expect(r.naik).toBeCloseTo(0.75, 9)
+    expect(r.naikAwal).toBeCloseTo(0.5, 9)
+    expect(r.naikAkhir).toBeCloseTo(1, 9)
+  })
+
+  test('tiap varian target dinilai sendiri, hanya dari yang sudah selesai', () => {
+    const r = evaluateFilter('uji', s, '2025-06-01', ['analisa', 'maks10'])
+    expect(r.trades.analisa).toMatchObject({ nSettled: 2, kenaTarget: 0.5 })
+    expect(r.trades.analisa!.rataTrade).toBeCloseTo(0.025, 9)
+    expect(r.trades.maks10).toMatchObject({ nSettled: 1, kenaTarget: 1 })
   })
 })

@@ -8,7 +8,10 @@ import { volumeProfile } from './indicators.ts'
 import { historyRange, marketById, type Market } from './market.ts'
 import { columnsFor } from './output/columns.ts'
 import { jakartaStamp } from './output/screener.ts'
-import { forwardReturn, isRanked, rankColumns, sampleIndices, summarizeBucket, type BucketStats, type Sample } from './replay/stats.ts'
+import {
+  capTarget, evaluateFilter, forwardReturn, isRanked, rankColumns, sampleIndices, summarizeBucket,
+  type BucketStats, type FilterStats, type Sample,
+} from './replay/stats.ts'
 import { fetchBars, parseChartResponse, toSymbol } from './yahoo.ts'
 import type { Bar } from './types.ts'
 
@@ -44,6 +47,50 @@ const ANALYZED = [
   'GERBANG', 'SKOR', 'TREND', 'RS60', 'RVOL_SKOR', 'RVOL', 'VOLUME_BACA', 'TREN_HARIAN', 'TREN_MINGGUAN',
   'FASE', 'RS60_POIN', 'MA_TERSUSUN', 'DIVERGENSI_OBV', 'ATR_PERSEN', 'NILAI_HARIAN', 'RR', 'VPA_5HARI', 'WYCKOFF',
 ]
+
+/**
+ * Varian target yang dinilai untuk tiap rencana: target analisa apa adanya, dan
+ * target yang dipotong ke +15% / +10% dari entry. Cut loss-nya sama untuk semua.
+ * Gerbang R:R ≥ 2 memilih target yang jauh; varian ini menguji apakah target
+ * yang lebih dekat lebih sering tercapai sebelum cut loss.
+ */
+const VARIANTS: { key: string; label: string; cap: number | null }[] = [
+  { key: 'analisa', label: 'target analisa', cap: null },
+  { key: 'maks15', label: 'target maks +15%', cap: 0.15 },
+  { key: 'maks10', label: 'target maks +10%', cap: 0.1 },
+]
+
+type Predicate = (s: Sample) => boolean
+
+/**
+ * Kombinasi yang diuji, diturunkan dari temuan per kolom (tren penuh, volatilitas
+ * tenang, pullback) plus pembanding terburuknya. Karena diturunkan dari data yang
+ * sama, laporan memisahkan tiap kombinasi per paruh waktu.
+ */
+function combinations(samples: Sample[]): { label: string; pred: Predicate }[] {
+  const atr = samples.map((s) => s.values.ATR_PERSEN).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b)
+  const med = atr[Math.floor(atr.length / 2)] ?? 0
+  const top = atr[Math.floor(atr.length * 0.8)] ?? 0
+  const num = (s: Sample, c: string) => (typeof s.values[c] === 'number' ? (s.values[c] as number) : null)
+  const trend = (s: Sample) => num(s, 'TREND')
+  const full: Predicate = (s) => Math.abs((trend(s) ?? -1) - 1) < 1e-9
+  const calm: Predicate = (s) => (num(s, 'ATR_PERSEN') ?? Infinity) <= med
+  const lolos: Predicate = (s) => s.values.GERBANG === 'lolos'
+  const pullback: Predicate = (s) => s.values.FASE === 'pullback'
+  const m = String(Math.round(med * 10) / 10).replace('.', ',')
+  return [
+    { label: 'Semua sampel', pred: () => true },
+    { label: 'Lolos gerbang (aturan sekarang)', pred: lolos },
+    { label: 'TREND = 1', pred: full },
+    { label: `TREND = 1 + ATR ≤ ${m}%`, pred: (s) => full(s) && calm(s) },
+    { label: `TREND = 1 + ATR ≤ ${m}% + pullback`, pred: (s) => full(s) && calm(s) && pullback(s) },
+    { label: `TREND ≥ 0,8 + ATR ≤ ${m}%`, pred: (s) => (trend(s) ?? 0) >= 0.8 - 1e-9 && calm(s) },
+    { label: 'Pullback + tren mingguan uptrend', pred: (s) => pullback(s) && s.values.TREN_MINGGUAN === 'uptrend' },
+    { label: `Lolos gerbang + TREND = 1 + ATR ≤ ${m}%`, pred: (s) => lolos(s) && full(s) && calm(s) },
+    { label: 'Pembanding: TREND 0,4–0,6', pred: (s) => (trend(s) ?? -1) >= 0.4 - 1e-9 && (trend(s) ?? 9) <= 0.6 + 1e-9 },
+    { label: 'Pembanding: ATR 20% teratas', pred: (s) => (num(s, 'ATR_PERSEN') ?? -Infinity) > top },
+  ]
+}
 
 interface ReplayArgs {
   market: Market
@@ -190,6 +237,30 @@ function report(
   for (const b of best.slice(0, 12)) {
     out.push(`| ${b.column} | ${b.label} | ${b.nFwd} | ${pct(b.naik)} | ${signed(b.rata)} | ${pct(b.kenaTarget)} |`)
   }
+  const split = [...samples.map((s) => s.date)].sort()[Math.floor(samples.length / 2)]!
+  const combos = combinations(samples).map((c) => evaluateFilter(c.label, samples.filter(c.pred), split, VARIANTS.map((v) => v.key)))
+  out.push('', '## Kombinasi', '')
+  out.push(
+    `Paruh 1 = sampel sebelum ${split}, paruh 2 = sesudahnya. Kondisi yang unggul hanya di satu paruh kemungkinan kebetulan.`,
+    '',
+    '| Kondisi | Sampel | Naik | Paruh 1 | Paruh 2 | Median |',
+    '|---|--:|--:|--:|--:|--:|',
+  )
+  for (const c of combos) {
+    out.push(`| ${c.label}${c.n < MIN_N ? ' _(sedikit)_' : ''} | ${c.n} | ${pct(c.naik)} | ${pct(c.naikAwal)} | ${pct(c.naikAkhir)} | ${signed(c.median)} |`)
+  }
+  out.push('', '## Varian target', '')
+  out.push(
+    'Kena target dulu / rata-rata return trade yang sudah selesai, per varian target. Cut loss sama untuk semua (stop analisa dijepit 5–10%).',
+    '',
+    `| Kondisi | ${VARIANTS.map((v) => v.label).join(' | ')} |`,
+    `|---|${VARIANTS.map(() => '--:').join('|')}|`,
+  )
+  const tradeCell = (c: FilterStats, key: string) => {
+    const t = c.trades[key]!
+    return t.nSettled ? `${pct(t.kenaTarget)} / ${signed(t.rataTrade)} (${t.nSettled})` : '—'
+  }
+  for (const c of combos) out.push(`| ${c.label} | ${VARIANTS.map((v) => tradeCell(c, v.key)).join(' | ')} |`)
   out.push('', '## Rincian per kolom', '')
   for (const r of ranked) out.push(`### ${r.column}`, '', bucketTable(r.buckets, base), '')
   return out.join('\n')
@@ -202,7 +273,7 @@ function samplesCsv(samples: Sample[]): string {
   const lines = [head.join(';')]
   for (const s of samples) {
     lines.push(
-      [s.code, s.date, cell(s.fwd), s.outcome?.status ?? 'n/a', cell(s.outcome?.ret), ...ANALYZED.map((c) => cell(s.values[c]))].join(';'),
+      [s.code, s.date, cell(s.fwd), s.trades.analisa?.status ?? 'n/a', cell(s.trades.analisa?.ret), ...ANALYZED.map((c) => cell(s.values[c]))].join(';'),
     )
   }
   return lines.join('\n')
@@ -266,17 +337,22 @@ async function main(): Promise<number> {
         options,
       )
       const rr = row.metrics.riskReward
-      const outcome =
-        rr.available && rr.value
-          ? judge({ code, name, date, entry: rr.value.entry, stop: rr.value.stop, target: rr.value.target }, bars.slice(i))
-          : null
+      const trades: Sample['trades'] = {}
+      if (rr.available && rr.value) {
+        const { entry, stop, target } = rr.value
+        const after = bars.slice(i)
+        for (const v of VARIANTS) {
+          const h = judge({ code, name, date, entry, stop, target: v.cap === null ? target : capTarget(entry, target, v.cap) }, after)
+          trades[v.key] = { status: h.status, ret: h.ret }
+        }
+      }
       const fresh = bars[Math.max(0, i - VPA_FRESH_BARS + 1)]!.date
       samples.push({
         code,
         date,
         values: rowValues(row, market, fresh),
         fwd: forwardReturn(bars, i, args.horizon),
-        outcome: outcome && { status: outcome.status, ret: outcome.ret },
+        trades,
       })
     }
     if ((n + 1) % 50 === 0) console.log(`[replay] ${n + 1}/${codes.length} emiten, ${samples.length} sampel, ${Math.round((Date.now() - t0) / 1000)} dtk`)

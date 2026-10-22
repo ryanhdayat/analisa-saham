@@ -10,6 +10,11 @@ import type { Bar } from '../types.ts'
  * analisisnya ada di src/replay.ts.
  */
 
+export interface Outcome {
+  status: Status
+  ret: number
+}
+
 export interface Sample {
   code: string
   date: string
@@ -17,8 +22,12 @@ export interface Sample {
   values: Record<string, string | number | null>
   /** Return maju sekian bar; null kalau datanya belum sampai. */
   fwd: number | null
-  /** Hasil rencana entry/target/cut loss dengan aturan /hasil/; null kalau tanpa rencana. */
-  outcome: { status: Status; ret: number } | null
+  /**
+   * Hasil rencana entry/target/cut loss dengan aturan /hasil/, per varian target:
+   * `analisa` memakai target analisa apa adanya, varian lain memotongnya. Kosong
+   * kalau sampel tidak punya rencana.
+   */
+  trades: Record<string, Outcome>
 }
 
 /**
@@ -123,7 +132,7 @@ function median(xs: number[]): number | null {
 
 export function summarizeBucket(label: string, samples: Sample[]): BucketStats {
   const fwd = samples.map((s) => s.fwd).filter((v): v is number => v !== null)
-  const settled = samples.flatMap((s) => (s.outcome && s.outcome.status !== 'open' ? [s.outcome] : []))
+  const t = tradeStats(samples, 'analisa')
   return {
     label,
     n: samples.length,
@@ -131,9 +140,66 @@ export function summarizeBucket(label: string, samples: Sample[]): BucketStats {
     naik: fwd.length ? fwd.filter((v) => v > 0).length / fwd.length : null,
     rata: mean(fwd),
     median: median(fwd),
+    ...t,
+  }
+}
+
+export interface TradeStats {
+  nSettled: number
+  kenaTarget: number | null
+  rataTrade: number | null
+}
+
+/** Hasil satu varian target, hanya dari rencana yang sudah kena target atau cut loss. */
+function tradeStats(samples: Sample[], variant: string): TradeStats {
+  const settled = samples.flatMap((s) => {
+    const o = s.trades[variant]
+    return o && o.status !== 'open' ? [o] : []
+  })
+  return {
     nSettled: settled.length,
     kenaTarget: settled.length ? settled.filter((o) => o.status === 'target').length / settled.length : null,
     rataTrade: mean(settled.map((o) => o.ret)),
+  }
+}
+
+/** Target analisa, tapi tidak lebih jauh dari `cap` (pecahan) di atas entry. */
+export function capTarget(entry: number, target: number, cap: number): number {
+  return Math.min(target, entry * (1 + cap))
+}
+
+export interface FilterStats {
+  label: string
+  /** Sampel yang return majunya sudah diketahui. */
+  n: number
+  naik: number | null
+  median: number | null
+  /** Persen naik sebelum dan sesudah `split` — efek yang nyata mestinya muncul di keduanya. */
+  naikAwal: number | null
+  naikAkhir: number | null
+  trades: Record<string, TradeStats>
+}
+
+const upShare = (samples: Sample[]) => {
+  const f = samples.map((s) => s.fwd).filter((v): v is number => v !== null)
+  return f.length ? f.filter((v) => v > 0).length / f.length : null
+}
+
+/**
+ * Ringkasan satu kondisi (kombinasi kolom). Kondisinya diturunkan dari data yang
+ * sama, jadi rawan kebetulan; pemisahan per paruh waktu adalah pemeriksaan
+ * murahnya — kondisi yang hanya unggul di satu paruh patut dicurigai.
+ */
+export function evaluateFilter(label: string, samples: Sample[], split: string, variants: string[]): FilterStats {
+  const fwd = samples.map((s) => s.fwd).filter((v): v is number => v !== null)
+  return {
+    label,
+    n: fwd.length,
+    naik: upShare(samples),
+    median: median(fwd),
+    naikAwal: upShare(samples.filter((s) => s.date < split)),
+    naikAkhir: upShare(samples.filter((s) => s.date >= split)),
+    trades: Object.fromEntries(variants.map((v) => [v, tradeStats(samples, v)])),
   }
 }
 

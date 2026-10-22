@@ -325,6 +325,11 @@ per emiten per tanggal sampel). Bar disimpan di `raw/` dan dipakai ulang selama
 
 - **Naik** = close `--horizon` bar (bawaan 20) sesudah tanggal sampel lebih tinggi.
 - **Kena target dulu** = aturan yang sama dengan `/hasil/` (target vs cut loss 5–10%).
+- **Kombinasi**: beberapa kondisi gabungan (tren penuh, volatilitas tenang,
+  pullback, plus pembanding terburuk), dipisah per paruh waktu — kondisi yang
+  unggul hanya di satu paruh kemungkinan kebetulan.
+- **Varian target**: tiap rencana dinilai dengan target analisa, target maks +15%,
+  dan maks +10%; cut loss sama. Menguji apakah target yang lebih dekat menolong.
 - Angka kontinu dikelompokkan per kuantil (Q1 terendah); kelompok di bawah 100
   sampel ditandai _sedikit_ dan tidak ikut peringkat.
 - **Batasan:** watchlist hari ini (emiten delisting tidak ada → hasil cenderung
@@ -346,13 +351,13 @@ per emiten per tanggal sampel). Bar disimpan di `raw/` dan dipakai ulang selama
 | `src/scan.ts` | CLI scan |
 | `src/hasil/nilai.ts` | Murni: cut loss, penilaian pilihan, ringkasan rekam jejak |
 | `src/hasil.ts` | CLI rekam jejak |
-| `src/replay/stats.ts` | Murni: sampel, return maju, kelompok kuantil, peringkat kolom |
+| `src/replay/stats.ts` | Murni: sampel, return maju, kelompok kuantil, peringkat kolom, kombinasi, varian target |
 | `src/replay.ts` | CLI uji ulang |
 
 `indicators.ts`, `chart.ts`, dan `render.ts` tidak menyentuh jaringan maupun berkas.
 
 ```bash
-bun test        # 404 test
+bun test        # 408 test
 bun run typecheck
 ```
 
