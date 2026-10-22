@@ -306,6 +306,30 @@ tidak tertimpa.
 - Tidak ada status yang disimpan: semuanya dinilai ulang dari bar tiap run, jadi
   run yang terlewat atau diulang tidak menggeser hasil.
 
+## Uji ulang (`src/replay.ts`)
+
+Jalankan analisa scan yang sama persis pada tanggal-tanggal di masa lalu — hanya
+dengan bar sampai tanggal itu — lalu lihat apa yang terjadi sesudahnya. Jawabannya:
+kolom scan mana yang benar-benar membedakan emiten yang naik dari yang tidak.
+
+```bash
+bun run src/replay.ts                       # IDX, 2 tahun ke belakang, sampel tiap 5 bar
+bun run src/replay.ts --market crypto
+bun run src/replay.ts --tahun 1 --langkah 10 --horizon 60 BBCA BBRI
+```
+
+Keluaran di `report/replay/`: `<pasar>-<TANGGAL>.md` (peringkat kolom, kondisi
+dengan peluang naik tertinggi, rincian per kelompok) dan `-sampel.csv` (satu baris
+per emiten per tanggal sampel). Bar disimpan di `raw/` dan dipakai ulang selama
+12 jam, jadi run kedua di hari yang sama hanya butuh waktu analisa.
+
+- **Naik** = close `--horizon` bar (bawaan 20) sesudah tanggal sampel lebih tinggi.
+- **Kena target dulu** = aturan yang sama dengan `/hasil/` (target vs cut loss 5–10%).
+- Angka kontinu dikelompokkan per kuantil (Q1 terendah); kelompok di bawah 100
+  sampel ditandai _sedikit_ dan tidak ikut peringkat.
+- **Batasan:** watchlist hari ini (emiten delisting tidak ada → hasil cenderung
+  terlalu bagus), sampel tumpang tindih, tanpa lapisan IDX.
+
 ## Struktur
 
 | Berkas | Tanggung jawab |
@@ -322,11 +346,13 @@ tidak tertimpa.
 | `src/scan.ts` | CLI scan |
 | `src/hasil/nilai.ts` | Murni: cut loss, penilaian pilihan, ringkasan rekam jejak |
 | `src/hasil.ts` | CLI rekam jejak |
+| `src/replay/stats.ts` | Murni: sampel, return maju, kelompok kuantil, peringkat kolom |
+| `src/replay.ts` | CLI uji ulang |
 
 `indicators.ts`, `chart.ts`, dan `render.ts` tidak menyentuh jaringan maupun berkas.
 
 ```bash
-bun test        # 392 test
+bun test        # 404 test
 bun run typecheck
 ```
 
