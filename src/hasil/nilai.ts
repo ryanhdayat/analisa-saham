@@ -36,6 +36,22 @@ export function pilihanFromRows(rows: ScanRow[]): Pilihan[] {
   })
 }
 
+/** Bagian emiten gagal diambil yang masih dianggap run lengkap. */
+export const MAKS_GAGAL = 0.05
+
+/**
+ * Boleh menulis catatan pilihan run ini?
+ *
+ * Catatan pilihan adalah rekam jejak itu sendiri dan ditimpa per tanggal, jadi
+ * yang ditulis harus run yang utuh: watchlist penuh (bukan beberapa kode), bar
+ * final (bukan DRAFT), dan hampir semua emiten berhasil diambil. Saat Yahoo
+ * membatasi permintaan (HTTP 429), semua atau sebagian besar emiten gagal; tanpa
+ * pemeriksaan ini catatan hari itu tertimpa daftar kosong atau bolong.
+ */
+export function bolehCatat(run: { watchlist: boolean; draft: boolean; total: number; failed: number }): boolean {
+  return run.watchlist && !run.draft && run.total > 0 && run.failed / run.total <= MAKS_GAGAL
+}
+
 export type Status = 'target' | 'cut' | 'open'
 
 export interface Hasil extends Pilihan {

@@ -12,7 +12,7 @@ import { toCsv } from './output/csv.ts'
 import { writeXlsx } from './output/xlsx.ts'
 import { toJson } from './output/json.ts'
 import { isIntraday, writeScreener } from './output/screener.ts'
-import { pilihanFromRows } from './hasil/nilai.ts'
+import { bolehCatat, MAKS_GAGAL, pilihanFromRows } from './hasil/nilai.ts'
 import { historyRange, MARKET_IDS } from './market.ts'
 
 const RAW_DIR = 'raw'
@@ -149,13 +149,16 @@ async function main(): Promise<number> {
 
   const draft = args.draft ?? isIntraday(tanggal, market)
 
-  // Catatan pilihan untuk src/hasil.ts. Hanya run watchlist penuh yang final:
-  // scan beberapa kode tidak boleh menimpa catatan hari itu, dan entry bar
-  // intraday adalah close yang belum final.
+  // Catatan pilihan untuk src/hasil.ts — lihat bolehCatat untuk syaratnya.
   let pilihanPath: string | null = null
-  if (args.codes.length === 0 && !draft) {
+  const run = { watchlist: args.codes.length === 0, draft, total: codes.length, failed }
+  if (bolehCatat(run)) {
     pilihanPath = join(args.reportDir, `pilihan-${tanggal}.json`)
     await writeFile(pilihanPath, JSON.stringify(pilihanFromRows(passed), null, 1))
+  } else if (run.watchlist && !draft) {
+    console.error(
+      `Pilihan TIDAK dicatat: ${failed} dari ${codes.length} emiten gagal diambil (batas ${MAKS_GAGAL * 100}%). Catatan lama dipertahankan.`,
+    )
   }
 
   let htmlPath: string | null = null

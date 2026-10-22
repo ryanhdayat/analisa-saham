@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'bun:test'
-import { buildPicks, cutLoss, judge, pilihanFromRows, summarize, yahooRangeSince, type Pilihan } from './nilai.ts'
+import { bolehCatat, buildPicks, cutLoss, judge, pilihanFromRows, summarize, yahooRangeSince, type Pilihan } from './nilai.ts'
 import type { ScanRow } from '../analysis/report.ts'
 import type { Bar } from '../types.ts'
 
@@ -135,6 +135,28 @@ describe('pilihanFromRows', () => {
 
   test('lolos tanpa rencana risk/reward dilewati', () => {
     expect(pilihanFromRows([row('AAA-USD', true, null)])).toEqual([])
+  })
+})
+
+describe('bolehCatat', () => {
+  const ok = { watchlist: true, draft: false, total: 900, failed: 0 }
+
+  test('run watchlist penuh yang final dan lengkap dicatat', () => {
+    expect(bolehCatat(ok)).toBe(true)
+  })
+
+  test('scan beberapa kode atau DRAFT tidak dicatat', () => {
+    expect(bolehCatat({ ...ok, watchlist: false })).toBe(false)
+    expect(bolehCatat({ ...ok, draft: true })).toBe(false)
+  })
+
+  test('semua gagal diambil (mis. Yahoo membalas 429) tidak menimpa catatan dengan daftar kosong', () => {
+    expect(bolehCatat({ ...ok, failed: 900 })).toBe(false)
+  })
+
+  test('lebih dari 5% gagal: daftarnya tidak lengkap, jangan dicatat', () => {
+    expect(bolehCatat({ ...ok, failed: 46 })).toBe(false)
+    expect(bolehCatat({ ...ok, failed: 45 })).toBe(true)
   })
 })
 
