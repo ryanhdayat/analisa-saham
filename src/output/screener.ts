@@ -27,7 +27,12 @@ export interface ScreenerOptions {
   draft?: boolean
   /** Ambang likuiditas dalam mata uang pasar penuh. */
   minValue: number
+  /** Ambang R:R; 0 = bukan gerbang. */
   minRatio: number
+  /** Syarat gerbang lain run ini; tanpa nilai = tidak dipakai. */
+  minTrend?: number
+  maxAtrPct?: number
+  targetCap?: number
   /** Waktu pembuatan, untuk spanduk draft. Bawaannya sekarang. */
   now?: Date
 }
@@ -39,6 +44,19 @@ export interface ScreenerSite {
 }
 
 const round = (x: number, d: number) => Math.round(x * 10 ** d) / 10 ** d
+const idNum = (x: number, d = 2) => String(round(x, d)).replace('.', ',')
+
+/** Kalimat syarat gerbang untuk spanduk, hanya yang dipakai run ini. */
+function gateText(market: Market, o: ScreenerOptions): string {
+  const parts = [`likuiditas ≥ ${market.moneyCompact(o.minValue)} per hari`]
+  if (o.minRatio > 0) parts.push(`R:R ≥ 1:${idNum(o.minRatio)}`)
+  if (o.minTrend !== undefined && o.minTrend > 0) {
+    parts.push(o.minTrend >= 1 ? 'tren MA penuh (5/5)' : `tren MA ≥ ${Math.round(o.minTrend * 5)}/5`)
+  }
+  if (o.maxAtrPct !== undefined) parts.push(`ATR ≤ ${idNum(o.maxAtrPct, 1)}%`)
+  if (o.targetCap !== undefined && o.targetCap > 0) parts.push(`target maks +${idNum(o.targetCap * 100, 1)}%`)
+  return parts.join(', ')
+}
 
 /** Satu baris tabel, berkunci header CSV — satu sumber kebenaran dengan laporan lain. */
 function tableRow(row: ScanRow, market: Market): Record<string, string | number | null> {
@@ -156,7 +174,8 @@ export function buildScreener(
     volumeUnit: market.volumeUnit,
     minValue: market.moneyCompact(options.minValue),
     minRatio: options.minRatio,
-    minRatioText: String(round(options.minRatio, 2)).replace('.', ','),
+    minRatioText: idNum(options.minRatio),
+    gerbang: gateText(market, options),
     chunk: chunkOf,
   }
 

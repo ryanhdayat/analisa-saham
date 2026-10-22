@@ -71,6 +71,44 @@ describe('buildRow — gerbang', () => {
     const row = buildRow(input())
     expect(row.gates.failures.join(' ').toLowerCase()).not.toContain('tidak likuid')
   })
+
+  test('minTrend 1: tren MA yang belum penuh menggagalkan gerbang, dengan jumlah syaratnya', () => {
+    const bars = flat()
+    const row = buildRow(input({ bars, displayBars: bars.slice(-250) }), { minTrend: 1 })
+    expect(row.gates.passed).toBe(false)
+    expect(row.gates.failures.join(' ')).toMatch(/Tren MA belum penuh: \d\/5/)
+  })
+
+  test('minTrend 1: uptrend dengan kelima syarat MA lolos syarat tren', () => {
+    const row = buildRow(input(), { minTrend: 1 })
+    expect(row.metrics.filters.value!.trendScore).toBe(1)
+    expect(row.gates.failures.join(' ')).not.toContain('Tren MA')
+  })
+
+  test('maxAtrPct: emiten lebih volatil dari ambang gagal, dengan ATR-nya', () => {
+    const row = buildRow(input(), { maxAtrPct: 0.5 })
+    expect(row.gates.passed).toBe(false)
+    expect(row.gates.failures.join(' ')).toMatch(/Terlalu volatil: ATR \d+,\d% > 0,5%/)
+  })
+
+  test('tanpa minTrend dan maxAtrPct, kedua syarat itu tidak diperiksa', () => {
+    const bars = flat()
+    const row = buildRow(input({ bars, displayBars: bars.slice(-250) }))
+    expect(row.gates.failures.join(' ')).not.toMatch(/Tren MA|volatil/)
+  })
+
+  test('targetCap diteruskan ke rencana: target tidak lebih jauh dari entry + batas', () => {
+    // Uptrend lalu turun ~12% dalam 25 bar terakhir, supaya ada resistance di atas harga.
+    const bars = healthy().map((b, i, all) => {
+      const k = Math.max(0, i - (all.length - 25)) / 25
+      const f = 1 - 0.12 * k
+      return { ...b, open: b.open * f, high: b.high * f, low: b.low * f, close: b.close * f }
+    })
+    const uncapped = buildRow(input({ bars, displayBars: bars.slice(-250) })).metrics.riskReward.value!
+    expect(uncapped.target).toBeGreaterThan(uncapped.entry * 1.01)
+    const rr = buildRow(input({ bars, displayBars: bars.slice(-250) }), { targetCap: 0.01 }).metrics.riskReward.value!
+    expect(rr.target).toBeCloseTo(rr.entry * 1.01, 6)
+  })
 })
 
 describe('buildRow — peringkat', () => {

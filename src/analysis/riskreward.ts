@@ -27,6 +27,12 @@ export function analyzeRiskReward(
   atrValue: number,
   levels: LevelsRead,
   minRatio = MIN_RR_DEFAULT,
+  /**
+   * Target paling jauh, sebagai pecahan di atas entry (0,1 = +10%). Uji ulang
+   * menunjukkan resistance terdekat pun sering terlalu jauh: dengan target
+   * analisa apa adanya cut loss lebih sering kena duluan. Tanpa nilai = tanpa batas.
+   */
+  targetCap?: number,
 ): Metric<RiskRewardRead> {
   // TERDEKAT, bukan yang skornya tertinggi.
   //
@@ -44,7 +50,8 @@ export function analyzeRiskReward(
 
   const entry = close
   const stop = support.price - BANTALAN_ATR * atrValue
-  const target = resistance.price
+  const capped = targetCap !== undefined && targetCap > 0 && resistance.price > entry * (1 + targetCap)
+  const target = capped ? entry * (1 + targetCap!) : resistance.price
 
   const risk = entry - stop
   const reward = target - entry
@@ -63,7 +70,9 @@ export function analyzeRiskReward(
     support.score >= 0.6 && resistance.score >= 0.6 ? 'sedang' : 'rendah',
     [
       `Risiko ${Math.round(risk)} per lembar (entry ${Math.round(entry)} → stop ${Math.round(stop)}, support ${support.price} dikurangi ${BANTALAN_ATR}×ATR).`,
-      `Imbalan ${Math.round(reward)} per lembar (entry → resistance ${target}).`,
+      capped
+        ? `Imbalan ${Math.round(reward)} per lembar: target dibatasi +${Math.round(targetCap! * 100)}% dari entry (resistance ${resistance.price} lebih jauh).`
+        : `Imbalan ${Math.round(reward)} per lembar (entry → resistance ${target}).`,
       `Ambang minimum 1:${minRatio}.`,
     ],
   )

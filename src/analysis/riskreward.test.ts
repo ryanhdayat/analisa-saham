@@ -25,6 +25,16 @@ describe('analyzeRiskReward', () => {
     expect(m.value!.stop).toBeCloseTo(940, 6) // 950 - 0,5 x 20
   })
 
+  test('targetCap memotong target ke entry + batas, dan rasionya ikut target itu', () => {
+    const v = analyzeRiskReward(1000, 20, levels([950], [1200]), 0, 0.1).value!
+    expect(v.target).toBeCloseTo(1100, 6)
+    expect(v.ratio).toBeCloseTo(100 / 60, 6)
+  })
+
+  test('targetCap tidak menjauhkan target yang sudah lebih dekat', () => {
+    expect(analyzeRiskReward(1000, 20, levels([950], [1050]), 0, 0.1).value!.target).toBe(1050)
+  })
+
   test('target adalah resistance terbaik di atas harga', () => {
     expect(analyzeRiskReward(1000, 20, levels([950], [1200])).value!.target).toBe(1200)
   })

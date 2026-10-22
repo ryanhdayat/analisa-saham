@@ -64,7 +64,10 @@ dan `out/<KODE>.json` berisi detail penuh tiap metrik beserta buktinya.
 |---|---|---|
 | `--days N` | Panjang jendela analisis | 250 |
 | `--min-likuiditas MILIAR` | Ambang nilai transaksi harian | 5 |
-| `--min-rr N` | Ambang risk/reward | 2 |
+| `--min-rr N` | Ambang risk/reward | bukan syarat |
+| `--min-tren N` | Skor tren MA minimum, 0..1 (0 = mati) | 1 (5/5 syarat) |
+| `--maks-atr PERSEN` | ATR maksimum | 5,1 IDX / 7,6 crypto |
+| `--target-maks PERSEN` | Batas target di atas entry (0 = tanpa batas) | 10 |
 | `--hari-idx N` | Hari bursa riwayat aliran asing | 60 |
 | `--tanpa-idx` | Matikan lapisan IDX | menyala |
 | `--tanpa-html` | Jangan tulis halaman screener HTML | menyala |
@@ -211,14 +214,27 @@ lihat catatan di bawah.
   Tanpa aturan ini, pembulatan beberapa rupiah menentukan apakah level tadi jadi
   "resistance" (R:R jeblok) atau "support" (R:R melambung). Diukur pada 46 emiten,
   artefak itu memengaruhi 14 dari 37 baris yang tersaring keluar.
-- **Gerbang 1:2 itu ketat, memang disengaja.** Ia menuntut pembelian **dekat support**.
-  Emiten yang sedang di tengah rentang wajar tidak lolos. Kalau ingin jaring lebih
-  lebar untuk ditimbang sendiri, pakai `--min-rr 1.5`.
+- **R:R bukan lagi syarat gerbang** (sejak uji ulang 2026-10-22). Gerbang 1:2
+  memilih target yang jauh, dan di uji ulang target itu jarang tercapai sebelum cut
+  loss: hanya 20% (IDX) dan 6% (crypto). Kolom R:R tetap dihitung dan ditampilkan;
+  `--min-rr 2` mengembalikan syarat lama.
 
 ### Gerbang dan peringkat
 
 **Gerbang** — gagal salah satu, emiten dicoret dari daftar berikut alasannya:
-likuiditas (#5) dan risk/reward (#12).
+
+1. **Likuiditas** (#5): nilai transaksi harian ≥ Rp 5 M (crypto $10 jt).
+2. **Rencana terukur** (#12): ada support di bawah dan resistance di atas harga.
+3. **Tren MA penuh** (#10): kelima syarat — close > MA20 > MA50 > MA200, MA50 dan
+   MA200 menanjak.
+4. **Volatilitas tenang** (#11): ATR ≤ 5,1% (crypto 7,6%) — median uji ulang.
+
+Target rencana dibatasi maksimal **+10%** dari entry. Dasarnya uji ulang 2 tahun
+(`src/replay.ts`): tren penuh + ATR ≤ median adalah satu-satunya kombinasi yang
+unggul di kedua pasar dan kedua paruh waktunya — IDX naik 20 hari 45,9% vs 40,8%
+baseline, crypto 50,2% vs 37,1%. **Rata-rata return per trade masih sedikit
+negatif** (sekitar −0,8%): menang lebih sering, tapi kemenangannya lebih kecil dari
+cut loss-nya.
 
 **Peringkat** dijumlah dari empat kolom terukur — `trend`, `rs60`, `rvol`, `asing` —
 yang semuanya ikut dicetak supaya urutannya bisa diaudit. **Wyckoff dan VPA tidak
@@ -357,7 +373,7 @@ per emiten per tanggal sampel). Bar disimpan di `raw/` dan dipakai ulang selama
 `indicators.ts`, `chart.ts`, dan `render.ts` tidak menyentuh jaringan maupun berkas.
 
 ```bash
-bun test        # 408 test
+bun test        # 419 test
 bun run typecheck
 ```
 

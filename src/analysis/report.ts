@@ -44,6 +44,16 @@ export interface ScanOptions {
   minValue?: number
   minRatio?: number
   /**
+   * Skor tren MA minimum untuk lolos gerbang (0..1; 1 = kelima syarat MA).
+   * Tanpa nilai = tidak diperiksa. Uji ulang: tren penuh unggul, tren setengah jadi
+   * (0,4–0,6) terburuk.
+   */
+  minTrend?: number
+  /** ATR maksimum sebagai persen harga. Tanpa nilai = tidak diperiksa. */
+  maxAtrPct?: number
+  /** Batas target di atas entry (pecahan), diteruskan ke analyzeRiskReward. */
+  targetCap?: number
+  /**
    * Kolom peringkat yang DIHARAPKAN ada di run ini. Bawaannya seluruh RANK_COLUMNS.
    *
    * Dipakai pasar yang memang tidak bisa menghasilkan sebagian kolom — crypto
@@ -129,7 +139,7 @@ export function buildRow(input: ScanInput, options: ScanOptions = {}): ScanRow {
   )
   const flow = analyzeFlow(input.foreignDays ?? [], input.foreignStaleness)
   const riskReward: Metric<RiskRewardRead> = levels.value
-    ? analyzeRiskReward(close, atrValue, levels.value, options.minRatio)
+    ? analyzeRiskReward(close, atrValue, levels.value, options.minRatio, options.targetCap)
     : unavailable<RiskRewardRead>('Level belum terbaca, R:R tidak bisa dihitung.')
 
   // ── Gerbang ────────────────────────────────────────────────────────────────
@@ -137,6 +147,22 @@ export function buildRow(input: ScanInput, options: ScanOptions = {}): ScanRow {
   if (liquidity.value && !liquidity.value.passesGate) failures.push(liquidity.verdict)
   if (!riskReward.available) failures.push(`R:R tidak terukur — ${riskReward.verdict}`)
   else if (riskReward.value && !riskReward.value.passesGate) failures.push(riskReward.verdict)
+  if (options.minTrend !== undefined) {
+    const t = filters.value?.trendScore
+    if (t == null) failures.push(`Tren MA tidak terukur — ${filters.verdict}`)
+    else if (t < options.minTrend - 1e-9) {
+      failures.push(
+        `Tren MA belum penuh: ${Math.round(t * 5)}/5 syarat (close > MA20 > MA50 > MA200, MA50 dan MA200 menanjak).`,
+      )
+    }
+  }
+  if (options.maxAtrPct !== undefined) {
+    const pct = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',')
+    if (!volatility.value) failures.push(`ATR tidak terukur — ${volatility.verdict}`)
+    else if (volatility.value.atrPct > options.maxAtrPct) {
+      failures.push(`Terlalu volatil: ATR ${volatility.value.atrPct.toFixed(1).replace('.', ',')}% > ${pct(options.maxAtrPct)}%.`)
+    }
+  }
 
   // ── Peringkat ──────────────────────────────────────────────────────────────
   const columns: Record<RankColumn, number | null> = {

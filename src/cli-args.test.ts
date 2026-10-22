@@ -77,12 +77,29 @@ describe('parseArgs', () => {
 })
 
 describe('parseScanArgs', () => {
-  test('nilai bawaan: 250 hari, ambang Rp 5 M, R:R 1:2, IDX menyala', () => {
+  test('nilai bawaan: 250 hari, ambang Rp 5 M, IDX menyala, R:R tidak lagi jadi gerbang', () => {
     const a = parseScanArgs([])
     expect(a.days).toBe(250)
     expect(a.minValue).toBe(5e9)
-    expect(a.minRatio).toBe(2)
+    expect(a.minRatio).toBe(0)
     expect(a.useIdx).toBe(true)
+  })
+
+  test('gerbang bawaan dari uji ulang: tren MA penuh, ATR ≤ batas pasar, target maks +10%', () => {
+    expect(parseScanArgs([])).toMatchObject({ minTrend: 1, maxAtrPct: 5.1, targetCap: 0.1 })
+    expect(parseScanArgs(['--market', 'crypto']).maxAtrPct).toBe(7.6)
+  })
+
+  test('--maks-atr dalam persen, --target-maks dalam persen (0 = tanpa batas)', () => {
+    expect(parseScanArgs(['--maks-atr', '6']).maxAtrPct).toBe(6)
+    expect(parseScanArgs(['--target-maks', '15']).targetCap).toBeCloseTo(0.15, 9)
+    expect(parseScanArgs(['--target-maks', '0']).targetCap).toBe(0)
+  })
+
+  test('--min-tren 0..1; 0 mematikan syarat tren', () => {
+    expect(parseScanArgs(['--min-tren', '0.8']).minTrend).toBe(0.8)
+    expect(parseScanArgs(['--min-tren', '0']).minTrend).toBe(0)
+    expect(() => parseScanArgs(['--min-tren', '2'])).toThrow(/--min-tren/)
   })
 
   test('--min-likuiditas dibaca dalam miliar rupiah', () => {

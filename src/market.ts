@@ -53,6 +53,14 @@ export interface Market {
   minValueScale: number
   /** Nama satuan masukan itu, untuk teks bantuan. */
   minValueUnit: string
+  /**
+   * ATR maksimum (persen harga) untuk lolos gerbang.
+   *
+   * Nilainya median ATR sampel likuid di uji ulang 2 tahun (src/replay.ts):
+   * volatilitas tinggi adalah pembeda terkuat ke arah buruk di kedua pasar, dan
+   * tren penuh + ATR ≤ median unggul di kedua paruh waktunya.
+   */
+  maxAtrPct: number
   /** Format nilai uang untuk string bukti (prosa). */
   money(v: number): string
   /**
@@ -147,6 +155,7 @@ export const IDX: Market = Object.freeze({
   minValue: 5e9,
   minValueScale: 1e9,
   minValueUnit: 'MILIAR',
+  maxAtrPct: 5.1,
   money: rupiah,
   moneyCompact: rupiahCompact,
   currencyCode: 'RP',
@@ -178,6 +187,7 @@ export const CRYPTO: Market = Object.freeze({
   minValue: 10e6,
   minValueScale: 1e6,
   minValueUnit: 'JUTA',
+  maxAtrPct: 7.6,
   money: dollar,
   moneyCompact: dollarCompact,
   currencyCode: 'USD',

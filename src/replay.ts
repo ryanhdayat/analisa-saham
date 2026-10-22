@@ -2,7 +2,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { buildRow, type ScanRow } from './analysis/report.ts'
 import { WARMUP_BARS } from './chart.ts'
-import { parseWatchlist } from './cli-args.ts'
+import { gateOptions, parseWatchlist, scanDefaultsFor } from './cli-args.ts'
 import { judge } from './hasil/nilai.ts'
 import { volumeProfile } from './indicators.ts'
 import { historyRange, marketById, type Market } from './market.ts'
@@ -298,9 +298,11 @@ async function main(): Promise<number> {
   console.log(`[replay] ${market.id}: ${codes.length} emiten, rentang ${range}, ${args.tahun} tahun, langkah ${args.langkah}, horizon ${args.horizon}`)
 
   const index = (await loadBars(market.benchmark, range, market)).bars
+  // Gerbang yang sama dengan scan.ts bawaan, supaya GERBANG di laporan berarti
+  // persis "yang akan dipilih cron".
   const options = {
     minValue: market.minValue,
-    minRatio: 2,
+    ...gateOptions(scanDefaultsFor(market)),
     rankColumns: market.rankColumns,
     money: market.money,
     dailyValue: market.dailyValue,

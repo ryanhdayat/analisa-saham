@@ -90,7 +90,8 @@ Not recorded:
 - **One pick per ticker.** A passing ticker opens a pick at that scan's close.
   While the pick is open, passing again doesn't open another. Once it's settled,
   the next pass opens a new one.
-- **Target** = the scan's TARGET.
+- **Target** = the scan's TARGET (the nearest resistance, capped at +10% above
+  the entry since 2026-10-22).
 - **Cut loss** = the scan's STOP, kept between −5% and −10% below the entry:
   deeper than −10% is tightened to −10%, shallower than −5% is widened to −5%.
 - **Hit target** (correct): the day's high reaches TARGET. The exit is the target.
@@ -131,6 +132,26 @@ Output on disk: `report/hasil-<DATE>/index.html` and `hasil.json`.
 | `src/hasil.ts` | CLI: read picks, fetch bars, write the page |
 | `src/output/hasil-page.ts`, `hasil-template.html` | Results page |
 | `src/scan.ts` | Now also writes `pilihan-<DATE>.json` |
+
+## Gate change (2026-10-22)
+
+The replay test (`src/replay.ts`, 2 years of history) showed the old gate (R:R ≥ 2)
+picked far-away targets that rarely got hit before the cut loss (20% IDX, 6% crypto).
+The gate is now:
+
+1. Liquidity (≥ Rp5 billion/day, ≥ $10 million/day for crypto).
+2. A measurable plan (support below and resistance above).
+3. Full MA trend: all 5 conditions (close > MA20 > MA50 > MA200, MA50 and MA200
+   rising).
+4. Calm volatility: ATR ≤ 5.1% (IDX) / 7.6% (crypto), the replay medians.
+
+The target is capped at +10% above the entry. In the replay, the new gate's picks
+rose over 20 days 45.9% of the time on IDX (baseline 40.8%) and 50.2% in crypto
+(baseline 37.1%), in both halves of the period. The average trade is still slightly
+negative (about −0.8%), because wins are smaller than the cut loss.
+
+Override with `--min-rr`, `--min-tren`, `--maks-atr`, `--target-maks` (see the README).
+Picks recorded before this change used the old gate.
 
 ## Known limits
 

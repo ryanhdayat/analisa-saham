@@ -76,6 +76,15 @@ describe('buildScreener', async () => {
     expect(r.ASING_SKOR).toBeNull()
   })
 
+  test('teks gerbang di meta menyebut syarat yang benar-benar dipakai run ini', () => {
+    const meta = embedded(buildScreener([row('BBCA')], new Map(), template, IDX, {
+      ...OPTS, minRatio: 0, minTrend: 1, maxAtrPct: 5.1, targetCap: 0.1,
+    }).html, 'META')
+    expect(meta.gerbang).toBe('likuiditas ≥ Rp5.0M per hari, tren MA penuh (5/5), ATR ≤ 5,1%, target maks +10%')
+    const lama = embedded(buildScreener([row('BBCA')], new Map(), template, IDX, OPTS).html, 'META')
+    expect(lama.gerbang).toBe('likuiditas ≥ Rp5.0M per hari, R:R ≥ 1:2')
+  })
+
   test('meta membawa ambang run dan status terdegradasi', () => {
     const { html } = buildScreener([row('BBCA')], new Map(), template, IDX, { ...OPTS, minRatio: 1.5 })
     const meta = embedded(html, 'META')

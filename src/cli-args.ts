@@ -107,7 +107,14 @@ export interface ScanArgs {
   watchlist: string
   /** Ambang likuiditas dalam mata uang pasar (masukannya lihat `market.minValueUnit`). */
   minValue: number
+  /** Ambang R:R; 0 = bukan gerbang lagi (rencana tetap dihitung dan ditampilkan). */
   minRatio: number
+  /** Skor tren MA minimum (0..1); 0 = tidak diperiksa. */
+  minTrend: number
+  /** ATR maksimum, persen harga. */
+  maxAtrPct: number
+  /** Batas target di atas entry, pecahan; 0 = tanpa batas. */
+  targetCap: number
   /** Lapisan pengaya IDX menyala. */
   useIdx: boolean
   /** Hari bursa riwayat aliran asing yang ditarik. */
@@ -132,7 +139,12 @@ export function scanDefaultsFor(market: Market): ScanArgs {
     reportDir: market.reportDir,
     watchlist: market.watchlist,
     minValue: market.minValue,
-    minRatio: 2,
+    // Gerbang dari uji ulang (src/replay.ts): R:R ≥ 2 memilih target jauh yang jarang
+    // tercapai sebelum cut loss; tren penuh + ATR tenang + target dekat lebih baik.
+    minRatio: 0,
+    minTrend: 1,
+    maxAtrPct: market.maxAtrPct,
+    targetCap: 0.1,
     useIdx: market.hasIdxLayer,
     idxDays: 60,
     market,
@@ -142,6 +154,20 @@ export function scanDefaultsFor(market: Market): ScanArgs {
 }
 
 export const SCAN_DEFAULTS: ScanArgs = scanDefaultsFor(IDX)
+
+/**
+ * Syarat gerbang run ini dalam bentuk ScanOptions/ScreenerOptions. Nilai 0 berarti
+ * "tidak dipakai" dan diterjemahkan jadi undefined di sini, supaya hilir tidak
+ * perlu tahu konvensi itu.
+ */
+export function gateOptions(args: Pick<ScanArgs, 'minRatio' | 'minTrend' | 'maxAtrPct' | 'targetCap'>) {
+  return {
+    minRatio: args.minRatio,
+    minTrend: args.minTrend > 0 ? args.minTrend : undefined,
+    maxAtrPct: args.maxAtrPct,
+    targetCap: args.targetCap > 0 ? args.targetCap : undefined,
+  }
+}
 
 /**
  * Pasar dibaca lebih dulu, sebelum flag lain diproses.
@@ -210,6 +236,21 @@ export function parseScanArgs(argv: string[]): ScanArgs {
       case '--min-rr':
         args.minRatio = positive('--min-rr', value('--min-rr', argv[++i]))
         break
+      case '--min-tren': {
+        const n = Number(value('--min-tren', argv[++i]))
+        if (!Number.isFinite(n) || n < 0 || n > 1) throw new Error('Opsi --min-tren butuh angka 0..1.')
+        args.minTrend = n
+        break
+      }
+      case '--maks-atr':
+        args.maxAtrPct = positive('--maks-atr', value('--maks-atr', argv[++i]))
+        break
+      case '--target-maks': {
+        const n = Number(value('--target-maks', argv[++i]))
+        if (!Number.isFinite(n) || n < 0) throw new Error('Opsi --target-maks butuh persen ≥ 0.')
+        args.targetCap = n / 100
+        break
+      }
       case '--hari-idx':
         args.idxDays = positiveInt('--hari-idx', value('--hari-idx', argv[++i]))
         break

@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { parseScanArgs, parseWatchlist, type ScanArgs } from './cli-args.ts'
+import { gateOptions, parseScanArgs, parseWatchlist, type ScanArgs } from './cli-args.ts'
 import { fetchBars } from './yahoo.ts'
 import type { Bar } from './types.ts'
 import { volumeProfile } from './indicators.ts'
@@ -23,7 +23,10 @@ const USAGE = `Pakai: bun run src/scan.ts [KODE...] [opsi]
   KODE...                  Kode emiten. Kosong = baca watchlist.
   --days N                 Panjang jendela analisis (bawaan 250).
   --min-likuiditas MILIAR  Ambang nilai transaksi harian (bawaan 5).
-  --min-rr N               Ambang risk/reward (bawaan 2).
+  --min-rr N               Ambang risk/reward (bawaan: bukan syarat gerbang).
+  --min-tren N             Skor tren MA minimum 0..1 (bawaan 1 = kelima syarat MA; 0 = mati).
+  --maks-atr PERSEN        ATR maksimum (bawaan 5,1 IDX / 7,6 crypto).
+  --target-maks PERSEN     Batas target di atas entry (bawaan 10; 0 = tanpa batas).
   --hari-idx N             Hari bursa riwayat aliran asing (bawaan 60).
   --tanpa-idx              Lewati lapisan IDX; jalankan 9 metrik Yahoo saja.
   --out DIR                Direktori keluaran JSON per emiten (bawaan out).
@@ -117,7 +120,7 @@ async function main(): Promise<number> {
         },
         {
           minValue: args.minValue,
-          minRatio: args.minRatio,
+          ...gateOptions(args),
           rankColumns: market.rankColumns,
           money: market.money,
           dailyValue: market.dailyValue,
@@ -160,7 +163,7 @@ async function main(): Promise<number> {
     htmlPath = await writeScreener(join(args.reportDir, `screener-${tanggal}`), [...passed, ...skipped], barsByCode, market, {
       draft,
       minValue: args.minValue,
-      minRatio: args.minRatio,
+      ...gateOptions(args),
     })
   }
 
