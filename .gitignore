@@ -5,3 +5,6 @@ raw/
 report/
 *.bak
 logs/
+.vercel/
+.env*
+situs/

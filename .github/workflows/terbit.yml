@@ -1,0 +1,85 @@
+# Terbit harian: verifikasi kode → scan IDX, crypto, hasil → simpan rekam jejak
+# ke branch `data` → push situs ke branch `site`.
+#
+# Vercel terhubung ke repo ini lewat integrasi GitHub dengan production branch
+# `site`, jadi push ke `site` = deploy produksi. Tidak ada token Vercel di sini.
+# Branch kode (`main` dan lainnya) tidak di-deploy: vercel.json di akar repo
+# mematikannya.
+#
+# Kode dan data terpisah: kode dari `main` (hanya yang lolos tes yang terbit),
+# rekam jejak (`report/pilihan-*.json`, `report/terbit-*.txt`) di branch `data`.
+# Gagal di langkah mana pun = tidak ada push ke `site`; deploy lama tetap tayang.
+# Rollback situs: Instant Rollback di dasbor Vercel.
+name: Terbit harian
+
+on:
+  schedule:
+    - cron: '15 0 * * *' # 07:15 WIB
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: terbit
+  cancel-in-progress: false
+
+jobs:
+  terbit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Verifikasi kode
+        run: bun run typecheck && bun test
+
+      - name: Ambil rekam jejak dari branch data
+        run: |
+          if git fetch --depth=1 origin data:data; then
+            git worktree add ../data data
+          else
+            git worktree add --orphan -b data ../data
+          fi
+          mkdir -p report/crypto
+          if [ -d ../data/report ]; then cp -R ../data/report/. report/; fi
+
+      - name: Scan dan rakit situs
+        run: deploy/vercel/rakit.sh
+
+      - name: Simpan rekam jejak ke branch data
+        run: |
+          mkdir -p ../data/report/crypto
+          cp report/terbit-*.txt ../data/report/
+          cp report/pilihan-*.json ../data/report/ 2>/dev/null || true
+          cp report/crypto/pilihan-*.json ../data/report/crypto/ 2>/dev/null || true
+          cd ../data
+          git add -A
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' \
+                -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+                commit -m "data: terbit $(date -u +%F) dari $(git -C "$GITHUB_WORKSPACE" rev-parse --short HEAD)"
+            git push origin data
+          fi
+
+      - name: Terbitkan ke branch site
+        # Satu komit yatim, ditimpa tiap hari: riwayat situs ada di daftar deploy
+        # Vercel, bukan di git, jadi repo tidak membengkak ~20 MB per hari.
+        run: |
+          cd situs
+          git init -q -b site
+          git add -A
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -q -m "situs: $(date -u +%F) dari $(git -C "$GITHUB_WORKSPACE" rev-parse --short HEAD)"
+          git push --force -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" site:site
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
