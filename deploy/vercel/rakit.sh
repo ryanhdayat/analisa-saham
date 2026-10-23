@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Rakit situs statis untuk Vercel (Build Output API v3): scan IDX, scan crypto,
-# lalu rekam jejak hasil — ketiganya dalam SATU deploy.
+# Rakit situs statis untuk Vercel: scan IDX, scan crypto, lalu rekam jejak
+# hasil — ketiganya dalam SATU terbitan.
 #
 #   deploy/vercel/rakit.sh                                     # watchlist penuh
 #   RAKIT_IDX="BBCA BSSR" RAKIT_CRYPTO="BTC-USD" deploy/vercel/rakit.sh   # uji cepat
 #
-# Hasilnya di .vercel/output/, siap untuk `vercel deploy --prebuilt`.
+# Hasilnya di situs/: berkas statis plus vercel.json. Di CI isinya dipush ke
+# branch `site`, dan integrasi GitHub Vercel men-deploy branch itu.
 #
 # Kalau satu bagian tidak layak terbit — halaman tidak tertulis, terlalu banyak
 # emiten gagal diambil, atau tanggal datanya mundur — skrip keluar non-nol dan
-# .vercel/output lama tidak disentuh. Deploy Vercel yang sedang tayang tetap
-# tayang; itu "snapshot terakhir yang sah".
+# situs/ lama tidak disentuh. Deploy Vercel yang sedang tayang tetap tayang;
+# itu "snapshot terakhir yang sah".
 #
 # Ditulis untuk bash 3 (macOS) maupun Linux (GitHub Actions).
 set -euo pipefail
@@ -24,12 +25,12 @@ MAKS_GAGAL_PERSEN="${MAKS_GAGAL_PERSEN:-5}"
 KOMIT="$(git rev-parse --short HEAD)"
 DITERBITKAN="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 STAGE="$(mktemp -d)"
-trap 'rm -rf "$STAGE"' EXIT
-mkdir -p "$STAGE/static"
+JEJAK="$(mktemp -d)"
+trap 'rm -rf "$STAGE" "$JEJAK"' EXIT
 
 # jalankan NAMA BATAS_GAGAL PERINTAH...
 # Menjalankan scan/hasil, memeriksa keluarannya, lalu menyalin halamannya ke
-# $STAGE/static/NAMA. BATAS_GAGAL "ya" berarti rasio emiten gagal diperiksa.
+# $STAGE/NAMA. BATAS_GAGAL "ya" berarti rasio emiten gagal diperiksa.
 jalankan() {
   local nama="$1" batas="$2"
   shift 2
@@ -81,10 +82,10 @@ jalankan() {
     fi
   fi
 
-  cp -R "$sumber" "$STAGE/static/$nama"
+  cp -R "$sumber" "$STAGE/$nama"
   printf '{"tanggal":"%s","diterbitkan":"%s","komit":"%s"}\n' "$tanggal" "$DITERBITKAN" "$KOMIT" \
-    >"$STAGE/static/$nama/terbit.json"
-  echo "$tanggal" >"$STAGE/jejak-$nama"
+    >"$STAGE/$nama/terbit.json"
+  echo "$tanggal" >"$JEJAK/$nama"
   echo "$nama: data $tanggal siap terbit." >&2
 }
 
@@ -94,25 +95,34 @@ jalankan idx ya bun run src/scan.ts --market idx --tanpa-idx ${RAKIT_IDX:-}
 jalankan crypto ya bun run src/scan.ts --market crypto --tanpa-idx ${RAKIT_CRYPTO:-}
 jalankan hasil tidak bun run src/hasil.ts
 
-cp deploy/vercel/index.html "$STAGE/static/index.html"
+cp deploy/vercel/index.html "$STAGE/index.html"
 
-# no-cache karena nama berkas berulang tiap hari; /idx tanpa garis miring
-# dialihkan supaya fetch relatif `data/...` di halaman screener tidak patah.
-cat >"$STAGE/config.json" <<'JSON'
+# Tanpa build: Vercel menyajikan berkas apa adanya. no-cache karena nama berkas
+# berulang tiap hari; /idx tanpa garis miring dialihkan supaya fetch relatif
+# `data/...` di halaman screener tidak patah.
+cat >"$STAGE/vercel.json" <<'JSON'
 {
-  "version": 3,
-  "routes": [
-    { "src": "^/(idx|crypto|hasil)$", "status": 308, "headers": { "Location": "/$1/" } },
-    { "src": "/(.*)", "headers": { "Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin" }, "continue": true },
-    { "handle": "filesystem" }
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": ".",
+  "redirects": [{ "source": "/:bagian(idx|crypto|hasil)", "destination": "/:bagian/", "permanent": true }],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
   ]
 }
 JSON
 
-# Semua bagian lolos: baru sekarang jejak tanggal dan keluaran lama diganti.
-for nama in idx crypto hasil; do cp "$STAGE/jejak-$nama" "report/terbit-$nama.txt"; done
-rm -rf .vercel/output
-mkdir -p .vercel
-cp -R "$STAGE" .vercel/output
-rm -f .vercel/output/jejak-*
-echo "Situs terakit di .vercel/output (komit $KOMIT)." >&2
+# Semua bagian lolos: baru sekarang jejak tanggal dan situs lama diganti.
+for nama in idx crypto hasil; do cp "$JEJAK/$nama" "report/terbit-$nama.txt"; done
+rm -rf situs
+cp -R "$STAGE" situs
+chmod 755 situs
+echo "Situs terakit di situs/ (komit $KOMIT)." >&2
