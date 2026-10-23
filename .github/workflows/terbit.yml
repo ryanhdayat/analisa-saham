@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main
 
@@ -58,6 +58,8 @@ jobs:
       - name: Simpan rekam jejak ke branch data
         run: |
           mkdir -p ../data/report/crypto
+          # Branch data bukan situs: jangan biarkan Vercel men-deploy-nya.
+          echo '{ "git": { "deploymentEnabled": false } }' > ../data/vercel.json
           cp report/terbit-*.txt ../data/report/
           cp report/pilihan-*.json ../data/report/ 2>/dev/null || true
           cp report/crypto/pilihan-*.json ../data/report/crypto/ 2>/dev/null || true
