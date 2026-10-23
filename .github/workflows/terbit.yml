@@ -1,0 +1,79 @@
+# Terbit harian ke Vercel: verifikasi kode → scan IDX, crypto, hasil → simpan
+# rekam jejak ke branch `data` → deploy produksi.
+#
+# Kode dan data terpisah: kode dari `main` (hanya yang lolos tes yang terbit),
+# rekam jejak (`report/pilihan-*.json`, `report/terbit-*.txt`) di branch `data`.
+# Gagal di langkah mana pun = tidak ada deploy; deploy lama tetap tayang.
+# Rollback situs: `vercel rollback` atau Instant Rollback di dasbor Vercel.
+name: Terbit harian
+
+on:
+  schedule:
+    - cron: '15 0 * * *' # 07:15 WIB
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: terbit
+  cancel-in-progress: false
+
+jobs:
+  terbit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Verifikasi kode
+        run: bun run typecheck && bun test
+
+      - name: Ambil rekam jejak dari branch data
+        run: |
+          if git fetch --depth=1 origin data:data; then
+            git worktree add ../data data
+          else
+            git worktree add --orphan -b data ../data
+          fi
+          mkdir -p report/crypto
+          if [ -d ../data/report ]; then cp -R ../data/report/. report/; fi
+
+      - name: Tarik pengaturan proyek Vercel
+        run: npx --yes vercel@61.0.0 pull --yes --environment=production --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Scan dan rakit situs
+        run: deploy/vercel/rakit.sh
+
+      - name: Simpan rekam jejak ke branch data
+        run: |
+          mkdir -p ../data/report/crypto
+          cp report/terbit-*.txt ../data/report/
+          cp report/pilihan-*.json ../data/report/ 2>/dev/null || true
+          cp report/crypto/pilihan-*.json ../data/report/crypto/ 2>/dev/null || true
+          cd ../data
+          git add -A
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' \
+                -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+                commit -m "data: terbit $(date -u +%F) dari $(git -C "$GITHUB_WORKSPACE" rev-parse --short HEAD)"
+            git push origin data
+          fi
+
+      - name: Deploy produksi
+        run: npx --yes vercel@61.0.0 deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
