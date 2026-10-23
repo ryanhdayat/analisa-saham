@@ -13,7 +13,7 @@ import { writeXlsx } from './output/xlsx.ts'
 import { toJson } from './output/json.ts'
 import { isIntraday, writeScreener } from './output/screener.ts'
 import { bolehCatat, MAKS_GAGAL, pilihanFromRows } from './hasil/nilai.ts'
-import { historyRange, MARKET_IDS } from './market.ts'
+import { barTertutup, historyRange, MARKET_IDS } from './market.ts'
 
 const RAW_DIR = 'raw'
 const PROFILE_ROWS = 24
@@ -76,7 +76,7 @@ async function main(): Promise<number> {
   let indexBars: Bar[]
   const alasanDegradasi: string[] = []
   try {
-    indexBars = (await fetchBars(market.benchmark, { range, rawDir: RAW_DIR, market })).bars
+    indexBars = barTertutup((await fetchBars(market.benchmark, { range, rawDir: RAW_DIR, market })).bars, market)
   } catch (err) {
     console.error(
       `Gagal mengambil patokan (${market.benchmark}): ${err instanceof Error ? err.message : String(err)}`,
@@ -106,7 +106,8 @@ async function main(): Promise<number> {
 
   for (const code of codes) {
     try {
-      const data = await fetchBars(code, { range, rawDir: RAW_DIR, market })
+      const fetched = await fetchBars(code, { range, rawDir: RAW_DIR, market })
+      const data = { ...fetched, bars: barTertutup(fetched.bars, market) }
       const displayBars = data.bars.slice(-args.days)
       const row = buildRow(
         {
