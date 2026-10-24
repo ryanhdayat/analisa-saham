@@ -124,13 +124,26 @@ describe('pilihanFromRows', () => {
       date: '2026-10-21',
       close: 0.00031,
       gates: { passed, failures: [] },
-      metrics: { riskReward: { available: rr !== null, value: rr } },
+      metrics: {
+        riskReward: { available: rr !== null, value: rr },
+        ...Object.fromEntries(['wyckoff', 'vpa', 'structure', 'filters', 'volume'].map((k) => [k, { available: false, value: null }])),
+      },
     }) as unknown as ScanRow
 
   test('hanya emiten lolos gerbang, dengan harga utuh tanpa pembulatan', () => {
     expect(pilihanFromRows([row('AAA-USD', true), row('BBB-USD', false)])).toEqual([
-      { code: 'AAA-USD', name: 'AAA-USD coin', date: '2026-10-21', entry: 0.00031, stop: 0.00028, target: 0.0004 },
+      { code: 'AAA-USD', name: 'AAA-USD coin', date: '2026-10-21', entry: 0.00031, stop: 0.00028, target: 0.0004, label: 'bersih' },
     ])
+  })
+
+  test('baris dengan catatan risiko dicatat hati-hati', () => {
+    const [p] = pilihanFromRows([row('AAA', true, { entry: 1000, stop: 940, target: 1030, ratio: 0.5 })])
+    expect(p!.label).toBe('hati-hati')
+  })
+
+  test('baris tanpa catatan dicatat bersih', () => {
+    const [p] = pilihanFromRows([row('AAA', true, { entry: 1000, stop: 940, target: 1200, ratio: 3.3 })])
+    expect(p!.label).toBe('bersih')
   })
 
   test('lolos tanpa rencana risk/reward dilewati', () => {

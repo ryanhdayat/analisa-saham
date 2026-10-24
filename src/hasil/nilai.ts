@@ -1,4 +1,5 @@
 import type { ScanRow } from '../analysis/report.ts'
+import { catatanRisiko, labelRisiko, type Label } from '../rencana/catatan.ts'
 import type { Bar } from '../types.ts'
 
 /**
@@ -20,6 +21,11 @@ export interface Pilihan {
   /** Stop dari analisa risk/reward, sebelum dijepit. */
   stop: number
   target: number
+  /**
+   * Ada catatan risiko saat scan? Tidak ada di catatan sebelum 2026-10-24 —
+   * yang itu dihitung sebagai "tanpa label".
+   */
+  label?: Label
 }
 
 /**
@@ -32,7 +38,8 @@ export function pilihanFromRows(rows: ScanRow[]): Pilihan[] {
   return rows.flatMap((r) => {
     const rr = r.metrics.riskReward
     if (!r.gates.passed || !rr.available || !rr.value) return []
-    return [{ code: r.code, name: r.name, date: r.date, entry: rr.value.entry, stop: rr.value.stop, target: rr.value.target }]
+    const label = labelRisiko(catatanRisiko(r))
+    return [{ code: r.code, name: r.name, date: r.date, entry: rr.value.entry, stop: rr.value.stop, target: rr.value.target, label }]
   })
 }
 
