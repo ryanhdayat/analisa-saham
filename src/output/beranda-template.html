@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analisa Saham</title>
+<meta name="description" content="Rencana harian saham IDX untuk latihan trading, dengan simulasi modal Rp100 juta.">
+<!--__FONT__-->
+<style>
+/* Layout: satu ajakan utama (rencana hari ini) sebagai blok besar, lalu dua tujuan sekunder: hasil simulasi dan crypto. */
+/*__TEMA__*/
+.wrap { max-width: 1180px; margin: 0 auto; padding: 22px 16px 56px; display: grid; gap: 22px; }
+.pembuka { display: grid; gap: 8px; max-width: 62ch; }
+.pembuka h1 { font: 800 clamp(36px, 8vw, 64px)/0.95 var(--font-display); font-stretch: 78%; letter-spacing: -.02em; margin: 0; }
+.pembuka p { margin: 0; color: var(--muted); font-size: 16px; }
+.utama { background: var(--ink); color: var(--bg); border-radius: 16px; padding: 22px 22px 24px; display: grid; gap: 14px; }
+.utama h2 { margin: 0; font: 800 clamp(28px, 5vw, 40px)/1 var(--font-display); font-stretch: 80%; }
+.utama .meta { opacity: .8; font-size: 15px; }
+.utama .tombol { justify-self: start; background: var(--bg); color: var(--ink); text-decoration: none; font-weight: 600; font-size: 16px; padding: 12px 20px; border-radius: 10px; }
+.utama .tombol:hover { background: var(--surface); }
+.utama .tombol:focus-visible { outline-color: var(--bg); }
+.lain { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.lain a { display: grid; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; color: var(--ink); text-decoration: none; }
+.lain a:hover { border-color: var(--accent); }
+.lain h3 { margin: 0; font: 700 22px/1.1 var(--font-display); font-stretch: 85%; }
+.lain .meta { color: var(--muted); font-size: 14px; }
+.lain .vonis { font-weight: 600; }
+footer { color: var(--muted); font-size: 13px; max-width: 72ch; }
+</style>
+</head>
+<body>
+<!--__NAV__-->
+<main class="wrap">
+  <header class="pembuka">
+    <h1>Analisa Saham</h1>
+    <p>Daftar saham IDX yang lolos screening setiap pagi, lengkap dengan harga beli, jumlah lot, dan batas jual. Untuk latihan di Stockbit Virtual Trading.</p>
+  </header>
+
+  <section class="utama" aria-labelledby="judul-utama">
+    <h2 id="judul-utama">Rencana hari ini</h2>
+    <div class="meta" data-pasar="idx">Memuat tanggal data…</div>
+    <a class="tombol" href="idx/">Lihat rencana hari ini</a>
+  </section>
+
+  <div class="lain">
+    <a href="hasil/">
+      <h3>Hasil simulasi</h3>
+      <span class="vonis" id="vonis">Memuat…</span>
+      <span class="meta" data-pasar="hasil"></span>
+    </a>
+    <a href="crypto/">
+      <h3>Screener crypto</h3>
+      <span class="meta" data-pasar="crypto">Memuat tanggal data…</span>
+    </a>
+  </div>
+
+  <footer>Diperbarui otomatis tiap hari pukul 07.15 WIB. Masa simulasi: bukan rekomendasi jual/beli. Data harga dari Yahoo Finance; periksa lagi di Stockbit sebelum memasang order.</footer>
+</main>
+<script>
+/*__BASI__*/
+const tanggal = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+const waktu = (iso) => new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB'
+for (const el of document.querySelectorAll('[data-pasar]')) {
+  const pasar = el.dataset.pasar
+  fetch(`${pasar}/terbit.json`, { cache: 'no-cache' })
+    .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then((t) => {
+      if (pasar === 'hasil') { el.textContent = `Dinilai ${waktu(t.diterbitkan)}`; return }
+      const basi = dataBasi(t.tanggal, pasar, new Date()) ? ' (data mungkin basi)' : ''
+      el.textContent = `Data ${pasar === 'idx' ? 'penutupan' : 'candle'} ${tanggal(t.tanggal)}${basi}`
+    })
+    .catch(() => { el.textContent = 'Belum ada terbitan.' })
+}
+const VONIS = { 'kurang-data': 'Belum cukup data', 'belum-lulus': 'Belum lulus', lulus: 'Lulus' }
+fetch('hasil/hasil.json', { cache: 'no-cache' })
+  .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+  .then((d) => {
+    const s = d.pasar.find((p) => p.id === 'idx')?.simulasi
+    if (!s) throw new Error('tanpa simulasi')
+    const rata = s.rataBersih == null ? '' : `, rata-rata ${(s.rataBersih * 100).toLocaleString('id-ID', { maximumFractionDigits: 1, signDisplay: 'always' })}%`
+    document.getElementById('vonis').textContent = `${VONIS[s.status]}: ${s.selesai} dari 30 transaksi${rata}`
+  })
+  .catch(() => { document.getElementById('vonis').textContent = 'Belum ada hasil.' })
+</script>
+</body>
+</html>

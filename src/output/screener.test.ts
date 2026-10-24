@@ -6,6 +6,8 @@ import { buildScreener, CHART_BARS, CHUNK, isIntraday, loadTemplate, sma, writeS
 import { CRYPTO, IDX } from '../market.ts'
 import type { ScanRow } from '../analysis/report.ts'
 import type { Bar } from '../types.ts'
+import { rencanaIdx } from '../rencana/rencana.ts'
+import { floorToTick } from '../analysis/levels.ts'
 
 function row(code: string, over: Partial<ScanRow> = {}): ScanRow {
   const m = (value: unknown, available = true) => ({
@@ -183,16 +185,18 @@ describe('buildScreener — catatan risiko dan cut loss', async () => {
   const rowsOf = (r: ScanRow) => embedded(buildScreener([r], new Map(), template, IDX, OPTS).html, 'ROWS')
 
   test('R:R di bawah 1 jadi catatan, walau bukan syarat gerbang', () => {
-    expect(rowsOf(rr(0.51))[0].CATATAN).toContainEqual(['R:R 1:0,51', 'warn'])
+    expect(rowsOf(rr(0.51))[0].CATATAN).toContainEqual(expect.objectContaining({ teknis: 'R:R 1:0,51', kind: 'warn' }))
+    expect(rowsOf(rr(0.51))[0].LABEL).toBe('hati-hati')
   })
 
   test('rencana dan sinyal bersih → tanpa catatan', () => {
     expect(rowsOf(row('BBCA'))[0].CATATAN).toEqual([])
+    expect(rowsOf(row('BBCA'))[0].LABEL).toBe('bersih')
   })
 
   test('catatan lama tetap ada: Wyckoff distribusi', () => {
     const r = row('BBCA', { metrics: { ...row('X').metrics, wyckoff: { ...row('X').metrics.wyckoff, value: { phase: 'distribusi', reasons: [] } } } })
-    expect(rowsOf(r)[0].CATATAN).toContainEqual(['Wyckoff distribusi', 'bad'])
+    expect(rowsOf(r)[0].CATATAN).toContainEqual(expect.objectContaining({ teknis: 'Wyckoff distribusi', kind: 'bad' }))
   })
 
   test('cut loss evaluasi ikut aturan /hasil/: stop dijepit ke 5–10% di bawah entry', () => {
@@ -216,5 +220,44 @@ describe('buildScreener — alasan terdegradasi', async () => {
 
   test('template tidak lagi menebak bahwa IDX tidak terjangkau', () => {
     expect(template).not.toContain('Data IDX tidak terjangkau')
+  })
+})
+
+describe('buildScreener — rencana hari ini', async () => {
+  const template = await loadTemplate()
+  const site = (rows: ScanRow[], market = IDX) => buildScreener(rows, new Map(), template, market, OPTS).html
+
+  test('baris IDX yang lolos membawa rencana dari rencanaIdx', () => {
+    const [r] = embedded(site([row('BBCA')]), 'ROWS')
+    expect(r.RENCANA).toEqual(rencanaIdx(1000, 930, 1200))
+    expect(r.RENCANA.jualRugi).toBe(floorToTick(r.CUT_LOSS))
+  })
+
+  test('baris tersaring tanpa rencana', () => {
+    const [r] = embedded(site([row('BBCA', { gates: { passed: false, failures: ['x'] } })]), 'ROWS')
+    expect(r.RENCANA).toBeNull()
+  })
+
+  test('crypto tanpa rencana', () => {
+    expect(embedded(site([row('BTC-USD')], CRYPTO), 'ROWS')[0].RENCANA).toBeNull()
+  })
+
+  test('hari tanpa emiten lolos → tidak ada satu pun rencana', () => {
+    const rows = embedded(site([row('A', { gates: { passed: false, failures: ['x'] } }), row('B', { gates: { passed: false, failures: ['y'] } })]), 'ROWS')
+    expect(rows.every((r: any) => r.RENCANA === null)).toBe(true)
+  })
+
+  test('meta membawa modal bawaan', () => {
+    expect(embedded(site([row('BBCA')]), 'META').modal).toBe(100_000_000)
+  })
+})
+
+describe('buildScreener — cut loss di laci sama dengan kartu', async () => {
+  const template = await loadTemplate()
+  test('CUT_LOSS IDX sudah dibulatkan ke fraksi BEI, sama dengan RENCANA.jualRugi', () => {
+    const r0 = row('MARK', { metrics: { ...row('X').metrics, riskReward: { ...row('X').metrics.riskReward, value: { entry: 1155, stop: 1000, target: 1225, ratio: 1, passesGate: true } } } })
+    const [r] = embedded(buildScreener([r0], new Map(), template, IDX, OPTS).html, 'ROWS')
+    expect(r.CUT_LOSS).toBe(1035)
+    expect(r.RENCANA.jualRugi).toBe(1035)
   })
 })

@@ -5,41 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hasil Analisa</title>
 <meta name="description" content="Rekam jejak pilihan screener: berapa yang kena target, kena cut loss, dan masih terbuka.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<!--__FONT__-->
 <style>
-/* Layout: rekam jejak — ringkasan per pasar, lalu tabel pilihan terbuka dan tabel yang sudah selesai. Token sama dengan screener-template.html. */
-:root {
-  --bg: #eef1f4; --surface: #ffffff; --sunk: #f6f8fa; --ink: #15202b; --muted: #5a6876; --line: #d9e0e7;
-  --accent: #0d6670; --accent-soft: #dcefef;
-  --up: #12805c; --up-soft: #ddf1e8; --down: #c0392b; --down-soft: #f8e1de; --warn: #a56a12; --warn-soft: #f6ead3;
-  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
-  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
-  --accent: #56b8c0; --accent-soft: #163338;
-  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
-  color-scheme: dark; } }
-:root[data-theme="dark"] {
-  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
-  --accent: #56b8c0; --accent-soft: #163338;
-  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
-  color-scheme: dark; }
-
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
-.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 18px; }
-.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
-a { color: var(--accent); }
-.eyebrow { font: 600 11px/1 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.eyebrow a { color: inherit; text-decoration: none; }
-.eyebrow a:hover { color: var(--accent); }
-h1 { font-family: var(--font-display); font-stretch: 80%; font-weight: 800; font-size: clamp(26px, 4vw, 38px); line-height: 1; margin: 6px 0 0; letter-spacing: -.01em; }
-h2 { font-family: var(--font-display); font-stretch: 85%; font-weight: 700; font-size: 20px; margin: 0; }
-.sub { color: var(--muted); margin: 6px 0 0; }
+/* Layout: hasil simulasi. IDX: vonis aturan lulus + angka simulasi Rp100 juta, pembanding bersih/hati-hati,
+   lalu daftar terbuka dan selesai (kartu di HP, tabel di laptop). Crypto: ringkasan persen dan daftar saja. */
+/*__TEMA__*/
+.wrap { max-width: 1180px; margin: 0 auto; padding: 18px 16px 56px; display: grid; gap: 18px; }
 
 .bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
 .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--surface); }
@@ -47,18 +18,17 @@ h2 { font-family: var(--font-display); font-stretch: 85%; font-weight: 700; font
 .tabs button + button { border-left: 1px solid var(--line); }
 .tabs button[aria-selected="true"] { background: var(--accent); color: var(--surface); }
 input[type=search] { font: 13px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; width: 220px; max-width: 100%; }
-button:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
-.stat b { display: block; font: 600 24px/1.1 var(--font-data); font-variant-numeric: tabular-nums; }
+.stat b { display: block; font: 700 24px/1.1 var(--font-display); font-stretch: 85%; font-variant-numeric: tabular-nums; }
 .stat span { font-size: 12px; color: var(--muted); }
 .stat.up b { color: var(--up); }
 .stat.down b { color: var(--down); }
 
 .banner { padding: 10px 14px; border-radius: 6px; font-size: 13px; border: 1px solid; }
 .banner.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
-details.rules { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; color: var(--muted); font-size: 13px; }
+details.rules { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; color: var(--muted); font-size: 14px; }
 details.rules summary { cursor: pointer; color: var(--ink); font-weight: 500; }
 details.rules ul { margin: 8px 0 0; padding-left: 18px; }
 
@@ -66,17 +36,20 @@ section { display: grid; gap: 10px; }
 .scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 8px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
-th { font: 600 11px/1.2 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--sunk); position: sticky; top: 0; }
+th { font: 600 12.5px/1.2 var(--font-body); color: var(--muted); background: var(--sunk); position: sticky; top: 0; }
 td.n, th.n { text-align: right; }
-td.n { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+td.n { font-variant-numeric: tabular-nums; }
 tbody tr:last-child td { border-bottom: 0; }
-.code { font: 600 13px var(--font-data); }
+.code { font: 700 15px var(--font-display); font-stretch: 85%; }
 .name { display: block; font-size: 12px; color: var(--muted); max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
 .pos { color: var(--up); }
 .neg { color: var(--down); }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 500; }
 .badge.target { background: var(--up-soft); color: var(--up); }
 .badge.cut { background: var(--down-soft); color: var(--down); }
+.badge.batal { background: var(--sunk); color: var(--muted); border: 1px solid var(--line); }
+.badge.bersih { background: var(--up-soft); color: var(--up); }
+.badge.hati { background: var(--warn-soft); color: var(--warn); }
 .meter { display: grid; gap: 4px; min-width: 150px; }
 .meter .track { position: relative; height: 6px; background: var(--sunk); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
 .meter .fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 99px; }
@@ -94,45 +67,61 @@ tbody tr:last-child td { border-bottom: 0; }
   tbody tr { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
   td { display: block; padding: 0; border: 0; white-space: normal; min-width: 0; }
   td.n { text-align: left; }
-  td[data-l]::before { content: attr(data-l); display: block; font: 600 10px/1.4 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  td[data-l]::before { content: attr(data-l); display: block; font-size: 12.5px; color: var(--muted); }
   td.full, td.empty { grid-column: 1 / -1; }
   .name { max-width: none; }
   .meter { min-width: 0; }
   input[type=search] { width: 100%; }
 }
 footer { color: var(--muted); font-size: 12px; }
+
+/* simulasi */
+.sim { display: grid; gap: 14px; }
+.sim-utama { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; display: grid; gap: 10px; }
+.sim-utama .vonis { font: 800 30px/1 var(--font-display); font-stretch: 80%; }
+.sim-utama .vonis.lulus { color: var(--up); } .sim-utama .vonis.belum-lulus { color: var(--down); } .sim-utama .vonis.kurang-data { color: var(--ink); }
+.sim-utama p { margin: 0; color: var(--muted); max-width: 70ch; }
+.kemajuan { height: 10px; border-radius: 99px; background: var(--sunk); border: 1px solid var(--line); overflow: hidden; }
+.kemajuan span { display: block; height: 100%; background: var(--accent); }
+.sim-angka { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 18px; margin: 0; }
+.sim-angka dt { font-size: 13px; color: var(--muted); }
+.sim-angka dd { margin: 0; font: 700 22px/1.15 var(--font-display); font-stretch: 85%; font-variant-numeric: tabular-nums; }
+.banding { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.banding > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 4px; }
+.banding h3 { margin: 0 0 4px; font: 700 17px var(--font-display); font-stretch: 85%; }
+.banding p { margin: 0; color: var(--muted); font-size: 14px; }
+.banding b { color: var(--ink); font-variant-numeric: tabular-nums; }
+h2 { font: 700 22px/1.1 var(--font-display); font-stretch: 85%; margin: 6px 0 0; }
 </style>
 </head>
 <body>
+<!--__NAV__-->
 <main class="wrap">
-  <header>
-    <div class="eyebrow"><a href="../">← Analisa Saham</a></div>
-    <h1>Hasil Analisa</h1>
-    <p class="sub">Apakah emiten yang lolos gerbang screener benar-benar naik. Diperbarui <span id="dibuat" class="num"></span>.</p>
+  <header class="kepala">
+    <h1>Hasil simulasi</h1>
+    <div class="status"><span>Semua rencana dinilai ulang dari harga terbaru, terakhir <span id="dibuat" class="num"></span>.</span></div>
   </header>
 
   <div class="bar">
     <div class="tabs" role="tablist" id="tabs"></div>
-    <input type="search" id="cari" placeholder="Cari kode atau nama…" aria-label="Cari emiten">
+    <input type="search" id="cari" placeholder="Cari kode atau nama" aria-label="Cari emiten">
   </div>
 
   <div id="banners"></div>
+
+  <section class="sim" id="sim" hidden aria-label="Simulasi modal Rp100 juta"></section>
+
   <div class="stats" id="stats"></div>
 
   <details class="rules">
     <summary>Cara menilai</summary>
-    <ul>
-      <li>Emiten yang lolos gerbang menjadi satu <b>pilihan</b>, dibuka pada harga penutupan hari scan. Selama pilihannya masih terbuka, emiten itu tidak dihitung lagi walau lolos lagi.</li>
-      <li><b>Target</b> adalah target rencana analisa (resistance terdekat, dibatasi maksimal +10% dari entry). <b>Cut loss</b> adalah stop analisa yang dijepit ke 5–10% di bawah entry.</li>
-      <li>High harian menyentuh target → <b>kena target</b> (benar). Low harian menyentuh cut loss → <b>kena cut loss</b> (salah). Keduanya di hari yang sama dihitung cut loss. Gap turun melewati cut loss dihitung di harga buka.</li>
-      <li>Pilihan yang masih terbuka dinilai dari harga penutupan terakhir. <b>Benar</b> berarti harganya naik dari entry. Pilihan yang belum melewati satu hari bursa pun sejak scan belum ikut dihitung.</li>
-    </ul>
+    <ul id="aturan"></ul>
   </details>
 
   <section>
     <h2>Masih terbuka</h2>
     <div class="scroll"><table>
-      <thead><tr><th>Emiten</th><th>Tgl scan</th><th class="n">Entry</th><th class="n">Target</th><th class="n">Cut loss</th><th class="n">Terakhir</th><th class="n">Return</th><th>Posisi</th><th class="n">Hari</th></tr></thead>
+      <thead><tr id="h-terbuka"></tr></thead>
       <tbody id="terbuka"></tbody>
     </table></div>
   </section>
@@ -140,14 +129,15 @@ footer { color: var(--muted); font-size: 12px; }
   <section>
     <h2>Selesai</h2>
     <div class="scroll"><table>
-      <thead><tr><th>Emiten</th><th>Tgl scan</th><th class="n">Entry</th><th>Hasil</th><th>Tgl selesai</th><th class="n">Keluar</th><th class="n">Return</th><th class="n">Hari</th></tr></thead>
+      <thead><tr id="h-selesai"></tr></thead>
       <tbody id="selesai"></tbody>
     </table></div>
   </section>
 
-  <footer>Bukan rekomendasi jual/beli. Data harga dari Yahoo Finance.</footer>
+  <footer>Simulasi, bukan rekomendasi jual/beli. Data harga dari Yahoo Finance.</footer>
 </main>
 <script>
+/*__BASI__*/
 const DATA = /*__DATA__*/{};
 
 const $ = (id) => document.getElementById(id)
@@ -175,54 +165,114 @@ function meter(h) {
     const f = Math.min(1, Math.max(0, h.progress))
     return `<div class="meter"><div class="track"><div class="fill pos" style="width:${f * 100}%"></div></div><small>${Math.round(h.progress * 100)}% menuju target</small></div>`
   }
-  const price = h.last ? h.last.close : h.entry
-  const f = Math.min(1, (h.entry - price) / (h.entry - h.cut))
+  const dasar = h.isi ?? h.entry
+  const price = h.last ? h.last.close : dasar
+  const f = Math.min(1, (dasar - price) / (dasar - h.cut))
   return `<div class="meter"><div class="track"><div class="fill neg" style="width:${f * 100}%"></div></div><small>${Math.round(f * 100)}% menuju cut loss</small></div>`
+}
+
+const rpRingkas = (v) => {
+  if (v === 0) return 'Rp0'
+  const a = Math.abs(v), t = v < 0 ? '−' : v > 0 ? '+' : ''
+  return a >= 1e6 ? `${t}Rp${(a / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 2 })} jt` : `${t}Rp${Math.round(a / 1e3).toLocaleString('id-ID')} rb`
+}
+const VONIS = { 'kurang-data': 'Belum cukup data', 'belum-lulus': 'Belum lulus', lulus: 'Lulus' }
+const STATUS = { target: ['target', 'Kena target'], cut: ['cut', 'Kena cut loss'], dilewati: ['batal', 'Dilewati'], 'tidak-terbeli': ['batal', 'Tidak terbeli'] }
+const labelBadge = (h) => h.label === 'bersih' ? '<span class="badge bersih">Bersih</span>' : h.label === 'hati-hati' ? '<span class="badge hati">Hati-hati</span>' : '<span class="mut">tanpa label</span>'
+
+const ATURAN_IDX = [
+  'Setiap saham yang lolos menjadi satu rencana. Selama rencananya masih berjalan, saham itu tidak dihitung lagi walau lolos lagi.',
+  'Simulasi meniru latihan di Stockbit Virtual: <b>Buy limit</b> di harga beli dipasang pagi setelah scan. Kalau harga pembukaan sudah di atas target atau di bawah batas rugi, rencana <b>dilewati</b>. Kalau harga sepanjang hari tidak turun ke harga beli, rencana <b>tidak terbeli</b>. Keduanya tidak dihitung sebagai transaksi.',
+  'Kalau terbeli, harganya adalah harga pembukaan atau harga beli, mana yang lebih rendah. Sejak hari itu, menyentuh target berarti <b>kena target</b>, menyentuh batas rugi berarti <b>kena cut loss</b>; keduanya di hari yang sama dihitung cut loss.',
+  'Harga beli, batas rugi, dan target sama persis dengan kartu Rencana hari ini (sudah dibulatkan ke fraksi harga BEI). Jumlah lot memakai modal Rp100 juta: rugi maksimal 1% modal, satu saham paling banyak 20% modal. Tiap rencana dihitung sendiri-sendiri, tanpa batas kas bersama.',
+  'Hasil rupiah dan rata-rata sudah dipotong perkiraan biaya broker (0,15% beli, 0,25% jual).',
+  '<b>Aturan lulus:</b> minimal 30 transaksi selesai, dan rata-rata hasil setelah biaya di atas nol.',
+]
+const ATURAN_CRYPTO = [
+  'Setiap koin yang lolos menjadi satu pilihan, dibuka pada harga penutupan hari scan. Selama masih terbuka, koin itu tidak dihitung lagi.',
+  '<b>Target</b> adalah target rencana analisa (maksimal +10%). <b>Cut loss</b> adalah stop analisa yang dijepit ke 5–10% di bawah harga masuk. Keduanya di hari yang sama dihitung cut loss.',
+  'Pilihan yang masih terbuka dinilai dari harga penutupan terakhir.',
+]
+
+function simulasi(s) {
+  const bagian = Math.min(1, s.selesai / 30)
+  const rata = s.rataBersih == null ? '—' : pct(s.rataBersih)
+  const kel = (judul, k) => `<div><h3>${judul}</h3>
+    <p><b>${k.n}</b> transaksi selesai</p>
+    <p>Kena target <b>${k.n ? Math.round(k.target / k.n * 100) + '%' : '—'}</b></p>
+    <p>Rata-rata setelah biaya <b class="${signCls(k.rataBersih ?? 0)}">${k.rataBersih == null ? '—' : pct(k.rataBersih)}</b></p></div>`
+  return `<div class="sim-utama">
+      <div class="vonis ${s.status}">${VONIS[s.status]}</div>
+      <div class="kemajuan" role="img" aria-label="${s.selesai} dari 30 transaksi"><span style="width:${(bagian * 100).toFixed(0)}%"></span></div>
+      <p>${s.selesai} dari 30 transaksi selesai, rata-rata ${rata} per transaksi setelah biaya. ${s.status === 'kurang-data' ? 'Simulasi baru bisa dinilai setelah 30 transaksi.' : s.status === 'lulus' ? 'Rata-ratanya positif: boleh mulai mempertimbangkan uang betulan dalam jumlah kecil.' : 'Rata-ratanya belum positif: tetap latihan dengan uang simulasi.'}</p>
+      <dl class="sim-angka">
+        <div><dt>Hasil modal Rp100 juta</dt><dd class="${signCls(s.totalRp)}">${rpRingkas(s.totalRp)}</dd></div>
+        <div><dt>Rata-rata per transaksi</dt><dd class="${signCls(s.rataBersih ?? 0)}">${rata}</dd></div>
+        <div><dt>Dilewati</dt><dd>${s.dilewati}</dd></div>
+        <div><dt>Tidak terbeli</dt><dd>${s.tidakTerbeli}</dd></div>
+      </dl>
+      <p>Hasil rupiah termasuk posisi yang masih terbuka, dinilai di harga penutupan terakhir.</p>
+    </div>
+    <div class="banding">${kel('Bersih', s.perLabel.bersih)}${kel('Hati-hati', s.perLabel['hati-hati'])}${s.perLabel['tanpa-label'].n ? kel('Tanpa label', s.perLabel['tanpa-label']) : ''}</div>`
 }
 
 function render() {
   const q = $('cari').value.trim().toLowerCase()
   const match = (h) => !q || h.code.toLowerCase().includes(q) || h.name.toLowerCase().includes(q)
   const r = pasar.ringkasan
+  const idx = !!pasar.simulasi
 
   $('tabs').innerHTML = DATA.pasar.map((p) =>
     `<button role="tab" aria-selected="${p.id === pasar.id}" data-id="${p.id}">${esc(p.label)}</button>`).join('')
 
   $('banners').innerHTML = pasar.gagal.length
-    ? `<div class="banner warn">Harga ${pasar.gagal.length} emiten tidak bisa diambil di run ini, jadi pilihannya dinilai dari data seadanya: ${pasar.gagal.map(esc).join(', ')}.</div>`
+    ? `<div class="banner warn">Harga ${pasar.gagal.length} emiten tidak bisa diambil di run ini, jadi rencananya dinilai dari data seadanya: ${pasar.gagal.map(esc).join(', ')}.</div>`
     : ''
 
+  $('sim').hidden = !idx
+  if (idx) $('sim').innerHTML = simulasi(pasar.simulasi)
+
   const benarPct = r.dinilai ? Math.round((r.benar / r.dinilai) * 100) + '%' : '—'
-  const belum = r.total - r.dinilai
   $('stats').innerHTML = [
-    ['', r.total, 'pilihan'],
+    ['', r.total, idx ? 'rencana tercatat' : 'pilihan'],
     ['up', r.target, 'kena target'],
     ['down', r.cut, 'kena cut loss'],
-    ['', r.open, 'masih terbuka'],
-    [!r.dinilai ? '' : r.benar / r.dinilai >= 0.5 ? 'up' : 'down', benarPct,
-      `benar (naik) — ${r.benar} dari ${r.dinilai}${belum ? `; ${belum} belum ada hari bursa sejak scan` : ''}`],
-    [r.avgReturn > 0 ? 'up' : r.avgReturn < 0 ? 'down' : '', r.dinilai ? pct(r.avgReturn) : '—', 'rata-rata return per pilihan'],
+    ['', r.open, 'masih berjalan'],
+    [!r.dinilai ? '' : r.benar / r.dinilai >= 0.5 ? 'up' : 'down', benarPct, `naik dari harga masuk (${r.benar} dari ${r.dinilai})`],
   ].map(([cls, v, label]) => `<div class="stat ${cls}"><b>${v}</b><span>${label}</span></div>`).join('')
 
+  $('aturan').innerHTML = (idx ? ATURAN_IDX : ATURAN_CRYPTO).map((t) => `<li>${t}</li>`).join('')
+
+  const masuk = (h) => h.isi ?? h.entry
+  const kolomTerbuka = ['Emiten', ...(idx ? ['Label'] : []), 'Tgl scan', 'Masuk', 'Target', 'Cut loss', 'Terakhir', 'Return', ...(idx ? ['Lot', 'Rupiah'] : []), 'Posisi', 'Hari']
+  $('h-terbuka').innerHTML = kolomTerbuka.map((k) => `<th class="${['Masuk', 'Target', 'Cut loss', 'Terakhir', 'Return', 'Lot', 'Rupiah', 'Hari'].includes(k) ? 'n' : ''}">${k}</th>`).join('')
   const open = pasar.picks.filter((h) => h.status === 'open' && match(h))
   $('terbuka').innerHTML = open.length
     ? open.map((h) => `<tr>
-        <td class="full">${emiten(h)}</td><td data-l="Tgl scan">${tgl(h.date)}</td>
-        <td class="n" data-l="Entry">${price(h.entry)}</td><td class="n" data-l="Target">${price(h.target)}</td><td class="n" data-l="Cut loss">${price(h.cut)}</td>
+        <td class="full">${emiten(h)}</td>${idx ? `<td data-l="Label">${labelBadge(h)}</td>` : ''}<td data-l="Tgl scan">${tgl(h.date)}</td>
+        <td class="n" data-l="Masuk">${h.isi == null && idx ? '<span class="mut">menunggu</span>' : price(masuk(h))}</td><td class="n" data-l="Target">${price(h.target)}</td><td class="n" data-l="Cut loss">${price(h.cut)}</td>
         <td class="n" data-l="Terakhir">${h.last ? price(h.last.close) : '—'}</td>
         <td class="n ${signCls(h.ret)}" data-l="Return">${pct(h.ret)}</td>
-        <td class="full">${meter(h)}</td><td class="n" data-l="Hari">${h.days}</td></tr>`).join('')
-    : `<tr><td colspan="9" class="empty">${q ? 'Tidak ada yang cocok.' : 'Belum ada pilihan terbuka.'}</td></tr>`
+        ${idx ? `<td class="n" data-l="Lot">${h.sim ? h.sim.lot : '—'}</td><td class="n ${signCls(h.sim?.rp ?? 0)}" data-l="Rupiah">${h.sim ? rpRingkas(h.sim.rp) : '—'}</td>` : ''}
+        <td class="full">${h.isi == null && idx ? '<small class="mut">Menunggu hari bursa berikutnya</small>' : meter(h)}</td><td class="n" data-l="Hari">${h.days}</td></tr>`).join('')
+    : `<tr><td colspan="${kolomTerbuka.length}" class="empty">${q ? 'Tidak ada yang cocok.' : 'Belum ada rencana yang berjalan.'}</td></tr>`
 
+  const kolomSelesai = ['Emiten', ...(idx ? ['Label'] : []), 'Tgl scan', 'Masuk', 'Hasil', 'Tgl selesai', 'Keluar', 'Return', ...(idx ? ['Rupiah'] : []), 'Hari']
+  $('h-selesai').innerHTML = kolomSelesai.map((k) => `<th class="${['Masuk', 'Keluar', 'Return', 'Rupiah', 'Hari'].includes(k) ? 'n' : ''}">${k}</th>`).join('')
   const done = pasar.picks.filter((h) => h.status !== 'open' && match(h))
     .sort((a, b) => b.settled.localeCompare(a.settled))
   $('selesai').innerHTML = done.length
-    ? done.map((h) => `<tr>
-        <td class="full">${emiten(h)}</td><td data-l="Tgl scan">${tgl(h.date)}</td><td class="n" data-l="Entry">${price(h.entry)}</td>
-        <td data-l="Hasil"><span class="badge ${h.status}">${h.status === 'target' ? 'Kena target' : 'Kena cut loss'}</span></td>
-        <td data-l="Tgl selesai">${tgl(h.settled)}</td><td class="n" data-l="Keluar">${price(h.exit)}</td>
-        <td class="n ${signCls(h.ret)}" data-l="Return">${pct(h.ret)}</td><td class="n" data-l="Hari">${h.days}</td></tr>`).join('')
-    : `<tr><td colspan="8" class="empty">${q ? 'Tidak ada yang cocok.' : 'Belum ada pilihan yang selesai.'}</td></tr>`
+    ? done.map((h) => {
+        const [cls, teks] = STATUS[h.status]
+        const batal = cls === 'batal'
+        return `<tr>
+        <td class="full">${emiten(h)}</td>${idx ? `<td data-l="Label">${labelBadge(h)}</td>` : ''}<td data-l="Tgl scan">${tgl(h.date)}</td><td class="n" data-l="Masuk">${batal ? '—' : price(masuk(h))}</td>
+        <td data-l="Hasil"><span class="badge ${cls}">${teks}</span></td>
+        <td data-l="Tgl selesai">${tgl(h.settled)}</td><td class="n" data-l="Keluar">${batal ? '—' : price(h.exit)}</td>
+        <td class="n ${signCls(h.ret)}" data-l="Return">${batal ? '—' : pct(h.ret)}</td>
+        ${idx ? `<td class="n ${signCls(h.sim?.rp ?? 0)}" data-l="Rupiah">${h.sim ? rpRingkas(h.sim.rp) : '—'}</td>` : ''}<td class="n" data-l="Hari">${h.days}</td></tr>`
+      }).join('')
+    : `<tr><td colspan="${kolomSelesai.length}" class="empty">${q ? 'Tidak ada yang cocok.' : 'Belum ada rencana yang selesai.'}</td></tr>`
 }
 
 $('dibuat').textContent = DATA.dibuat

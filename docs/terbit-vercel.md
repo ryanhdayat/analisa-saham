@@ -17,7 +17,8 @@ One GitHub Actions run per day, `.github/workflows/terbit.yml`, at 07:15 WIB
    never publishes.
 2. Restore the track record from the `data` branch into `report/`.
 3. `deploy/vercel/rakit.sh` scans IDX, scans crypto, scores the track record,
-   and assembles a static site plus `vercel.json` in `situs/`.
+   generates the landing page (`src/beranda.ts`), and assembles a static site
+   plus `vercel.json` in `situs/`.
 4. Commit the new `report/pilihan-*.json` and `report/terbit-*.txt` to `data`.
 5. Force-push `situs/` as a single orphan commit to `site`. Vercel deploys it to
    production.
@@ -75,3 +76,21 @@ cannot touch the track record.
 - Domain `saham.ryanhdayat.biz.id` on the project, plus a
   `CNAME saham → cname.vercel-dns.com` record at the DNS provider of
   `ryanhdayat.biz.id`.
+
+## What the pages show
+
+All four pages share one theme and nav (`src/output/tema.ts`). Each section page
+shows its data date and a "data mungkin basi" badge when the data is older than
+expected at the time it is viewed. The check counts weekdays only, so a badge
+can show on an exchange holiday.
+
+- **`/idx/` Rencana hari ini:** every IDX ticker that passed the gate, with buy
+  price, lots, cut loss, and target (`src/rencana/rencana.ts`), plus a plain-language
+  risk label (`src/rencana/catatan.ts`). Capital defaults to Rp100 juta. The
+  visitor can change it, and the value is stored in their browser only. The full
+  screener table is in a collapsed section below.
+- **`/hasil/` Hasil simulasi:** IDX picks are judged as a Buy limit placed the
+  morning after the scan (`judgeIdx` in `src/hasil/nilai.ts`). It shows the
+  Rp100 juta simulation and the pass rule: 30 finished trades, mean return after
+  fees above zero (`src/rencana/simulasi.ts`). Results are split into clean,
+  caution, and unlabeled picks. Crypto keeps the old percent-based judging.

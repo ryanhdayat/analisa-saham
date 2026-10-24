@@ -4,43 +4,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>/*__TITLE__*/</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<!--__FONT__-->
 <style>
-/* Layout: trading-desk screener — summary strip, filter bar, dense sortable table; a ticker opens a side drawer (full screen on phones) with chart + metric evidence. */
-:root {
-  --bg: #eef1f4; --surface: #ffffff; --sunk: #f6f8fa; --ink: #15202b; --muted: #5a6876; --line: #d9e0e7;
-  --accent: #0d6670; --accent-soft: #dcefef;
-  --up: #12805c; --up-soft: #ddf1e8; --down: #c0392b; --down-soft: #f8e1de; --warn: #a56a12; --warn-soft: #f6ead3;
-  --ma20: #c27c0e; --ma50: #2f6fd0; --ma200: #8a4fbf;
-  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
-  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
-  --accent: #56b8c0; --accent-soft: #163338;
-  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
-  --ma20: #e0a23a; --ma50: #6ea2f0; --ma200: #b88ae6; color-scheme: dark; } }
-:root[data-theme="dark"] {
-  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
-  --accent: #56b8c0; --accent-soft: #163338;
-  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
-  --ma20: #e0a23a; --ma50: #6ea2f0; --ma200: #b88ae6; color-scheme: dark; }
-
-* { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
-.wrap { max-width: 1480px; margin: 0 auto; padding-block: 20px 48px;
+/* Layout: halaman pemula. Atas: rencana hari ini (kartu di HP, baris tabel di laptop), tiap kartu dengan
+   tangga harga jual-rugi / beli / jual-untung. Bawah, terlipat: cara memasang di Stockbit, dan seluruh tabel
+   screening lama. Kode emiten membuka laci: ringkasan awam dulu, grafik, lalu detail teknis terlipat. */
+/*__TEMA__*/
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 18px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: grid; gap: 16px; }
-.num, td.n { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
-
-header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
-.eyebrow { font: 600 11px/1 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-h1 { font-family: var(--font-display); font-stretch: 80%; font-weight: 800; font-size: clamp(26px, 4vw, 38px); line-height: 1; margin: 6px 0 0; letter-spacing: -.01em; text-wrap: balance; }
+  display: grid; gap: 20px; }
 .stats { display: flex; flex-wrap: wrap; gap: 8px 28px; }
-.stat b { display: block; font: 600 22px/1.1 var(--font-data); font-variant-numeric: tabular-nums; }
+.stat b { display: block; font: 700 24px/1.1 var(--font-display); font-stretch: 85%; font-variant-numeric: tabular-nums; }
 .stat span { font-size: 12px; color: var(--muted); }
 .stat.pass b { color: var(--up); }
 
@@ -55,25 +29,23 @@ h1 { font-family: var(--font-display); font-stretch: 80%; font-weight: 800; font
 .tabs button { border: 0; background: none; padding: 8px 14px; font: 500 13px var(--font-body); color: var(--muted); cursor: pointer; }
 .tabs button + button { border-left: 1px solid var(--line); }
 .tabs button[aria-selected="true"] { background: var(--accent); color: var(--surface); }
-.tabs button .c { font-family: var(--font-data); margin-left: 4px; opacity: .8; }
+.tabs button .c { margin-left: 4px; opacity: .8; font-variant-numeric: tabular-nums; }
 input[type=search], select { font: 13px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; }
 input[type=search] { width: 200px; max-width: 100%; }
 label.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; }
-button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, th:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .count { font-size: 12px; color: var(--muted); margin-left: auto; }
 
 .tablebox { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; min-width: 1180px; }
 th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
-th { position: sticky; top: 0; background: var(--sunk); font: 600 11px var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); cursor: pointer; user-select: none; z-index: 1; }
+th { position: sticky; top: 0; background: var(--sunk); font: 600 12.5px var(--font-body); color: var(--muted); cursor: pointer; user-select: none; z-index: 1; }
 th[aria-sort="ascending"]::after { content: " ▲"; } th[aria-sort="descending"]::after { content: " ▼"; }
 td.n, th.n { text-align: right; }
 tbody tr:hover { background: var(--sunk); }
 tbody tr:last-child td { border-bottom: 0; }
-.code { font: 600 14px var(--font-data); color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent); text-underline-offset: 3px; }
+.code { font: 700 15px var(--font-display); font-stretch: 85%; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent); text-underline-offset: 3px; }
 .code:hover { text-decoration-color: var(--accent); }
 .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
-.up { color: var(--up); } .down { color: var(--down); } .mut { color: var(--muted); }
 .pill { display: inline-block; padding: 1px 7px; border-radius: 99px; font: 500 11.5px/1.6 var(--font-body); background: var(--sunk); border: 1px solid var(--line); color: var(--ink); }
 .pill.good { background: var(--up-soft); border-color: transparent; color: var(--up); }
 .pill.bad { background: var(--down-soft); border-color: transparent; color: var(--down); }
@@ -93,7 +65,7 @@ aside.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 1
   padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
 .dhead { position: sticky; top: 0; background: var(--surface); border-bottom: 1px solid var(--line); padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; z-index: 2; }
 .dhead h2 { margin: 0; font: 800 28px/1 var(--font-display); font-stretch: 80%; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
-.dhead h2 .px { font: 600 18px var(--font-data); }
+.dhead h2 .px { font: 600 18px var(--font-body); font-variant-numeric: tabular-nums; }
 .dhead .sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
 .dhead .x { margin-left: auto; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 7px; width: 34px; height: 34px; font-size: 18px; cursor: pointer; flex: none; }
 .nav { display: flex; gap: 6px; margin-top: 8px; }
@@ -101,8 +73,8 @@ aside.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 1
 .dbody { padding: 16px 18px 32px; display: grid; gap: 16px; }
 .planbox { display: flex; flex-wrap: wrap; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .planbox div { background: var(--surface); padding: 10px 12px; flex: 1 1 100px; }
-.planbox span { display: block; font: 600 10.5px var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.planbox b { font: 600 17px var(--font-data); font-variant-numeric: tabular-nums; }
+.planbox span { display: block; font-size: 12.5px; color: var(--muted); }
+.planbox b { font: 700 19px var(--font-display); font-stretch: 85%; font-variant-numeric: tabular-nums; }
 .planbox small { display: block; font: 12px var(--font-data); color: var(--muted); }
 .reason { padding: 10px 12px; border-radius: 8px; background: var(--down-soft); color: var(--ink); font-size: 13px; display: grid; gap: 4px; }
 .reason.ok { background: var(--up-soft); }
@@ -115,48 +87,134 @@ aside.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 1
 .metric { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
 .metric.na { background: var(--sunk); }
 .mh { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.mh h3 { margin: 0; font: 600 11.5px var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.mh h3 { margin: 0; font: 600 14px var(--font-body); color: var(--ink); }
 .verdict { font-size: 14.5px; font-weight: 500; }
 .metric ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 12.5px; color: var(--muted); }
 .metric details summary { font-size: 12px; color: var(--accent); cursor: pointer; }
 .loading { color: var(--muted); padding: 30px 0; text-align: center; }
 @media (max-width: 640px) { .dhead h2 { font-size: 24px; } .count { margin-left: 0; width: 100%; } }
 @media (prefers-reduced-motion: no-preference) { aside.drawer { animation: slide .18s ease-out; } @keyframes slide { from { transform: translateX(24px); opacity: .6; } } }
+
+/* rencana hari ini */
+.rencana { display: grid; gap: 14px; }
+.modal-baris { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.modal-baris label { font-weight: 600; }
+.rp-input { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
+.rp-input input { border: 0; background: none; color: var(--ink); font: 600 16px var(--font-body); font-variant-numeric: tabular-nums; width: 9.5em; outline: none; }
+.rp-input:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+#modal-ket { color: var(--muted); font-size: 13.5px; }
+#modal-ket.salah { color: var(--warn); }
+.kartu-daftar { display: grid; gap: 12px; }
+.kartu { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px 16px; display: grid; gap: 12px; }
+.kartu.hati { border-left: 4px solid var(--warn); }
+.kartu.bersih { border-left: 4px solid var(--up); }
+.k-atas { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.k-kode { font: 800 26px/1 var(--font-display); font-stretch: 80%; letter-spacing: -.01em; }
+.k-nama { color: var(--muted); font-size: 13.5px; flex: 1 1 12em; min-width: 0; }
+.label-r { font-size: 13px; font-weight: 600; padding: 2px 10px; border-radius: 99px; }
+.label-r.bersih { background: var(--up-soft); color: var(--up); }
+.label-r.hati { background: var(--warn-soft); color: var(--warn); }
+.alasan { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+/* tangga harga: merah dari jual-rugi ke beli, hijau dari beli ke jual-untung, panjangnya sebanding jarak harga */
+.tangga { display: grid; gap: 6px; }
+.tangga .batang { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: var(--sunk); }
+.tangga .rugi { background: var(--down); }
+.tangga .untung { background: var(--up); }
+.tangga .titik { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tangga .titik b { color: var(--ink); font-weight: 600; }
+.angka { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.angka div { min-width: 0; }
+.angka dt { font-size: 13px; color: var(--muted); }
+.angka dd { margin: 0; font: 700 21px/1.15 var(--font-display); font-stretch: 85%; font-variant-numeric: tabular-nums; }
+.angka dd small { display: block; font: 400 13px var(--font-body); color: var(--muted); }
+.k-aksi { justify-self: start; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 8px 14px; font: 500 14px var(--font-body); cursor: pointer; }
+.k-aksi:hover { border-color: var(--accent); color: var(--accent); }
+.kosong { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius); padding: 22px 18px; color: var(--muted); }
+.kosong b { color: var(--ink); display: block; font-size: 16px; margin-bottom: 4px; }
+.catatan-sim { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 72ch; }
+@media (min-width: 760px) {
+  .kartu { grid-template-columns: minmax(170px, 1.1fr) minmax(220px, 1.4fr) minmax(320px, 2fr) auto; align-items: center; gap: 12px 20px; }
+  .k-atas { flex-direction: column; align-items: flex-start; }
+  .k-nama { flex: none; }
+  .angka { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .angka dd { font-size: 19px; }
+}
+/* bagian terlipat */
+details.lipat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+details.lipat > summary { cursor: pointer; padding: 14px 16px; font: 700 18px var(--font-display); font-stretch: 85%; list-style-position: inside; }
+details.lipat > summary .mut { font: 400 14px var(--font-body); margin-left: 6px; }
+details.lipat > .isi { padding: 0 16px 16px; display: grid; gap: 14px; }
+details.lipat ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; max-width: 72ch; }
+/* ringkasan awam di laci */
+.awam { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 12px; }
+.awam h3 { margin: 0; font: 700 18px var(--font-display); font-stretch: 85%; }
+.awam ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+details.teknis > summary { cursor: pointer; font-weight: 600; padding: 6px 0; color: var(--accent); }
+details.teknis > .isi { display: grid; gap: 16px; padding-top: 8px; }
 </style>
 
-<div class="wrap">
-  <header class="top">
-    <div>
-      <div class="eyebrow" id="eyebrow">Screener watchlist · analisa-saham</div>
-      <h1 id="title">Screening</h1>
-    </div>
-    <div class="stats" id="stats"></div>
+<!--__NAV__-->
+<main class="wrap">
+  <header class="kepala">
+    <h1 id="judul">Rencana hari ini</h1>
+    <div class="status" id="status"></div>
   </header>
-  <div class="banners" id="banners"></div>
 
-  <div class="bar">
-    <div class="tabs" role="tablist" id="tabs">
-      <button role="tab" data-tab="lolos" aria-selected="true">Lolos<span class="c" id="c-lolos"></span></button>
-      <button role="tab" data-tab="tersaring" aria-selected="false">Tersaring<span class="c" id="c-tersaring"></span></button>
-      <button role="tab" data-tab="semua" aria-selected="false">Semua<span class="c" id="c-semua"></span></button>
+  <section class="rencana" id="rencana" hidden aria-labelledby="judul">
+    <div class="modal-baris">
+      <label for="modal">Modal simulasi</label>
+      <span class="rp-input">Rp <input id="modal" inputmode="numeric" autocomplete="off" aria-describedby="modal-ket"></span>
+      <span id="modal-ket"></span>
     </div>
-    <input type="search" id="q" placeholder="Cari kode / nama" aria-label="Cari kode atau nama emiten">
-    <select id="fase" aria-label="Filter fase"><option value="">Semua fase</option></select>
-    <select id="wyck" aria-label="Filter Wyckoff"><option value="">Semua Wyckoff</option></select>
-    <label class="chk"><input type="checkbox" id="clean"> Tanpa peringatan</label>
-    <label class="chk"><input type="checkbox" id="liquid"> Likuid saja</label>
-    <span class="count" id="count"></span>
-  </div>
+    <div class="kartu-daftar" id="kartu"></div>
+    <p class="catatan-sim">Ini masa simulasi: pasang di Stockbit Virtual Trading, bukan dengan uang betulan. Angka di sini hasil hitungan otomatis dari data harga kemarin, bukan perintah beli. Rugi dan untung sudah dipotong perkiraan biaya broker.</p>
+  </section>
 
-  <div class="tablebox"><table id="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
+  <details class="lipat" id="cara" hidden>
+    <summary>Cara memasang di Stockbit Virtual Trading</summary>
+    <div class="isi">
+      <ol>
+        <li>Pagi sebelum 09.00 WIB, pasang <b>Buy limit</b> di harga "Beli di" dengan jumlah lot yang tertera.</li>
+        <li>Kalau harga pembukaan sudah di atas "Jual untung" atau di bawah "Jual rugi", <b>lewati</b>. Jangan dikejar.</li>
+        <li>Lihat sekilas orderbook: antrean beli tidak tipis, dan antrean jual tidak menumpuk tepat di atas harga beli.</li>
+        <li>Setelah terbeli, jual begitu harga menyentuh "Jual rugi" atau "Jual untung", mana yang lebih dulu.</li>
+      </ol>
+      <p class="catatan-sim">Halaman Hasil mensimulasikan aturan yang sama untuk setiap rencana, jadi hasil latihanmu bisa dibandingkan dengan hitungan otomatis.</p>
+    </div>
+  </details>
 
-  <p class="foot">ENTRY adalah harga penutupan terakhir: titik acuan, bukan anjuran masuk. STOP = support terdekat dikurangi 0,5×ATR; TARGET = resistance terdekat. Wyckoff dan VPA adalah tafsir heuristik dan tidak ikut memeringkat. <span class="num">n/a</span> berarti datanya tidak ada, bukan nol. Penyaringan teknikal, bukan nasihat investasi.</p>
-</div>
+  <details class="lipat" id="semua-bagian">
+    <summary>Semua hasil screening<span class="mut" id="ringkas"></span></summary>
+    <div class="isi">
+      <div class="stats" id="stats"></div>
+      <div class="banners" id="banners"></div>
+
+      <div class="bar">
+        <div class="tabs" role="tablist" id="tabs">
+          <button role="tab" data-tab="lolos" aria-selected="true">Lolos<span class="c" id="c-lolos"></span></button>
+          <button role="tab" data-tab="tersaring" aria-selected="false">Tersaring<span class="c" id="c-tersaring"></span></button>
+          <button role="tab" data-tab="semua" aria-selected="false">Semua<span class="c" id="c-semua"></span></button>
+        </div>
+        <input type="search" id="q" placeholder="Cari kode atau nama" aria-label="Cari kode atau nama emiten">
+        <select id="fase" aria-label="Filter fase"><option value="">Semua fase</option></select>
+        <select id="wyck" aria-label="Filter Wyckoff"><option value="">Semua Wyckoff</option></select>
+        <label class="chk"><input type="checkbox" id="clean"> Tanpa peringatan</label>
+        <label class="chk"><input type="checkbox" id="liquid"> Likuid saja</label>
+        <span class="count" id="count"></span>
+      </div>
+
+      <div class="tablebox"><table id="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
+
+      <p class="foot">ENTRY adalah harga penutupan terakhir. STOP adalah support terdekat dikurangi 0,5×ATR; TARGET adalah resistance terdekat. Wyckoff dan VPA adalah tafsir heuristik dan tidak ikut memeringkat. <span class="num">n/a</span> berarti datanya tidak ada, bukan nol. Penyaringan teknikal, bukan nasihat investasi.</p>
+    </div>
+  </details>
+</main>
 
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="Detail emiten"></aside>
 
 <script>
+/*__BASI__*/
 const ROWS = /*__ROWS__*/[];
 const META = /*__META__*/{};
 
@@ -171,27 +229,129 @@ const BAD_WY = new Set(['distribusi', 'markdown']);
 ROWS.forEach(r => {
   r.pass = r.GERBANG === 'lolos';
   // Catatan risiko disusun di screener.ts (catatan()), bukan di sini.
-  r.flags = r.CATATAN || [];
+  r.flags = (r.CATATAN || []).map(c => [c.teknis, c.kind]);
   r.risk = r.ENTRY && r.STOP ? (r.ENTRY - r.STOP) / r.ENTRY * 100 : null;
   r.reward = r.ENTRY && r.TARGET ? (r.TARGET - r.ENTRY) / r.ENTRY * 100 : null;
   r.liquid = !/TIDAK LIKUID/.test(r.GERBANG || '');
 });
 
-/* header */
+/* kepala */
+const IDX = META.exchange === 'IDX';
 const passN = ROWS.filter(r => r.pass).length;
-const date = new Date(META.tanggal + 'T00:00:00');
-$('#eyebrow').textContent = `Screener watchlist ${META.exchange} · analisa-saham`;
-$('#title').textContent = 'Screening ' + date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+const tglPanjang = d => new Date(d + 'T00:00:00Z').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+$('#judul').textContent = IDX ? 'Rencana hari ini' : 'Screener crypto';
+function tulisStatus(terbit) {
+  const basi = dataBasi(META.tanggal, IDX ? 'idx' : 'crypto', new Date());
+  $('#status').innerHTML = [
+    `<span>Data ${IDX ? 'penutupan' : 'candle'} ${esc(tglPanjang(META.tanggal))}, terbit ${esc(terbit)}</span>`,
+    IDX ? '<span class="lencana simulasi">Masa simulasi</span>' : '',
+    basi ? `<span class="lencana basi">Data mungkin basi${IDX ? ' (bisa karena libur bursa)' : ''}</span>` : '',
+    META.draft ? '<span class="lencana basi">Draft: bursa masih buka, angka hari ini belum final</span>' : '',
+  ].join('');
+}
+tulisStatus(META.dibuat);
+fetch('terbit.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(t => {
+  if (t && t.diterbitkan) tulisStatus(new Date(t.diterbitkan).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB');
+}).catch(() => {});
+
 $('#stats').innerHTML = [
-  [ROWS.length, 'emiten dianalisis'], [passN, 'lolos gerbang', 'pass'],
-  [ROWS.filter(r => r.pass && !r.flags.length).length, 'lolos tanpa peringatan'],
-  [ROWS.filter(r => !r.liquid).length, 'tidak likuid']
+  [ROWS.length, 'emiten diperiksa'], [passN, 'lolos syarat', 'pass'],
+  [ROWS.filter(r => r.pass && !r.flags.length).length, 'lolos tanpa catatan'],
+  [ROWS.filter(r => !r.liquid).length, 'terlalu sepi transaksi']
 ].map(([v, l, c]) => `<div class="stat ${c || ''}"><b>${nf(v)}</b><span>${l}</span></div>`).join('');
+$('#ringkas').textContent = ` ${nf(ROWS.length)} emiten, ${nf(passN)} lolos`;
 const bn = [];
-if (META.draft) bn.push(`<div class="banner warn"><b>Draft dari bar intraday.</b> Dijalankan ${esc(META.dibuat)} saat bursa masih buka; volume hari ini belum lengkap, jadi RVOL, baca volume, dan sinyal VPA bertanggal hari ini belum final.</div>`);
-if (META.degraded) bn.push(`<div class="banner info"><b>Peringkat terdegradasi.</b> ${META.alasanDegradasi ? esc(META.alasanDegradasi) + ' ' : ''}SKOR hanya dari ${esc(META.used)}; jangan bandingkan dengan run yang memakai kolom lebih lengkap.</div>`);
-bn.push(`<div class="banner info">Gerbang: ${esc(META.gerbang)}. Klik kode emiten untuk melihat grafik, level, dan bukti tiap metrik.</div>`);
+if (META.draft) bn.push(`<div class="banner warn"><b>Draft dari data yang belum final.</b> Dibuat ${esc(META.dibuat)} saat bursa masih buka; volume hari ini belum lengkap.</div>`);
+if (META.degraded) bn.push(`<div class="banner info"><b>Sebagian data tambahan tidak dipakai.</b> ${META.alasanDegradasi ? esc(META.alasanDegradasi) + ' ' : ''}Skor hanya dihitung dari ${esc(META.used)}, jadi jangan dibandingkan dengan hari yang datanya lebih lengkap.</div>`);
+bn.push(`<div class="banner info"><b>Syarat lolos:</b> ${esc(META.gerbang)}. Klik kode emiten untuk grafik, level harga, dan bukti tiap metrik.</div>`);
 $('#banners').innerHTML = bn.join('');
+
+/* rencana hari ini */
+/*<BIAYA>*/ const BIAYA = { beli: 0.0015, jual: 0.0025 }; /*</BIAYA>*/
+// Salinan hitungLot dari src/rencana/rencana.ts — dites sama persis di screener-rencana.test.ts.
+/*<hitungLot>*/
+function hitungLot(beli, jualRugi, modal) {
+  if (!Number.isFinite(modal) || modal <= 0 || !(beli > jualRugi)) return 0
+  const lotRisiko = Math.floor((modal * 0.01) / ((beli - jualRugi) * 100))
+  const lotBatas = Math.floor((modal * 0.2) / (beli * 100))
+  return Math.max(0, Math.min(lotRisiko, lotBatas))
+}
+/*</hitungLot>*/
+const rp = v => {
+  const a = Math.abs(v), t = v < 0 ? '−' : v > 0 ? '+' : '';
+  if (a >= 1e6) return `${t}Rp${(a / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 2 })} jt`;
+  return `${t}Rp${Math.round(a / 1e3).toLocaleString('id-ID')} rb`;
+};
+const persen = (dari, ke) => { const x = (ke - dari) / dari * 100; return (x > 0 ? '+' : '−') + Math.abs(x).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '%'; };
+const hasilRp = (beli, jual, lot) => lot * 100 * (jual - beli) - lot * 100 * (beli * BIAYA.beli + jual * BIAYA.jual);
+const RENCANA = ROWS.filter(r => r.RENCANA)
+  .sort((a, b) => (a.LABEL === 'bersih' ? 0 : 1) - (b.LABEL === 'bersih' ? 0 : 1) || (b.SKOR ?? -1) - (a.SKOR ?? -1));
+
+function kartu(r, modal) {
+  const p = r.RENCANA, lot = hitungLot(p.beli, p.jualRugi, modal);
+  const bersih = r.LABEL === 'bersih';
+  const jarakRugi = p.beli - p.jualRugi, jarakUntung = Math.max(0, p.jualUntung - p.beli);
+  const lebar = x => (x / (jarakRugi + jarakUntung) * 100).toFixed(1) + '%';
+  const alasan = bersih ? '' : `<ul class="alasan">${r.CATATAN.map(c => `<li>${esc(c.awam)}</li>`).join('')}</ul>`;
+  const jumlah = lot > 0
+    ? `${nf(lot)} lot<small>${rp(lot * 100 * p.beli).replace('+', '')}</small>`
+    : `—<small>modal terlalu kecil untuk saham ini</small>`;
+  return `<article class="kartu ${bersih ? 'bersih' : 'hati'}">
+    <div class="k-atas">
+      <span class="k-kode">${esc(r.KODE)}</span>
+      <span class="label-r ${bersih ? 'bersih' : 'hati'}">${bersih ? 'Bersih' : 'Hati-hati'}</span>
+      <span class="k-nama">${esc(r.NAMA)}</span>
+      ${alasan}
+    </div>
+    <div class="tangga" aria-label="Jual rugi ${nf(p.jualRugi)}, beli ${nf(p.beli)}, jual untung ${nf(p.jualUntung)}">
+      <div class="batang"><span class="rugi" style="width:${lebar(jarakRugi)}"></span><span class="untung" style="width:${lebar(jarakUntung)}"></span></div>
+      <div class="titik"><span>Rugi <b>${nf(p.jualRugi)}</b></span><span>Beli <b>${nf(p.beli)}</b></span><span>Untung <b>${nf(p.jualUntung)}</b></span></div>
+    </div>
+    <dl class="angka">
+      <div><dt>Beli di</dt><dd>${nf(p.beli)}<small>Buy limit</small></dd></div>
+      <div><dt>Jumlah</dt><dd>${jumlah}</dd></div>
+      <div><dt>Jual rugi di</dt><dd class="down">${nf(p.jualRugi)}<small>${persen(p.beli, p.jualRugi)}${lot > 0 ? ', ' + rp(hasilRp(p.beli, p.jualRugi, lot)) : ''}</small></dd></div>
+      <div><dt>Jual untung di</dt><dd class="up">${nf(p.jualUntung)}<small>${persen(p.beli, p.jualUntung)}${lot > 0 ? ', ' + rp(hasilRp(p.beli, p.jualUntung, lot)) : ''}</small></dd></div>
+    </dl>
+    <button class="k-aksi" data-code="${esc(r.KODE)}">Lihat grafik dan alasan</button>
+  </article>`;
+}
+
+// Format rupiah: titik ribuan, koma desimal (dibuang). NaN kalau kosong atau di luar akal (> Rp1 triliun).
+/*<bacaModal>*/
+function bacaModal(v) {
+  const angka = String(v).split(',')[0].replace(/[^\d]/g, '')
+  const n = angka ? Number(angka) : NaN
+  return Number.isFinite(n) && n > 0 && n <= 1e12 ? n : NaN
+}
+/*</bacaModal>*/
+function tulisRencana() {
+  const masuk = bacaModal($('#modal').value);
+  const sah = Number.isFinite(masuk) && masuk > 0;
+  const modal = sah ? masuk : META.modal;
+  const ket = $('#modal-ket');
+  ket.classList.toggle('salah', !sah);
+  ket.textContent = sah
+    ? `Rugi maksimal per saham ${rp(modal * 0.01).replace('+', '')} (1% modal); satu saham paling banyak 20% modal.`
+    : `Modal tidak terbaca, dipakai Rp${nf(META.modal)}.`;
+  if (sah) { try { localStorage.setItem('rencana-modal', String(masuk)); } catch (e) {} }
+  $('#kartu').innerHTML = RENCANA.length
+    ? RENCANA.map(r => kartu(r, modal)).join('')
+    : `<div class="kosong"><b>Tidak ada rencana hari ini.</b>Tidak ada saham yang lolos semua syarat. Itu wajar; jangan memaksa beli. Cek lagi besok pagi.</div>`;
+}
+if (IDX) {
+  $('#rencana').hidden = false; $('#cara').hidden = false;
+  let simpan = null;
+  try { simpan = localStorage.getItem('rencana-modal'); } catch (e) {}
+  const awal = Number.isFinite(bacaModal(simpan ?? '')) ? bacaModal(simpan) : META.modal;
+  $('#modal').value = awal.toLocaleString('id-ID');
+  $('#modal').addEventListener('input', tulisRencana);
+  $('#modal').addEventListener('blur', () => { const v = bacaModal($('#modal').value); if (Number.isFinite(v)) $('#modal').value = v.toLocaleString('id-ID'); });
+  $('#kartu').addEventListener('click', e => { const b = e.target.closest('[data-code]'); if (b) openDetail(b.dataset.code); });
+  tulisRencana();
+} else {
+  $('#semua-bagian').open = true;
+}
 
 /* filters */
 const uniq = k => [...new Set(ROWS.map(r => r[k]).filter(Boolean))].sort();
@@ -271,6 +431,31 @@ const LABEL = { structure: 'Struktur & fase', levels: 'Support / resistance', ri
 const ORDER = Object.keys(LABEL);
 let current = null;
 
+const modalSekarang = () => { const v = bacaModal($('#modal').value); return Number.isFinite(v) ? v : META.modal; };
+/** Ringkasan untuk pemula di bagian atas laci: kenapa lolos (atau tidak), dan rencana yang sama dengan kartunya. */
+function awam(r) {
+  if (!r.pass) {
+    return `<div class="awam"><h3>Kenapa tidak lolos</h3><ul>${(r.GERBANG || '').split(' | ').map(s => `<li>${esc(s)}</li>`).join('')}</ul></div>`;
+  }
+  const kenapa = [
+    r.NILAI_HARIAN != null ? `Ramai ditransaksikan: rata-rata ${IDX ? 'Rp' + (r.NILAI_HARIAN / 1e9).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' miliar' : esc(r.NILAI_HARIAN_TEKS)} per hari.` : '',
+    r.MA_TERSUSUN === 'ya' ? 'Tren naik rapi: harga di atas rata-rata 20, 50, dan 200 hari, dan rata-ratanya menanjak.' : '',
+    r.ATR_PERSEN != null ? `Pergerakan harian tenang: rata-rata ${pct(r.ATR_PERSEN)} per hari.` : '',
+  ].filter(Boolean);
+  const hati = r.CATATAN.length ? `<div><b>Perlu hati-hati:</b><ul>${r.CATATAN.map(c => `<li>${esc(c.awam)} <span class="mut">(${esc(c.teknis)})</span></li>`).join('')}</ul></div>` : '';
+  let rencana = '';
+  if (r.RENCANA) {
+    const p = r.RENCANA, lot = hitungLot(p.beli, p.jualRugi, modalSekarang());
+    rencana = `<dl class="angka">
+      <div><dt>Beli di</dt><dd>${nf(p.beli)}</dd></div>
+      <div><dt>Jumlah</dt><dd>${lot > 0 ? nf(lot) + ' lot' : '—'}<small>${lot > 0 ? 'modal ' + rp(modalSekarang()).replace('+', '') : 'modal terlalu kecil'}</small></dd></div>
+      <div><dt>Jual rugi di</dt><dd class="down">${nf(p.jualRugi)}<small>${persen(p.beli, p.jualRugi)}</small></dd></div>
+      <div><dt>Jual untung di</dt><dd class="up">${nf(p.jualUntung)}<small>${persen(p.beli, p.jualUntung)}</small></dd></div>
+    </dl>`;
+  }
+  return `<div class="awam"><h3>Kenapa lolos</h3><ul>${kenapa.map(k => `<li>${k}</li>`).join('')}</ul>${hati}${rencana}</div>`;
+}
+
 async function openDetail(code) {
   const r = ROWS.find(x => x.KODE === code); if (!r) return;
   current = code;
@@ -285,18 +470,21 @@ async function openDetail(code) {
       <div class="nav">${i > 0 ? `<button data-go="${ord[i - 1]}">← ${ord[i - 1]}</button>` : ''}${i >= 0 && i < ord.length - 1 ? `<button data-go="${ord[i + 1]}">${ord[i + 1]} →</button>` : ''}</div>
     </div><button class="x" id="close" aria-label="Tutup detail">×</button></div>
     <div class="dbody">
+      ${awam(r)}
+      <div class="chartbox" id="chart"><div class="loading">Memuat grafik…</div></div>
+      <details class="teknis"><summary>Detail teknis</summary><div class="isi">
       <div class="planbox">
         <div><span>Entry</span><b>${nf(r.ENTRY)}</b><small>close terakhir</small></div>
-        <div><span>Stop</span><b class="down">${nf(r.STOP)}</b><small>${r.risk == null ? '' : '−' + nf(r.risk, 1) + '%'}</small></div>
+        <div><span>Stop analisa</span><b class="down">${nf(r.STOP)}</b><small>${r.risk == null ? '' : '−' + nf(r.risk, 1) + '%'}</small></div>
         <div><span>Target</span><b class="up">${nf(r.TARGET)}</b><small>${r.reward == null ? '' : '+' + nf(r.reward, 1) + '%'}</small></div>
-        <div><span>R:R</span><b class="${rrCls(r.RR)}">${r.RR == null ? 'n/a' : '1:' + nf(r.RR, 2)}</b><small>${META.minRatio > 0 ? 'ambang 1:' + esc(META.minRatioText) : 'bukan syarat gerbang'}</small></div>
-        <div><span>Cut loss evaluasi</span><b class="down">${nf(r.CUT_LOSS)}</b><small>${r.CUT_LOSS == null || !r.ENTRY ? '' : '−' + nf((r.ENTRY - r.CUT_LOSS) / r.ENTRY * 100, 1) + '% · stop dijepit 5–10%'}</small></div>
-        <div><span>ATR</span><b>${pct(r.ATR_PERSEN)}</b><small>derak harian</small></div>
+        <div><span>R:R</span><b class="${rrCls(r.RR)}">${r.RR == null ? 'n/a' : '1:' + nf(r.RR, 2)}</b><small>${META.minRatio > 0 ? 'ambang 1:' + esc(META.minRatioText) : 'bukan syarat lolos'}</small></div>
+        <div><span>Cut loss evaluasi</span><b class="down">${nf(r.CUT_LOSS)}</b><small>${r.CUT_LOSS == null || !r.ENTRY ? '' : '−' + nf((r.ENTRY - r.CUT_LOSS) / r.ENTRY * 100, 1) + '%, stop dijepit 5–10%'}</small></div>
+        <div><span>ATR</span><b>${pct(r.ATR_PERSEN)}</b><small>gerak harian rata-rata</small></div>
       </div>
-      ${r.pass ? `<div class="reason ok">${r.flags.length ? '<b>Lolos, dengan catatan:</b> ' + r.flags.map(f => esc(f[0])).join(' · ') : '<b>Lolos gerbang tanpa peringatan.</b> Yang diperiksa: Wyckoff, VPA, fase, divergensi OBV, baca volume, dan R:R di bawah 1. Bukan jaminan — periksa grafik dan orderbook sendiri.'}</div>`
+      ${r.pass ? `<div class="reason ok">${r.flags.length ? '<b>Lolos, dengan catatan:</b> ' + r.flags.map(f => esc(f[0])).join(', ') : '<b>Lolos tanpa catatan.</b> Yang diperiksa: Wyckoff, VPA, fase, divergensi OBV, baca volume, dan R:R di bawah 1.'}</div>`
         : `<div class="reason"><b>Tersaring:</b>${(r.GERBANG || '').split(' | ').map(s => `<div>${esc(s)}</div>`).join('')}</div>`}
-      <div class="chartbox" id="chart"><div class="loading">Memuat grafik…</div></div>
       <div class="metrics" id="metrics"><div class="loading">Memuat analisis…</div></div>
+      </div></details>
     </div>`;
   $('#close').onclick = close;
   dr.querySelectorAll('[data-go]').forEach(b => b.onclick = () => openDetail(b.dataset.go));

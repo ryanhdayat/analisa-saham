@@ -1,5 +1,8 @@
 import type { ScanRow } from '../analysis/report.ts'
+import { catatanRisiko, labelRisiko, type Label } from '../rencana/catatan.ts'
 import type { Bar } from '../types.ts'
+import type { Market } from '../market.ts'
+import { rencanaIdx } from '../rencana/rencana.ts'
 
 /**
  * Penilaian pilihan scan: apakah emiten yang lolos gerbang benar-benar naik.
@@ -20,6 +23,11 @@ export interface Pilihan {
   /** Stop dari analisa risk/reward, sebelum dijepit. */
   stop: number
   target: number
+  /**
+   * Ada catatan risiko saat scan? Tidak ada di catatan sebelum 2026-10-24 —
+   * yang itu dihitung sebagai "tanpa label".
+   */
+  label?: Label
 }
 
 /**
@@ -32,7 +40,8 @@ export function pilihanFromRows(rows: ScanRow[]): Pilihan[] {
   return rows.flatMap((r) => {
     const rr = r.metrics.riskReward
     if (!r.gates.passed || !rr.available || !rr.value) return []
-    return [{ code: r.code, name: r.name, date: r.date, entry: rr.value.entry, stop: rr.value.stop, target: rr.value.target }]
+    const label = labelRisiko(catatanRisiko(r))
+    return [{ code: r.code, name: r.name, date: r.date, entry: rr.value.entry, stop: rr.value.stop, target: rr.value.target, label }]
   })
 }
 
@@ -52,11 +61,18 @@ export function bolehCatat(run: { watchlist: boolean; draft: boolean; total: num
   return run.watchlist && !run.draft && run.total > 0 && run.failed / run.total <= MAKS_GAGAL
 }
 
-export type Status = 'target' | 'cut' | 'open'
+/**
+ * `dilewati`: harga buka pagi setelah scan sudah di atas target atau di bawah
+ * cut loss, jadi order tidak dipasang. `tidak-terbeli`: Buy limit tidak tersentuh
+ * sepanjang hari itu. Keduanya bukan transaksi. (Hanya IDX, lihat judgeIdx.)
+ */
+export type Status = 'target' | 'cut' | 'open' | 'dilewati' | 'tidak-terbeli'
 
 export interface Hasil extends Pilihan {
   /** Stop analisa yang dijepit ke rentang CUT_MIN..CUT_MAX di bawah entry. */
   cut: number
+  /** Harga terisi; null kalau tidak pernah terbeli. Return dihitung dari sini. */
+  isi: number | null
   status: Status
   /** Tanggal bar yang menyelesaikan pilihan; null selama terbuka. */
   settled: string | null
@@ -99,7 +115,7 @@ export function cutLoss(entry: number, stop: number): number {
 export function judge(p: Pilihan, bars: Bar[]): Hasil {
   const cut = cutLoss(p.entry, p.stop)
   const after = bars.filter((b) => b.date > p.date)
-  const base = { ...p, cut }
+  const base = { ...p, cut, isi: p.entry }
   const progressOf = (price: number) => (price - p.entry) / (p.target - p.entry)
 
   for (const [i, b] of after.entries()) {
@@ -134,6 +150,57 @@ export function judge(p: Pilihan, bars: Bar[]): Hasil {
 }
 
 /**
+ * Penilaian IDX yang meniru latihan di Stockbit Virtual: Buy limit di harga
+ * entry dipasang sebelum pasar buka pada hari bursa pertama setelah scan.
+ *
+ * - Buka di atas target atau di bawah cut loss: order tidak dipasang (dilewati).
+ * - Low hari itu tidak menyentuh harga beli: tidak terbeli.
+ * - Selain itu terisi di min(harga buka, entry) — buka di bawah limit langsung
+ *   match di harga buka. Sejak bar itu juga aturan target/cut loss berlaku.
+ *
+ * Cut loss dan target adalah harga rencana yang sudah dibulatkan ke fraksi BEI,
+ * sama dengan yang tercetak di kartu "Rencana hari ini".
+ */
+export function judgeIdx(p: Pilihan, bars: Bar[]): Hasil {
+  const plan = rencanaIdx(p.entry, p.stop, p.target)
+  const cut = plan.jualRugi
+  const target = plan.jualUntung
+  const after = bars.filter((b) => b.date > p.date)
+  const progressOf = (price: number, from: number) => (price - from) / (target - from)
+  const base = { ...p, target, cut }
+
+  const pertama = after[0]
+  if (!pertama) {
+    return { ...base, isi: null, status: 'open', settled: null, exit: null, last: null, ret: 0, progress: 0, days: 0 }
+  }
+  const batal = (status: 'dilewati' | 'tidak-terbeli'): Hasil => ({
+    ...base, isi: null, status, settled: pertama.date, exit: null,
+    last: { date: pertama.date, close: pertama.close }, ret: 0, progress: 0, days: 1,
+  })
+  if (pertama.open >= target || pertama.open <= cut) return batal('dilewati')
+  if (pertama.low > p.entry) return batal('tidak-terbeli')
+
+  const isi = Math.min(pertama.open, p.entry)
+  for (const [i, b] of after.entries()) {
+    // Di bar pengisian, harga buka sudah dipakai untuk masuk; yang tersisa high/low-nya.
+    if (b.low <= cut || b.high >= target) {
+      const status: Status = b.low <= cut ? 'cut' : 'target'
+      const exit = status === 'cut' ? Math.min(b.open, cut) : target
+      return {
+        ...base, isi, status, settled: b.date, exit,
+        last: { date: b.date, close: b.close }, ret: exit / isi - 1, progress: progressOf(exit, isi), days: i + 1,
+      }
+    }
+  }
+  const lastBar = after.at(-1)!
+  return {
+    ...base, isi, status: 'open', settled: null, exit: null,
+    last: { date: lastBar.date, close: lastBar.close }, ret: lastBar.close / isi - 1,
+    progress: progressOf(lastBar.close, isi), days: after.length,
+  }
+}
+
+/**
  * Semua pilihan dari kumpulan scan, satu pilihan terbuka per emiten.
  *
  * Emiten yang lolos lagi selagi pilihannya masih terbuka tidak membuka pilihan
@@ -142,7 +209,8 @@ export function judge(p: Pilihan, bars: Bar[]): Hasil {
  * selesai pada hari D memberi jalan bagi scan bertanggal D atau sesudahnya
  * (entry-nya close hari D, setelah pilihan lama selesai di dalam hari itu).
  */
-export function buildPicks(scans: Pilihan[], barsByCode: Map<string, Bar[]>): Hasil[] {
+export function buildPicks(scans: Pilihan[], barsByCode: Map<string, Bar[]>, market?: Market): Hasil[] {
+  const nilai = market?.id === 'idx' ? judgeIdx : judge
   const byCode = new Map<string, Pilihan[]>()
   for (const p of scans) byCode.set(p.code, [...(byCode.get(p.code) ?? []), p])
 
@@ -152,7 +220,7 @@ export function buildPicks(scans: Pilihan[], barsByCode: Map<string, Bar[]>): Ha
     let current: Hasil | null = null
     for (const p of [...list].sort((a, b) => a.date.localeCompare(b.date))) {
       if (current && (current.settled === null || current.settled > p.date)) continue
-      current = judge(p, bars)
+      current = nilai(p, bars)
       out.push(current)
     }
   }
@@ -190,11 +258,16 @@ export interface Ringkasan {
   benar: number
   /** Rata-rata return pilihan yang sudah dinilai, pecahan. */
   avgReturn: number
+  /** Order tidak dipasang karena harga buka sudah lewat target atau cut loss. */
+  dilewati: number
+  /** Buy limit tidak tersentuh. */
+  tidakTerbeli: number
 }
 
 export function summarize(picks: Hasil[]): Ringkasan {
   const count = (f: (h: Hasil) => boolean) => picks.filter(f).length
-  const dinilai = picks.filter((h) => h.days > 0)
+  const batal = (h: Hasil) => h.status === 'dilewati' || h.status === 'tidak-terbeli'
+  const dinilai = picks.filter((h) => h.days > 0 && !batal(h))
   return {
     total: picks.length,
     target: count((h) => h.status === 'target'),
@@ -203,5 +276,7 @@ export function summarize(picks: Hasil[]): Ringkasan {
     dinilai: dinilai.length,
     benar: dinilai.filter((h) => h.ret > 0).length,
     avgReturn: dinilai.length === 0 ? 0 : dinilai.reduce((s, h) => s + h.ret, 0) / dinilai.length,
+    dilewati: count((h) => h.status === 'dilewati'),
+    tidakTerbeli: count((h) => h.status === 'tidak-terbeli'),
   }
 }

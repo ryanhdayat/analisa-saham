@@ -4,6 +4,7 @@ import { buildPicks, summarize, yahooRangeSince, type Pilihan } from './hasil/ni
 import { writeHasilPage, type HasilPasar } from './output/hasil-page.ts'
 import { CRYPTO, IDX, type Market } from './market.ts'
 import { fetchBars } from './yahoo.ts'
+import { posisi, ringkasSimulasi } from './rencana/simulasi.ts'
 import type { Bar } from './types.ts'
 
 /**
@@ -48,18 +49,20 @@ async function nilaiPasar(market: Market, label: string, now: Date) {
     }
   }
 
-  const picks = buildPicks(scans, barsByCode)
+  const picks = buildPicks(scans, barsByCode, market)
   const ringkasan = summarize(picks)
   console.log(
     `[${market.id}] ${ringkasan.total} pilihan: ${ringkasan.target} target, ${ringkasan.cut} cut loss, ${ringkasan.open} terbuka`,
   )
+  const idx = market.id === 'idx'
   const pasar: HasilPasar = {
     id: market.id,
     label,
-    currency: market.id === 'idx' ? 'IDR' : 'USD',
-    picks,
+    currency: idx ? 'IDR' : 'USD',
+    picks: idx ? picks.map((h) => ({ ...h, sim: posisi(h) })) : picks,
     ringkasan,
     gagal,
+    ...(idx ? { simulasi: ringkasSimulasi(picks) } : {}),
   }
   return { pasar, codes: codes.length }
 }

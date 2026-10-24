@@ -4,6 +4,9 @@ import { columnsFor } from './columns.ts'
 import { IDX, type Market } from '../market.ts'
 import { tanggalRun, type ScanRow } from '../analysis/report.ts'
 import { cutLoss } from '../hasil/nilai.ts'
+import { catatanRisiko, labelRisiko } from '../rencana/catatan.ts'
+import { MODAL_BAWAAN, rencanaIdx } from '../rencana/rencana.ts'
+import { tanamTema } from './tema.ts'
 import type { Bar } from '../types.ts'
 
 /**
@@ -64,29 +67,6 @@ function gateText(market: Market, o: ScreenerOptions): string {
   return parts.join(', ')
 }
 
-type Catatan = [label: string, kind: 'bad' | 'warn']
-
-const BAD_WY = new Set(['distribusi', 'markdown'])
-const BAD_VPA = new Set(['upthrust', 'no-demand'])
-
-/**
- * Catatan risiko untuk baris yang lolos. Tidak menggagalkan gerbang — hanya
- * memberi tahu kenapa baris itu tidak "bersih".
- *
- * R:R di bawah 1 ikut dicatat walau R:R bukan syarat gerbang: risiko ke stop
- * lebih besar dari imbalan ke target, dan itu harus terlihat di tabel.
- */
-function catatan(r: Record<string, unknown>): Catatan[] {
-  const out: Catatan[] = []
-  if (BAD_WY.has(r.WYCKOFF as string)) out.push([`Wyckoff ${r.WYCKOFF}`, 'bad'])
-  if (BAD_VPA.has(r.VPA_TERAKHIR as string)) out.push([`${r.VPA_TERAKHIR} ${String(r.VPA_TANGGAL ?? '').slice(5)}`, 'bad'])
-  if (r.FASE === 'rebound') out.push(['rebound dlm downtrend', 'warn'])
-  if (r.DIVERGENSI_OBV === 'bearish') out.push(['OBV bearish', 'warn'])
-  if (r.VOLUME_BACA === 'tekanan-jual' || r.VOLUME_BACA === 'rally-lemah') out.push([r.VOLUME_BACA, 'warn'])
-  if (typeof r.RR === 'number' && r.RR < 1) out.push([`R:R 1:${idNum(r.RR)}`, 'warn'])
-  return out
-}
-
 /** Satu baris tabel, berkunci header CSV — satu sumber kebenaran dengan laporan lain. */
 function tableRow(row: ScanRow, market: Market): Record<string, unknown> {
   const out: Record<string, unknown> = {}
@@ -104,8 +84,13 @@ function tableRow(row: ScanRow, market: Market): Record<string, unknown> {
   // Cut loss yang benar-benar dipakai /hasil/, supaya angka di laci sama dengan
   // angka yang dinilai — STOP analisa bisa jauh lebih dalam dari itu.
   const plan = row.metrics.riskReward.available ? row.metrics.riskReward.value : null
-  out.CUT_LOSS = plan ? round(cutLoss(plan.entry, plan.stop), 4) : null
-  out.CATATAN = catatan(out)
+  // IDX: dibulatkan ke fraksi BEI, persis angka kartu rencana dan /hasil/. Crypto apa adanya.
+  out.CUT_LOSS = !plan ? null : market.id === 'idx' ? rencanaIdx(plan.entry, plan.stop, plan.target).jualRugi : round(cutLoss(plan.entry, plan.stop), 4)
+  // Rencana hari ini: hanya IDX (Stockbit tidak memperdagangkan crypto) dan hanya yang lolos.
+  out.RENCANA = plan && market.id === 'idx' && row.gates.passed ? rencanaIdx(plan.entry, plan.stop, plan.target) : null
+  const catatan = catatanRisiko(row)
+  out.CATATAN = catatan
+  out.LABEL = labelRisiko(catatan)
   return out
 }
 
@@ -204,6 +189,7 @@ export function buildScreener(
     dibuat: jakartaStamp(options.now ?? new Date()),
     degraded: rows.some((r) => r.rank.degraded),
     alasanDegradasi: options.alasanDegradasi ?? null,
+    modal: MODAL_BAWAAN,
     used: used.join(', ') || 'n/a',
     exchange: market.exchangeLabel,
     volumeUnit: market.volumeUnit,
@@ -217,7 +203,7 @@ export function buildScreener(
   const title = market.id === 'idx' ? 'Screener Watchlist IDX' : `Screener Watchlist ${market.exchangeLabel}`
   // Fungsi pengganti, bukan string: `$&` atau `$'` di data tidak boleh ditafsir
   // sebagai pola pengganti String.replace.
-  const html = template
+  const html = tanamTema(template, market.id === 'idx' ? 'idx' : 'crypto', '../')
     .replace('/*__TITLE__*/', () => title)
     .replace('/*__ROWS__*/[]', () => inlineJson(rows.map((r) => tableRow(r, market))))
     .replace('/*__META__*/{}', () => inlineJson(meta))

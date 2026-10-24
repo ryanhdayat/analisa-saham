@@ -100,6 +100,15 @@ baris yang sama dengan CSV/Excel, jadi tidak pernah berbeda angka.
 - Ambang gerbang, satuan uang, dan satuan volume ikut pasar dan opsi run
   (`--market crypto` menampilkan dolar dan volume USD).
 
+### Rencana hari ini dan simulasi (fork)
+
+Di fork `ryanhdayat/analisa-saham`, halaman IDX dibuka dengan **Rencana hari
+ini**. Isinya, untuk setiap emiten yang lolos: harga beli, jumlah lot untuk modal
+simulasi (bawaan Rp100 juta, rugi maksimal 1% modal, maksimal 20% modal per
+saham), batas jual rugi, target, dan label bersih/hati-hati. Halaman `/hasil/`
+mensimulasikan rencana itu sebagai Buy limit pagi berikutnya, sudah dipotong
+biaya, dengan aturan lulus 30 transaksi. Lihat `docs/terbit-vercel.md`.
+
 ### Isi berkas Excel
 
 Tiga jenis sheet:
@@ -380,7 +389,7 @@ per emiten per tanggal sampel). Bar disimpan di `raw/` dan dipakai ulang selama
 `indicators.ts`, `chart.ts`, dan `render.ts` tidak menyentuh jaringan maupun berkas.
 
 ```bash
-bun test        # 438 test
+bun test        # 509 test
 bun run typecheck
 ```
 

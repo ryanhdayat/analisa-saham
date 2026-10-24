@@ -38,6 +38,16 @@ export function roundToTick(price: number): number {
 }
 
 /**
+ * Fraksi sah terdekat DI BAWAH harga. Untuk harga jual rencana: target yang
+ * dibulatkan ke atas berarti target yang lebih jauh dari hitungannya.
+ */
+export function floorToTick(price: number): number {
+  const tick = idxTickSize(price)
+  // Bantalan kecil supaya 2100 / 10 = 209,99999… tidak jatuh ke 2090.
+  return Math.floor(price / tick + 1e-9) * tick
+}
+
+/**
  * Kebaruan meluruh dengan paruh waktu 60 bar: level yang diuji bulan lalu masih
  * berarti, level dari dua tahun lalu nyaris tidak. Tidak pernah nol — level tua
  * yang sangat sering diuji tetap layak muncul.

@@ -95,7 +95,7 @@ jalankan idx ya bun run src/scan.ts --market idx --tanpa-idx ${RAKIT_IDX:-}
 jalankan crypto ya bun run src/scan.ts --market crypto --tanpa-idx ${RAKIT_CRYPTO:-}
 jalankan hasil tidak bun run src/hasil.ts
 
-cp deploy/vercel/index.html "$STAGE/index.html"
+bun run src/beranda.ts "$STAGE/index.html" >&2
 
 # Tanpa build: Vercel menyajikan berkas apa adanya. no-cache karena nama berkas
 # berulang tiap hari; /idx tanpa garis miring dialihkan supaya fetch relatif
