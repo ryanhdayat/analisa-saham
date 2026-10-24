@@ -1,5 +1,6 @@
 import { expect, test, describe } from 'bun:test'
-import { bolehCatat, buildPicks, cutLoss, judge, pilihanFromRows, summarize, yahooRangeSince, type Pilihan } from './nilai.ts'
+import { bolehCatat, buildPicks, cutLoss, judge, judgeIdx, pilihanFromRows, summarize, yahooRangeSince, type Pilihan } from './nilai.ts'
+import { CRYPTO, IDX } from '../market.ts'
 import type { ScanRow } from '../analysis/report.ts'
 import type { Bar } from '../types.ts'
 
@@ -206,5 +207,78 @@ describe('summarize', () => {
     const s = summarize(buildPicks([pilihan({ code: 'A' }), pilihan({ code: 'B' })], b))
     expect(s).toMatchObject({ total: 2, open: 1, dinilai: 1, benar: 1 })
     expect(s.avgReturn).toBeCloseTo(0.2, 6)
+  })
+})
+
+describe('judgeIdx — Buy limit dipasang pagi setelah scan', () => {
+  // pilihan(): entry 1000, cut loss 920, target 1200.
+  test('buka di atas target → dilewati, tidak terbeli', () => {
+    const h = judgeIdx(pilihan(), [bar('2026-10-02', 1190, 1250, 1220, 1210)])
+    expect(h).toMatchObject({ status: 'dilewati', isi: null, ret: 0, settled: '2026-10-02' })
+  })
+
+  test('buka di bawah cut loss → dilewati, bukan terbeli lalu kena cut loss', () => {
+    expect(judgeIdx(pilihan(), [bar('2026-10-02', 880, 905, 900, 900)]).status).toBe('dilewati')
+  })
+
+  test('low sepanjang hari di atas harga beli → tidak terbeli', () => {
+    const h = judgeIdx(pilihan(), [bar('2026-10-02', 1010, 1050, 1040, 1020)])
+    expect(h).toMatchObject({ status: 'tidak-terbeli', isi: null, ret: 0, settled: '2026-10-02' })
+  })
+
+  test('buka di bawah harga beli → terisi di harga buka', () => {
+    const h = judgeIdx(pilihan(), [bar('2026-10-02', 960, 1010, 1000, 980)])
+    expect(h.isi).toBe(980)
+    expect(h.status).toBe('open')
+    expect(h.ret).toBeCloseTo(1000 / 980 - 1, 9)
+  })
+
+  test('terisi lalu cut loss tersentuh di hari yang sama → cut', () => {
+    const h = judgeIdx(pilihan(), [bar('2026-10-02', 915, 1005, 930, 990)])
+    expect(h).toMatchObject({ status: 'cut', isi: 990, exit: 920, settled: '2026-10-02' })
+    expect(h.ret).toBeCloseTo(920 / 990 - 1, 9)
+  })
+
+  test('terisi, kena target di hari berikutnya; return dari harga terisi', () => {
+    const h = judgeIdx(pilihan(), [bar('2026-10-02', 980, 1010, 1000, 990), bar('2026-10-03', 1100, 1210)])
+    expect(h).toMatchObject({ status: 'target', isi: 990, exit: 1200, days: 2 })
+    expect(h.ret).toBeCloseTo(1200 / 990 - 1, 9)
+  })
+
+  test('cut loss dan target memakai harga rencana yang dibulatkan ke fraksi BEI', () => {
+    const h = judgeIdx(pilihan({ entry: 11375, stop: 10560, target: 11720 }), [])
+    expect(h.cut).toBe(10550)
+    expect(h.target).toBe(11700)
+    expect(h.status).toBe('open')
+    expect(h.isi).toBeNull()
+  })
+})
+
+describe('buildPicks — pasar', () => {
+  const bars = new Map([['BBCA', [bar('2026-10-02', 1190, 1250, 1220, 1210), bar('2026-10-03', 1225, 1250, 1240, 1230)]]])
+
+  test('IDX: pilihan dilewati selesai di hari itu, scan hari itu boleh membuka pilihan baru', () => {
+    const picks = buildPicks([pilihan({ date: '2026-10-01' }), pilihan({ date: '2026-10-02', entry: 1220, stop: 1150, target: 1300 })], bars, IDX)
+    expect(picks.map((p) => [p.date, p.status])).toEqual([
+      ['2026-10-02', 'tidak-terbeli'],
+      ['2026-10-01', 'dilewati'],
+    ])
+  })
+
+  test('crypto memakai penilaian lama: masuk di close hari scan', () => {
+    const [h] = buildPicks([pilihan({ date: '2026-10-01' })], bars, CRYPTO)
+    expect(h!.status).toBe('target')
+    expect(h!.isi).toBe(1000)
+  })
+})
+
+describe('summarize — dilewati dan tidak terbeli', () => {
+  test('tidak ikut dinilai, tapi dihitung terpisah', () => {
+    const picks = [
+      judgeIdx(pilihan(), [bar('2026-10-02', 1190, 1250, 1220, 1210)]),
+      judgeIdx(pilihan(), [bar('2026-10-02', 1010, 1050, 1040, 1020)]),
+      judgeIdx(pilihan(), [bar('2026-10-02', 960, 1010, 1000, 980)]),
+    ]
+    expect(summarize(picks)).toMatchObject({ total: 3, dinilai: 1, dilewati: 1, tidakTerbeli: 1 })
   })
 })

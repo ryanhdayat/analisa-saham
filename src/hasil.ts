@@ -48,7 +48,7 @@ async function nilaiPasar(market: Market, label: string, now: Date) {
     }
   }
 
-  const picks = buildPicks(scans, barsByCode)
+  const picks = buildPicks(scans, barsByCode, market)
   const ringkasan = summarize(picks)
   console.log(
     `[${market.id}] ${ringkasan.total} pilihan: ${ringkasan.target} target, ${ringkasan.cut} cut loss, ${ringkasan.open} terbuka`,
