@@ -18,6 +18,9 @@ on:
     # Cadangan: jadwal GitHub bisa telat atau terlewat. Kalau run pertama sudah
     # jalan, run ini hanya menerbitkan ulang data yang sama.
     - cron: '45 1 * * *' # 08:45 WIB
+    # Malam hari bursa: data penutupan hari itu sudah final, jadi rencana besok
+    # bisa dilihat dan dipasang malam sebelumnya.
+    - cron: '30 11 * * 1-5' # 18:30 WIB
   workflow_dispatch:
 
 permissions:
