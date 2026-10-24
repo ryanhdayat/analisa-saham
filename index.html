@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analisa Saham</title>
+<meta name="description" content="Rencana harian saham IDX untuk latihan trading, dengan simulasi modal Rp100 juta.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: satu ajakan utama (rencana hari ini) sebagai blok besar, lalu dua tujuan sekunder: hasil simulasi dan crypto. */
+/* tema bersama — src/output/tema.ts */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --sunk: #f6f8fa; --ink: #16202b; --muted: #5b6875; --line: #d9e0e7;
+  --accent: #0e6b73; --accent-soft: #dcefef;
+  --up: #12805c; --up-soft: #ddf1e8; --down: #c0392b; --down-soft: #f8e1de; --warn: #a56a12; --warn-soft: #f6ead3;
+  --ma20: #c27c0e; --ma50: #2f6fd0; --ma200: #8a4fbf;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: var(--font-body);
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
+  --accent: #56b8c0; --accent-soft: #163338;
+  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
+  --ma20: #e0a23a; --ma50: #6ea2f0; --ma200: #b88ae6; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
+  --accent: #56b8c0; --accent-soft: #163338;
+  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
+  --ma20: #e0a23a; --ma50: #6ea2f0; --ma200: #b88ae6; color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.num, td.n { font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible, th:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.up { color: var(--up); } .down { color: var(--down); } .mut { color: var(--muted); }
+
+nav.situs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px max(16px, env(safe-area-inset-left, 0px)) 0;
+  max-width: 1180px; margin: 0 auto; }
+nav.situs .merek { font: 800 17px/1 var(--font-display); font-stretch: 85%; color: var(--ink); text-decoration: none; margin-right: auto; }
+nav.situs .tautan { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+nav.situs .tautan a { padding: 6px 12px; border-radius: 99px; color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; white-space: nowrap; }
+nav.situs .tautan a:hover { color: var(--ink); background: var(--surface); }
+nav.situs .tautan a[aria-current="page"] { background: var(--ink); color: var(--bg); }
+
+.kepala { display: grid; gap: 6px; }
+.kepala h1 { font-family: var(--font-display); font-stretch: 80%; font-weight: 800; font-size: clamp(30px, 6vw, 46px); line-height: 1; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+.kepala .status { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; color: var(--muted); font-size: 14px; }
+.lencana { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 500; background: var(--accent-soft); color: var(--accent); }
+.lencana.basi { background: var(--warn-soft); color: var(--warn); }
+.lencana.simulasi::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 22px 16px 56px; display: grid; gap: 22px; }
+.pembuka { display: grid; gap: 8px; max-width: 62ch; }
+.pembuka h1 { font: 800 clamp(36px, 8vw, 64px)/0.95 var(--font-display); font-stretch: 78%; letter-spacing: -.02em; margin: 0; }
+.pembuka p { margin: 0; color: var(--muted); font-size: 16px; }
+.utama { background: var(--ink); color: var(--bg); border-radius: 16px; padding: 22px 22px 24px; display: grid; gap: 14px; }
+.utama h2 { margin: 0; font: 800 clamp(28px, 5vw, 40px)/1 var(--font-display); font-stretch: 80%; }
+.utama .meta { opacity: .8; font-size: 15px; }
+.utama .tombol { justify-self: start; background: var(--bg); color: var(--ink); text-decoration: none; font-weight: 600; font-size: 16px; padding: 12px 20px; border-radius: 10px; }
+.utama .tombol:hover { background: var(--surface); }
+.utama .tombol:focus-visible { outline-color: var(--bg); }
+.lain { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.lain a { display: grid; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; color: var(--ink); text-decoration: none; }
+.lain a:hover { border-color: var(--accent); }
+.lain h3 { margin: 0; font: 700 22px/1.1 var(--font-display); font-stretch: 85%; }
+.lain .meta { color: var(--muted); font-size: 14px; }
+.lain .vonis { font-weight: 600; }
+footer { color: var(--muted); font-size: 13px; max-width: 72ch; }
+</style>
+</head>
+<body>
+<nav class="situs" aria-label="Navigasi situs"><a class="merek" href="./">Analisa Saham</a><div class="tautan"><a href="./" aria-current="page">Beranda</a><a href="idx/">Rencana IDX</a><a href="crypto/">Crypto</a><a href="hasil/">Hasil</a></div></nav>
+<main class="wrap">
+  <header class="pembuka">
+    <h1>Analisa Saham</h1>
+    <p>Daftar saham IDX yang lolos screening setiap pagi, lengkap dengan harga beli, jumlah lot, dan batas jual. Untuk latihan di Stockbit Virtual Trading.</p>
+  </header>
+
+  <section class="utama" aria-labelledby="judul-utama">
+    <h2 id="judul-utama">Rencana hari ini</h2>
+    <div class="meta" data-pasar="idx">Memuat tanggal data…</div>
+    <a class="tombol" href="idx/">Lihat rencana hari ini</a>
+  </section>
+
+  <div class="lain">
+    <a href="hasil/">
+      <h3>Hasil simulasi</h3>
+      <span class="vonis" id="vonis">Memuat…</span>
+      <span class="meta" data-pasar="hasil"></span>
+    </a>
+    <a href="crypto/">
+      <h3>Screener crypto</h3>
+      <span class="meta" data-pasar="crypto">Memuat tanggal data…</span>
+    </a>
+  </div>
+
+  <footer>Diperbarui otomatis tiap hari pukul 07.15 WIB. Masa simulasi: bukan rekomendasi jual/beli. Data harga dari Yahoo Finance; periksa lagi di Stockbit sebelum memasang order.</footer>
+</main>
+<script>
+/*<dataBasi>*/
+function dataBasi(tanggal, pasar, now) {
+  const hari = (d) => d.toISOString().slice(0, 10)
+  if (pasar === 'crypto') return tanggal < hari(new Date(now.getTime() - 86400000))
+  const wib = new Date(now.getTime() + 7 * 3600000)
+  const menit = wib.getUTCHours() * 60 + wib.getUTCMinutes()
+  const kerja = (d) => d.getUTCDay() >= 1 && d.getUTCDay() <= 5
+  let d = new Date(Date.UTC(wib.getUTCFullYear(), wib.getUTCMonth(), wib.getUTCDate()))
+  if (!(kerja(d) && menit >= 16 * 60 + 15)) {
+    do { d = new Date(d.getTime() - 86400000) } while (!kerja(d))
+  }
+  return tanggal < hari(d)
+}
+/*</dataBasi>*/
+const tanggal = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+const waktu = (iso) => new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB'
+for (const el of document.querySelectorAll('[data-pasar]')) {
+  const pasar = el.dataset.pasar
+  fetch(`${pasar}/terbit.json`, { cache: 'no-cache' })
+    .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then((t) => {
+      if (pasar === 'hasil') { el.textContent = `Dinilai ${waktu(t.diterbitkan)}`; return }
+      const basi = dataBasi(t.tanggal, pasar, new Date()) ? ' (data mungkin basi)' : ''
+      el.textContent = `Data ${pasar === 'idx' ? 'penutupan' : 'candle'} ${tanggal(t.tanggal)}${basi}`
+    })
+    .catch(() => { el.textContent = 'Belum ada terbitan.' })
+}
+const VONIS = { 'kurang-data': 'Belum cukup data', 'belum-lulus': 'Belum lulus', lulus: 'Lulus' }
+fetch('hasil/hasil.json', { cache: 'no-cache' })
+  .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+  .then((d) => {
+    const s = d.pasar.find((p) => p.id === 'idx')?.simulasi
+    if (!s) throw new Error('tanpa simulasi')
+    const rata = s.rataBersih == null ? '' : `, rata-rata ${(s.rataBersih * 100).toLocaleString('id-ID', { maximumFractionDigits: 1, signDisplay: 'always' })}%`
+    document.getElementById('vonis').textContent = `${VONIS[s.status]}: ${s.selesai} dari 30 transaksi${rata}`
+  })
+  .catch(() => { document.getElementById('vonis').textContent = 'Belum ada hasil.' })
+</script>
+</body>
+</html>

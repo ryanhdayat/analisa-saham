@@ -1,0 +1,190 @@
+{
+ "dibuat": "2026-10-24 11:34 WIB",
+ "pasar": [
+  {
+   "id": "idx",
+   "label": "Saham IDX",
+   "currency": "IDR",
+   "picks": [
+    {
+     "code": "AADI",
+     "name": "PT Adaro Andalan Indonesia Tbk",
+     "date": "2026-10-23",
+     "entry": 11375,
+     "stop": 10560.414096005108,
+     "target": 11700,
+     "label": "hati-hati",
+     "cut": 10550,
+     "isi": null,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": null,
+     "ret": 0,
+     "progress": 0,
+     "days": 0,
+     "sim": null
+    },
+    {
+     "code": "BSSR",
+     "name": "PT Baramulti Suksessarana Tbk",
+     "date": "2026-10-23",
+     "entry": 5225,
+     "stop": 4929.332633620366,
+     "target": 5500,
+     "label": "hati-hati",
+     "cut": 4920,
+     "isi": null,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": null,
+     "ret": 0,
+     "progress": 0,
+     "days": 0,
+     "sim": null
+    },
+    {
+     "code": "MARK",
+     "name": "PT Mark Dynamics Indonesia Tbk",
+     "date": "2026-10-23",
+     "entry": 1155,
+     "stop": 1083.126298265587,
+     "target": 1225,
+     "label": "hati-hati",
+     "cut": 1080,
+     "isi": null,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": null,
+     "ret": 0,
+     "progress": 0,
+     "days": 0,
+     "sim": null
+    },
+    {
+     "code": "ULTJ",
+     "name": "PT Ultrajaya Milk Industry & Trading Company Tbk",
+     "date": "2026-10-23",
+     "entry": 2100,
+     "stop": 2022.5429550445929,
+     "target": 2190,
+     "label": "hati-hati",
+     "cut": 1995,
+     "isi": null,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": null,
+     "ret": 0,
+     "progress": 0,
+     "days": 0,
+     "sim": null
+    }
+   ],
+   "ringkasan": {
+    "total": 4,
+    "target": 0,
+    "cut": 0,
+    "open": 4,
+    "dinilai": 0,
+    "benar": 0,
+    "avgReturn": 0,
+    "dilewati": 0,
+    "tidakTerbeli": 0
+   },
+   "gagal": [],
+   "simulasi": {
+    "modal": 100000000,
+    "selesai": 0,
+    "totalRp": 0,
+    "rataBersih": null,
+    "dilewati": 0,
+    "tidakTerbeli": 0,
+    "status": "kurang-data",
+    "perLabel": {
+     "bersih": {
+      "n": 0,
+      "target": 0,
+      "cut": 0,
+      "rataBersih": null
+     },
+     "hati-hati": {
+      "n": 0,
+      "target": 0,
+      "cut": 0,
+      "rataBersih": null
+     },
+     "tanpa-label": {
+      "n": 0,
+      "target": 0,
+      "cut": 0,
+      "rataBersih": null
+     }
+    }
+   }
+  },
+  {
+   "id": "crypto",
+   "label": "Crypto",
+   "currency": "USD",
+   "picks": [
+    {
+     "code": "COMP5692-USD",
+     "name": "Compound USD",
+     "date": "2026-10-22",
+     "entry": 24.431556701660156,
+     "stop": 21.18122480105063,
+     "target": 26.874712371826174,
+     "label": "hati-hati",
+     "cut": 21.988401031494142,
+     "isi": 24.431556701660156,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-10-24",
+      "close": 23.84000015258789
+     },
+     "ret": -0.02421280626101363,
+     "progress": -0.24212806261013572,
+     "days": 1
+    },
+    {
+     "code": "XMR-USD",
+     "name": "Monero USD",
+     "date": "2026-10-22",
+     "entry": 600.638427734375,
+     "stop": 529.2896686404183,
+     "target": 630,
+     "label": "hati-hati",
+     "cut": 540.5745849609375,
+     "isi": 600.638427734375,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-10-24",
+      "close": 582.4474487304688
+     },
+     "ret": -0.030286072558699084,
+     "progress": -0.6195505758117491,
+     "days": 1
+    }
+   ],
+   "ringkasan": {
+    "total": 2,
+    "target": 0,
+    "cut": 0,
+    "open": 2,
+    "dinilai": 2,
+    "benar": 0,
+    "avgReturn": -0.027249439409856357,
+    "dilewati": 0,
+    "tidakTerbeli": 0
+   },
+   "gagal": []
+  }
+ ]
+}
