@@ -5,7 +5,8 @@
   "date": "2026-10-23",
   "entry": 11375,
   "stop": 10560.414096005108,
-  "target": 11700
+  "target": 11700,
+  "label": "hati-hati"
  },
  {
   "code": "MARK",
@@ -13,7 +14,8 @@
   "date": "2026-10-23",
   "entry": 1155,
   "stop": 1083.126298265587,
-  "target": 1225
+  "target": 1225,
+  "label": "hati-hati"
  },
  {
   "code": "BSSR",
@@ -21,7 +23,8 @@
   "date": "2026-10-23",
   "entry": 5225,
   "stop": 4929.332633620366,
-  "target": 5500
+  "target": 5500,
+  "label": "hati-hati"
  },
  {
   "code": "ULTJ",
@@ -29,6 +32,7 @@
   "date": "2026-10-23",
   "entry": 2100,
   "stop": 2022.5429550445929,
-  "target": 2190
+  "target": 2190,
+  "label": "hati-hati"
  }
 ]
