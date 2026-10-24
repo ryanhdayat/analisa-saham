@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { inlineJson, jakartaStamp } from './screener.ts'
+import { tanamTema } from './tema.ts'
 import type { Hasil, Ringkasan } from '../hasil/nilai.ts'
 import type { PosisiSim, RingkasanSimulasi } from '../rencana/simulasi.ts'
 import type { MarketId } from '../market.ts'
@@ -28,7 +29,7 @@ export interface HasilPasar {
 export function buildHasilPage(pasar: HasilPasar[], template: string, now: Date): string {
   const data = { dibuat: jakartaStamp(now), pasar }
   // Fungsi pengganti, bukan string: `$&` di data tidak boleh ditafsir sebagai pola.
-  return template.replace('/*__DATA__*/{}', () => inlineJson(data))
+  return tanamTema(template, 'hasil', '../').replace('/*__DATA__*/{}', () => inlineJson(data))
 }
 
 export async function loadHasilTemplate(): Promise<string> {

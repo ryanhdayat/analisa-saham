@@ -6,6 +6,7 @@ import { tanggalRun, type ScanRow } from '../analysis/report.ts'
 import { cutLoss } from '../hasil/nilai.ts'
 import { catatanRisiko, labelRisiko } from '../rencana/catatan.ts'
 import { MODAL_BAWAAN, rencanaIdx } from '../rencana/rencana.ts'
+import { tanamTema } from './tema.ts'
 import type { Bar } from '../types.ts'
 
 /**
@@ -201,7 +202,7 @@ export function buildScreener(
   const title = market.id === 'idx' ? 'Screener Watchlist IDX' : `Screener Watchlist ${market.exchangeLabel}`
   // Fungsi pengganti, bukan string: `$&` atau `$'` di data tidak boleh ditafsir
   // sebagai pola pengganti String.replace.
-  const html = template
+  const html = tanamTema(template, market.id === 'idx' ? 'idx' : 'crypto', '../')
     .replace('/*__TITLE__*/', () => title)
     .replace('/*__ROWS__*/[]', () => inlineJson(rows.map((r) => tableRow(r, market))))
     .replace('/*__META__*/{}', () => inlineJson(meta))

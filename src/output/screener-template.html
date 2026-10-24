@@ -4,32 +4,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>/*__TITLE__*/</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<!--__FONT__-->
 <style>
 /* Layout: trading-desk screener — summary strip, filter bar, dense sortable table; a ticker opens a side drawer (full screen on phones) with chart + metric evidence. */
-:root {
-  --bg: #eef1f4; --surface: #ffffff; --sunk: #f6f8fa; --ink: #15202b; --muted: #5a6876; --line: #d9e0e7;
-  --accent: #0d6670; --accent-soft: #dcefef;
-  --up: #12805c; --up-soft: #ddf1e8; --down: #c0392b; --down-soft: #f8e1de; --warn: #a56a12; --warn-soft: #f6ead3;
-  --ma20: #c27c0e; --ma50: #2f6fd0; --ma200: #8a4fbf;
-  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
-  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
-  --accent: #56b8c0; --accent-soft: #163338;
-  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
-  --ma20: #e0a23a; --ma50: #6ea2f0; --ma200: #b88ae6; color-scheme: dark; } }
-:root[data-theme="dark"] {
-  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
-  --accent: #56b8c0; --accent-soft: #163338;
-  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
-  --ma20: #e0a23a; --ma50: #6ea2f0; --ma200: #b88ae6; color-scheme: dark; }
-
-* { box-sizing: border-box; }
+/*__TEMA__*/
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
 .wrap { max-width: 1480px; margin: 0 auto; padding-block: 20px 48px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -124,6 +102,7 @@ aside.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 1
 @media (prefers-reduced-motion: no-preference) { aside.drawer { animation: slide .18s ease-out; } @keyframes slide { from { transform: translateX(24px); opacity: .6; } } }
 </style>
 
+<!--__NAV__-->
 <div class="wrap">
   <header class="top">
     <div>
@@ -157,6 +136,7 @@ aside.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 1
 <aside class="drawer" id="drawer" hidden aria-label="Detail emiten"></aside>
 
 <script>
+/*__BASI__*/
 const ROWS = /*__ROWS__*/[];
 const META = /*__META__*/{};
 

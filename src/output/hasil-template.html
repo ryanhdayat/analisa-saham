@@ -5,31 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hasil Analisa</title>
 <meta name="description" content="Rekam jejak pilihan screener: berapa yang kena target, kena cut loss, dan masih terbuka.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<!--__FONT__-->
 <style>
 /* Layout: rekam jejak — ringkasan per pasar, lalu tabel pilihan terbuka dan tabel yang sudah selesai. Token sama dengan screener-template.html. */
-:root {
-  --bg: #eef1f4; --surface: #ffffff; --sunk: #f6f8fa; --ink: #15202b; --muted: #5a6876; --line: #d9e0e7;
-  --accent: #0d6670; --accent-soft: #dcefef;
-  --up: #12805c; --up-soft: #ddf1e8; --down: #c0392b; --down-soft: #f8e1de; --warn: #a56a12; --warn-soft: #f6ead3;
-  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
-  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
-  --accent: #56b8c0; --accent-soft: #163338;
-  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
-  color-scheme: dark; } }
-:root[data-theme="dark"] {
-  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
-  --accent: #56b8c0; --accent-soft: #163338;
-  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
-  color-scheme: dark; }
-
-* { box-sizing: border-box; }
+/*__TEMA__*/
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
 .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 18px; }
 .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
@@ -104,6 +83,7 @@ footer { color: var(--muted); font-size: 12px; }
 </style>
 </head>
 <body>
+<!--__NAV__-->
 <main class="wrap">
   <header>
     <div class="eyebrow"><a href="../">← Analisa Saham</a></div>
@@ -148,6 +128,7 @@ footer { color: var(--muted); font-size: 12px; }
   <footer>Bukan rekomendasi jual/beli. Data harga dari Yahoo Finance.</footer>
 </main>
 <script>
+/*__BASI__*/
 const DATA = /*__DATA__*/{};
 
 const $ = (id) => document.getElementById(id)
