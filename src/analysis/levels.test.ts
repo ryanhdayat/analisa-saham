@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'bun:test'
-import { idxTickSize, roundToTick, findLevels, recencyWeight, clusterTolerance } from './levels.ts'
+import { idxTickSize, roundToTick, findLevels, recencyWeight, clusterTolerance, floorToTick } from './levels.ts'
 import { volumeProfile } from '../indicators.ts'
 import { atr } from './volatility.ts'
 import type { Bar } from '../types.ts'
@@ -152,5 +152,14 @@ describe('level tempat harga SEDANG BERDIRI bukan support maupun resistance', ()
   test('toleransi klaster adalah yang terlebar antara 1,5% harga dan setengah ATR', () => {
     expect(clusterTolerance(1000, 10)).toBeCloseTo(15, 9) // 1,5% menang
     expect(clusterTolerance(1000, 100)).toBeCloseTo(50, 9) // setengah ATR menang
+  })
+})
+
+describe('floorToTick', () => {
+  test('membulatkan ke bawah ke fraksi BEI', () => {
+    expect(floorToTick(10552)).toBe(10550) // fraksi 25
+    expect(floorToTick(1083.2)).toBe(1080) // fraksi 5
+    expect(floorToTick(4929.33)).toBe(4920) // fraksi 10
+    expect(floorToTick(2100)).toBe(2100)
   })
 })
