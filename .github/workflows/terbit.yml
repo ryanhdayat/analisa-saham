@@ -15,6 +15,9 @@ name: Terbit harian
 on:
   schedule:
     - cron: '15 0 * * *' # 07:15 WIB
+    # Cadangan: jadwal GitHub bisa telat atau terlewat. Kalau run pertama sudah
+    # jalan, run ini hanya menerbitkan ulang data yang sama.
+    - cron: '45 1 * * *' # 08:45 WIB
   workflow_dispatch:
 
 permissions:
