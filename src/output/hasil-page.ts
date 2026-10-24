@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { inlineJson, jakartaStamp } from './screener.ts'
 import type { Hasil, Ringkasan } from '../hasil/nilai.ts'
+import type { PosisiSim, RingkasanSimulasi } from '../rencana/simulasi.ts'
 import type { MarketId } from '../market.ts'
 
 /**
@@ -15,8 +16,11 @@ export interface HasilPasar {
   label: string
   /** Kode mata uang untuk format harga di halaman: IDR atau USD. */
   currency: string
-  picks: Hasil[]
+  /** `sim` hanya untuk IDX: posisi simulasi Rp100 juta per pilihan. */
+  picks: (Hasil & { sim?: PosisiSim | null })[]
   ringkasan: Ringkasan
+  /** Hanya IDX. */
+  simulasi?: RingkasanSimulasi
   /** Emiten yang barnya gagal diambil di run ini. */
   gagal: string[]
 }

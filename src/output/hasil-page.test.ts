@@ -1,6 +1,7 @@
 import { expect, test, describe } from 'bun:test'
 import { buildHasilPage, loadHasilTemplate, type HasilPasar } from './hasil-page.ts'
 import { buildPicks, summarize } from '../hasil/nilai.ts'
+import { ringkasSimulasi } from '../rencana/simulasi.ts'
 
 /** Ambil literal JSON yang ditanam setelah `const NAME = `. */
 function embedded(html: string, name: string): any {
@@ -38,5 +39,18 @@ describe('buildHasilPage', async () => {
     const html = buildHasilPage(pasar, template, NOW)
     expect(html).not.toContain('Bank </script>')
     expect(embedded(html, 'DATA').pasar[0].picks[0].name).toBe('Bank </script> Asia')
+  })
+})
+
+describe('buildHasilPage — simulasi', async () => {
+  const template = await loadHasilTemplate()
+
+  test('ringkasan simulasi ikut ditanam untuk IDX, tidak untuk crypto', () => {
+    const data = embedded(buildHasilPage([
+      { ...pasar[0]!, simulasi: ringkasSimulasi(picks) },
+      { id: 'crypto', label: 'Crypto', currency: 'USD', picks: [], ringkasan: summarize([]), gagal: [] },
+    ], template, NOW), 'DATA')
+    expect(data.pasar[0].simulasi).toMatchObject({ modal: 100_000_000, status: 'kurang-data' })
+    expect(data.pasar[1].simulasi).toBeUndefined()
   })
 })
