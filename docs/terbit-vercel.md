@@ -9,8 +9,9 @@ site, not the code.
 
 ## How it runs
 
-One GitHub Actions run per day, `.github/workflows/terbit.yml`, at 07:15 WIB
-(00:15 UTC). It can also be started by hand from the Actions tab
+`.github/workflows/terbit.yml` runs at 18:30 WIB on trading days (the day's close
+is final, so the next day's plan is up the evening before), plus 07:15 and a
+08:45 fallback every day. It can also be started by hand from the Actions tab
 (`workflow_dispatch`).
 
 1. Check out `main` and run `typecheck` + `bun test`. Code that fails its tests
