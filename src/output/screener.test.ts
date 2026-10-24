@@ -6,6 +6,8 @@ import { buildScreener, CHART_BARS, CHUNK, isIntraday, loadTemplate, sma, writeS
 import { CRYPTO, IDX } from '../market.ts'
 import type { ScanRow } from '../analysis/report.ts'
 import type { Bar } from '../types.ts'
+import { rencanaIdx } from '../rencana/rencana.ts'
+import { floorToTick } from '../analysis/levels.ts'
 
 function row(code: string, over: Partial<ScanRow> = {}): ScanRow {
   const m = (value: unknown, available = true) => ({
@@ -218,5 +220,34 @@ describe('buildScreener — alasan terdegradasi', async () => {
 
   test('template tidak lagi menebak bahwa IDX tidak terjangkau', () => {
     expect(template).not.toContain('Data IDX tidak terjangkau')
+  })
+})
+
+describe('buildScreener — rencana hari ini', async () => {
+  const template = await loadTemplate()
+  const site = (rows: ScanRow[], market = IDX) => buildScreener(rows, new Map(), template, market, OPTS).html
+
+  test('baris IDX yang lolos membawa rencana dari rencanaIdx', () => {
+    const [r] = embedded(site([row('BBCA')]), 'ROWS')
+    expect(r.RENCANA).toEqual(rencanaIdx(1000, 930, 1200))
+    expect(r.RENCANA.jualRugi).toBe(floorToTick(r.CUT_LOSS))
+  })
+
+  test('baris tersaring tanpa rencana', () => {
+    const [r] = embedded(site([row('BBCA', { gates: { passed: false, failures: ['x'] } })]), 'ROWS')
+    expect(r.RENCANA).toBeNull()
+  })
+
+  test('crypto tanpa rencana', () => {
+    expect(embedded(site([row('BTC-USD')], CRYPTO), 'ROWS')[0].RENCANA).toBeNull()
+  })
+
+  test('hari tanpa emiten lolos → tidak ada satu pun rencana', () => {
+    const rows = embedded(site([row('A', { gates: { passed: false, failures: ['x'] } }), row('B', { gates: { passed: false, failures: ['y'] } })]), 'ROWS')
+    expect(rows.every((r: any) => r.RENCANA === null)).toBe(true)
+  })
+
+  test('meta membawa modal bawaan', () => {
+    expect(embedded(site([row('BBCA')]), 'META').modal).toBe(100_000_000)
   })
 })

@@ -5,6 +5,7 @@ import { IDX, type Market } from '../market.ts'
 import { tanggalRun, type ScanRow } from '../analysis/report.ts'
 import { cutLoss } from '../hasil/nilai.ts'
 import { catatanRisiko, labelRisiko } from '../rencana/catatan.ts'
+import { MODAL_BAWAAN, rencanaIdx } from '../rencana/rencana.ts'
 import type { Bar } from '../types.ts'
 
 /**
@@ -83,6 +84,8 @@ function tableRow(row: ScanRow, market: Market): Record<string, unknown> {
   // angka yang dinilai — STOP analisa bisa jauh lebih dalam dari itu.
   const plan = row.metrics.riskReward.available ? row.metrics.riskReward.value : null
   out.CUT_LOSS = plan ? round(cutLoss(plan.entry, plan.stop), 4) : null
+  // Rencana hari ini: hanya IDX (Stockbit tidak memperdagangkan crypto) dan hanya yang lolos.
+  out.RENCANA = plan && market.id === 'idx' && row.gates.passed ? rencanaIdx(plan.entry, plan.stop, plan.target) : null
   const catatan = catatanRisiko(row)
   out.CATATAN = catatan
   out.LABEL = labelRisiko(catatan)
@@ -184,6 +187,7 @@ export function buildScreener(
     dibuat: jakartaStamp(options.now ?? new Date()),
     degraded: rows.some((r) => r.rank.degraded),
     alasanDegradasi: options.alasanDegradasi ?? null,
+    modal: MODAL_BAWAAN,
     used: used.join(', ') || 'n/a',
     exchange: market.exchangeLabel,
     volumeUnit: market.volumeUnit,
