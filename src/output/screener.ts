@@ -84,7 +84,8 @@ function tableRow(row: ScanRow, market: Market): Record<string, unknown> {
   // Cut loss yang benar-benar dipakai /hasil/, supaya angka di laci sama dengan
   // angka yang dinilai — STOP analisa bisa jauh lebih dalam dari itu.
   const plan = row.metrics.riskReward.available ? row.metrics.riskReward.value : null
-  out.CUT_LOSS = plan ? round(cutLoss(plan.entry, plan.stop), 4) : null
+  // IDX: dibulatkan ke fraksi BEI, persis angka kartu rencana dan /hasil/. Crypto apa adanya.
+  out.CUT_LOSS = !plan ? null : market.id === 'idx' ? rencanaIdx(plan.entry, plan.stop, plan.target).jualRugi : round(cutLoss(plan.entry, plan.stop), 4)
   // Rencana hari ini: hanya IDX (Stockbit tidak memperdagangkan crypto) dan hanya yang lolos.
   out.RENCANA = plan && market.id === 'idx' && row.gates.passed ? rencanaIdx(plan.entry, plan.stop, plan.target) : null
   const catatan = catatanRisiko(row)

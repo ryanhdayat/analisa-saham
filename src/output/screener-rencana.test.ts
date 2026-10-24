@@ -32,3 +32,20 @@ describe('screener-template: rencana hari ini', async () => {
     expect(template).toContain('Modal tidak terbaca')
   })
 })
+
+describe('screener-template: membaca isian modal', async () => {
+  const bacaModal = ambil<(v: string) => number>(await loadTemplate(), 'bacaModal')
+  test('format rupiah dengan titik ribuan', () => {
+    expect(bacaModal('100.000.000')).toBe(100_000_000)
+    expect(bacaModal('Rp 50.000.000')).toBe(50_000_000)
+  })
+  test('desimal setelah koma dibuang, bukan ditempel', () => {
+    expect(bacaModal('100.000.000,00')).toBe(100_000_000)
+  })
+  test('kosong, tak masuk akal, atau terlalu besar → tidak terbaca (NaN)', () => {
+    expect(bacaModal('')).toBeNaN()
+    expect(bacaModal('abc')).toBeNaN()
+    expect(bacaModal('1'.repeat(400))).toBeNaN()
+    expect(bacaModal('2.000.000.000.000.000')).toBeNaN()
+  })
+})

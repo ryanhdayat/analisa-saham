@@ -1,4 +1,4 @@
-import { floorToTick } from '../analysis/levels.ts'
+import { floorToTick, idxTickSize } from '../analysis/levels.ts'
 import { cutLoss } from '../hasil/nilai.ts'
 import { SHARES_PER_LOT } from '../market.ts'
 
@@ -64,7 +64,9 @@ export function hitungLot(beli: number, jualRugi: number, modal: number): number
 export function rencanaIdx(entry: number, stop: number, target: number, modal = MODAL_BAWAAN): Rencana {
   const beli = entry
   const jualRugi = floorToTick(cutLoss(entry, stop))
-  const jualUntung = floorToTick(target)
+  // Target kurang dari satu fraksi di atas harga beli terbulatkan ke harga beli itu sendiri —
+  // "jual untung" yang rugi setelah biaya. Paling dekat satu fraksi di atas harga beli.
+  const jualUntung = Math.max(floorToTick(target), beli + idxTickSize(beli))
   const lot = hitungLot(beli, jualRugi, modal)
   const hasil = (jual: number) => lot * SHARES_PER_LOT * (jual - beli) - biaya(beli, jual, lot)
   return { beli, jualRugi, jualUntung, lot, nilai: lot * SHARES_PER_LOT * beli, rugiRp: hasil(jualRugi), untungRp: hasil(jualUntung) }

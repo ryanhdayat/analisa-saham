@@ -251,3 +251,13 @@ describe('buildScreener — rencana hari ini', async () => {
     expect(embedded(site([row('BBCA')]), 'META').modal).toBe(100_000_000)
   })
 })
+
+describe('buildScreener — cut loss di laci sama dengan kartu', async () => {
+  const template = await loadTemplate()
+  test('CUT_LOSS IDX sudah dibulatkan ke fraksi BEI, sama dengan RENCANA.jualRugi', () => {
+    const r0 = row('MARK', { metrics: { ...row('X').metrics, riskReward: { ...row('X').metrics.riskReward, value: { entry: 1155, stop: 1000, target: 1225, ratio: 1, passesGate: true } } } })
+    const [r] = embedded(buildScreener([r0], new Map(), template, IDX, OPTS).html, 'ROWS')
+    expect(r.CUT_LOSS).toBe(1035)
+    expect(r.RENCANA.jualRugi).toBe(1035)
+  })
+})

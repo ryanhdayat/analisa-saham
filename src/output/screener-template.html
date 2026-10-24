@@ -317,7 +317,14 @@ function kartu(r, modal) {
   </article>`;
 }
 
-const bacaModal = v => Number(String(v).replace(/[^\d]/g, ''));
+// Format rupiah: titik ribuan, koma desimal (dibuang). NaN kalau kosong atau di luar akal (> Rp1 triliun).
+/*<bacaModal>*/
+function bacaModal(v) {
+  const angka = String(v).split(',')[0].replace(/[^\d]/g, '')
+  const n = angka ? Number(angka) : NaN
+  return Number.isFinite(n) && n > 0 && n <= 1e12 ? n : NaN
+}
+/*</bacaModal>*/
 function tulisRencana() {
   const masuk = bacaModal($('#modal').value);
   const sah = Number.isFinite(masuk) && masuk > 0;
@@ -336,10 +343,10 @@ if (IDX) {
   $('#rencana').hidden = false; $('#cara').hidden = false;
   let simpan = null;
   try { simpan = localStorage.getItem('rencana-modal'); } catch (e) {}
-  const awal = bacaModal(simpan ?? '') > 0 ? bacaModal(simpan) : META.modal;
+  const awal = Number.isFinite(bacaModal(simpan ?? '')) ? bacaModal(simpan) : META.modal;
   $('#modal').value = awal.toLocaleString('id-ID');
   $('#modal').addEventListener('input', tulisRencana);
-  $('#modal').addEventListener('blur', () => { const v = bacaModal($('#modal').value); if (v > 0) $('#modal').value = v.toLocaleString('id-ID'); });
+  $('#modal').addEventListener('blur', () => { const v = bacaModal($('#modal').value); if (Number.isFinite(v)) $('#modal').value = v.toLocaleString('id-ID'); });
   $('#kartu').addEventListener('click', e => { const b = e.target.closest('[data-code]'); if (b) openDetail(b.dataset.code); });
   tulisRencana();
 } else {
@@ -424,7 +431,7 @@ const LABEL = { structure: 'Struktur & fase', levels: 'Support / resistance', ri
 const ORDER = Object.keys(LABEL);
 let current = null;
 
-const modalSekarang = () => { const v = bacaModal($('#modal').value); return v > 0 ? v : META.modal; };
+const modalSekarang = () => { const v = bacaModal($('#modal').value); return Number.isFinite(v) ? v : META.modal; };
 /** Ringkasan untuk pemula di bagian atas laci: kenapa lolos (atau tidak), dan rencana yang sama dengan kartunya. */
 function awam(r) {
   if (!r.pass) {

@@ -38,3 +38,12 @@ describe('returnBersih', () => {
     expect(returnBersih(1000, 1000)).toBeCloseTo(0.9975 / 1.0015 - 1, 9)
   })
 })
+
+describe('rencanaIdx — target terlalu dekat', () => {
+  test('target yang terbulatkan ke harga beli naik satu fraksi, jual untung tidak pernah rugi', () => {
+    // Harga 60 (fraksi 1): target 60,9 terbulatkan ke bawah jadi 60 = harga beli.
+    const r = rencanaIdx(60, 57, 60.9)
+    expect(r.jualUntung).toBe(61)
+    expect(r.jualUntung).toBeGreaterThan(r.beli)
+  })
+})
