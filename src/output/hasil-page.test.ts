@@ -54,3 +54,21 @@ describe('buildHasilPage — simulasi', async () => {
     expect(data.pasar[1].simulasi).toBeUndefined()
   })
 })
+
+describe('hasil-template: simulasi dan cara menilai', async () => {
+  const template = await loadHasilTemplate()
+
+  test('punya teks untuk ketiga status aturan lulus', () => {
+    for (const t of ['Belum cukup data', 'Belum lulus', 'Lulus']) expect(template).toContain(t)
+  })
+
+  test('cara menilai menjelaskan aturan lewati dan pengisian order', () => {
+    expect(template).toContain('dilewati')
+    expect(template).toContain('tidak terbeli')
+    expect(template).toContain('Buy limit')
+  })
+
+  test('tanpa placeholder tersisa', () => {
+    expect(buildHasilPage(pasar, template, NOW)).not.toMatch(/__[A-Z]+__/)
+  })
+})
