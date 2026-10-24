@@ -51,3 +51,9 @@ describe('tema ditanam di semua halaman', async () => {
     })
   }
 })
+
+describe('TEMA_CSS', () => {
+  test('atribut hidden selalu menang atas aturan display halaman', () => {
+    expect(TEMA_CSS).toMatch(/\[hidden\]\s*\{\s*display:\s*none\s*!important;?\s*\}/)
+  })
+})

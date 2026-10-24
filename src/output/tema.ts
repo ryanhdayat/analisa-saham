@@ -37,6 +37,7 @@ export const TEMA_CSS = `/* tema bersama — src/output/tema.ts */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {${GELAP} } }
 :root[data-theme="dark"] {${GELAP} }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
 .num, td.n { font-variant-numeric: tabular-nums; }
