@@ -183,16 +183,18 @@ describe('buildScreener — catatan risiko dan cut loss', async () => {
   const rowsOf = (r: ScanRow) => embedded(buildScreener([r], new Map(), template, IDX, OPTS).html, 'ROWS')
 
   test('R:R di bawah 1 jadi catatan, walau bukan syarat gerbang', () => {
-    expect(rowsOf(rr(0.51))[0].CATATAN).toContainEqual(['R:R 1:0,51', 'warn'])
+    expect(rowsOf(rr(0.51))[0].CATATAN).toContainEqual(expect.objectContaining({ teknis: 'R:R 1:0,51', kind: 'warn' }))
+    expect(rowsOf(rr(0.51))[0].LABEL).toBe('hati-hati')
   })
 
   test('rencana dan sinyal bersih → tanpa catatan', () => {
     expect(rowsOf(row('BBCA'))[0].CATATAN).toEqual([])
+    expect(rowsOf(row('BBCA'))[0].LABEL).toBe('bersih')
   })
 
   test('catatan lama tetap ada: Wyckoff distribusi', () => {
     const r = row('BBCA', { metrics: { ...row('X').metrics, wyckoff: { ...row('X').metrics.wyckoff, value: { phase: 'distribusi', reasons: [] } } } })
-    expect(rowsOf(r)[0].CATATAN).toContainEqual(['Wyckoff distribusi', 'bad'])
+    expect(rowsOf(r)[0].CATATAN).toContainEqual(expect.objectContaining({ teknis: 'Wyckoff distribusi', kind: 'bad' }))
   })
 
   test('cut loss evaluasi ikut aturan /hasil/: stop dijepit ke 5–10% di bawah entry', () => {

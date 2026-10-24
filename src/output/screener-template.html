@@ -171,7 +171,7 @@ const BAD_WY = new Set(['distribusi', 'markdown']);
 ROWS.forEach(r => {
   r.pass = r.GERBANG === 'lolos';
   // Catatan risiko disusun di screener.ts (catatan()), bukan di sini.
-  r.flags = r.CATATAN || [];
+  r.flags = (r.CATATAN || []).map(c => [c.teknis, c.kind]);
   r.risk = r.ENTRY && r.STOP ? (r.ENTRY - r.STOP) / r.ENTRY * 100 : null;
   r.reward = r.ENTRY && r.TARGET ? (r.TARGET - r.ENTRY) / r.ENTRY * 100 : null;
   r.liquid = !/TIDAK LIKUID/.test(r.GERBANG || '');

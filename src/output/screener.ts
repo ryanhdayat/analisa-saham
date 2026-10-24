@@ -4,6 +4,7 @@ import { columnsFor } from './columns.ts'
 import { IDX, type Market } from '../market.ts'
 import { tanggalRun, type ScanRow } from '../analysis/report.ts'
 import { cutLoss } from '../hasil/nilai.ts'
+import { catatanRisiko, labelRisiko } from '../rencana/catatan.ts'
 import type { Bar } from '../types.ts'
 
 /**
@@ -64,29 +65,6 @@ function gateText(market: Market, o: ScreenerOptions): string {
   return parts.join(', ')
 }
 
-type Catatan = [label: string, kind: 'bad' | 'warn']
-
-const BAD_WY = new Set(['distribusi', 'markdown'])
-const BAD_VPA = new Set(['upthrust', 'no-demand'])
-
-/**
- * Catatan risiko untuk baris yang lolos. Tidak menggagalkan gerbang — hanya
- * memberi tahu kenapa baris itu tidak "bersih".
- *
- * R:R di bawah 1 ikut dicatat walau R:R bukan syarat gerbang: risiko ke stop
- * lebih besar dari imbalan ke target, dan itu harus terlihat di tabel.
- */
-function catatan(r: Record<string, unknown>): Catatan[] {
-  const out: Catatan[] = []
-  if (BAD_WY.has(r.WYCKOFF as string)) out.push([`Wyckoff ${r.WYCKOFF}`, 'bad'])
-  if (BAD_VPA.has(r.VPA_TERAKHIR as string)) out.push([`${r.VPA_TERAKHIR} ${String(r.VPA_TANGGAL ?? '').slice(5)}`, 'bad'])
-  if (r.FASE === 'rebound') out.push(['rebound dlm downtrend', 'warn'])
-  if (r.DIVERGENSI_OBV === 'bearish') out.push(['OBV bearish', 'warn'])
-  if (r.VOLUME_BACA === 'tekanan-jual' || r.VOLUME_BACA === 'rally-lemah') out.push([r.VOLUME_BACA, 'warn'])
-  if (typeof r.RR === 'number' && r.RR < 1) out.push([`R:R 1:${idNum(r.RR)}`, 'warn'])
-  return out
-}
-
 /** Satu baris tabel, berkunci header CSV — satu sumber kebenaran dengan laporan lain. */
 function tableRow(row: ScanRow, market: Market): Record<string, unknown> {
   const out: Record<string, unknown> = {}
@@ -105,7 +83,9 @@ function tableRow(row: ScanRow, market: Market): Record<string, unknown> {
   // angka yang dinilai — STOP analisa bisa jauh lebih dalam dari itu.
   const plan = row.metrics.riskReward.available ? row.metrics.riskReward.value : null
   out.CUT_LOSS = plan ? round(cutLoss(plan.entry, plan.stop), 4) : null
-  out.CATATAN = catatan(out)
+  const catatan = catatanRisiko(row)
+  out.CATATAN = catatan
+  out.LABEL = labelRisiko(catatan)
   return out
 }
 
