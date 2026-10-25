@@ -1,0 +1,20 @@
+[
+ {
+  "code": "COMP5692-USD",
+  "name": "Compound USD",
+  "date": "2026-10-23",
+  "entry": 24.036237716674805,
+  "stop": 21.208727679989956,
+  "target": 25,
+  "label": "hati-hati"
+ },
+ {
+  "code": "XMR-USD",
+  "name": "Monero USD",
+  "date": "2026-10-23",
+  "entry": 583.8970336914062,
+  "stop": 529.0316602567835,
+  "target": 630,
+  "label": "hati-hati"
+ }
+]
