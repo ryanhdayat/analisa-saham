@@ -53,7 +53,7 @@ function tokenDalam(v: unknown, kind: 'access' | 'refresh', depth = 0): Obj | un
   }
 }
 const rows = (v: unknown): Obj[] => {
-  const xs = Array.isArray(v) ? v : obj(v).list ?? obj(v).result
+  const xs = Array.isArray(v) ? v : obj(v).list ?? obj(v).result ?? obj(v).results
   if (!Array.isArray(xs)) throw Error('Daftar Stockbit tidak terbaca')
   return xs.map(obj)
 }
@@ -73,11 +73,13 @@ function normalisasi(jenis: JenisStockbit, porto: unknown, orders: unknown, summ
       pnl: angka(virtual ? r.unrealized?.profit_loss : r.asset?.unrealised?.profit_loss) }
   })
   const os = rows(payload(orders)).map((r) => ({
-    id: teks(r.id ?? r.order_id), kode: teks(r.symbol ?? r.stock_code), side: teks(r.action ?? r.side), status: teks(r.status),
-    lot: angka(jenis === 'virtual' ? r.total : r.lot),
-    // Carina's done is shares; Virtual's done is lots. Never infer fills from status.
-    matchedLot: jenis === 'virtual' ? angka(r.done) : angka(r.done) === null ? null : wajib(r.done) / 100,
-    price: angka(r.price), createdAt: typeof r.time?.created === 'string' ? r.time.created : typeof r.created_at === 'string' ? r.created_at : null,
+    id: teks(r.id ?? r.order_id), kode: teks(r.symbol ?? r.stock_code),
+    side: teks(jenis === 'virtual' ? r.action : r.side ?? r.action), status: teks(r.status_text ?? r.status),
+    lot: angka(jenis === 'virtual' ? r.total : r.qty?.lot_total ?? r.lot),
+    // Prefer explicit Carina lot quantities; legacy done is shares. Never infer fills from status.
+    matchedLot: jenis === 'virtual' ? angka(r.done) : angka(r.qty?.lot_done) ?? (angka(r.done) === null ? null : wajib(r.done) / 100),
+    price: angka(jenis === 'virtual' ? r.price : r.price?.order ?? r.price),
+    createdAt: typeof r.time_utc?.order === 'string' ? r.time_utc.order : typeof r.time?.created === 'string' ? r.time.created : typeof r.created_at === 'string' ? r.created_at : null,
   }))
   const balance = angka(jenis === 'virtual' ? totals.trading_balance : totals.trading?.balance)
   const unrealized = angka(jenis === 'virtual' ? totals.profit_loss?.unrealized : totals.profit_loss?.unrealised)
