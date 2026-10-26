@@ -1,0 +1,29 @@
+[
+ {
+  "code": "AADI",
+  "name": "PT Adaro Andalan Indonesia Tbk",
+  "date": "2026-10-26",
+  "entry": 11525,
+  "stop": 10565.920232004743,
+  "target": 12450,
+  "label": "hati-hati"
+ },
+ {
+  "code": "BSSR",
+  "name": "PT Baramulti Suksessarana Tbk",
+  "date": "2026-10-26",
+  "entry": 5200,
+  "stop": 4933.4874455046265,
+  "target": 5500,
+  "label": "bersih"
+ },
+ {
+  "code": "ULTJ",
+  "name": "PT Ultrajaya Milk Industry & Trading Company Tbk",
+  "date": "2026-10-26",
+  "entry": 2090,
+  "stop": 1962.3613153985505,
+  "target": 2190,
+  "label": "hati-hati"
+ }
+]
