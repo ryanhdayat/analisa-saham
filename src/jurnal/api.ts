@@ -78,7 +78,8 @@ const setCookie = (nilai: string, umur: number) =>
   `${COOKIE}=${nilai}; Path=/api/jurnal; Max-Age=${umur}; HttpOnly; Secure; SameSite=Strict`
 
 const cookieGoogle = (nilai: string, umur: number) =>
-  `${CHALLENGE}=${nilai}; Path=/api/jurnal; Max-Age=${umur}; HttpOnly; Secure; SameSite=Strict`
+  // Challenge harus ikut POST navigasi dari Google. Cookie sesi tetap Strict.
+  `${CHALLENGE}=${nilai}; Path=/api/jurnal; Max-Age=${umur}; HttpOnly; Secure; SameSite=None`
 
 async function tokenGoogle(kunci: string, email: string, subject: string, umur: number, nonce?: string) {
   return new SignJWT({ email, ...(nonce ? { nonce } : {}) }).setProtectedHeader({ alg: 'HS256' })
@@ -177,6 +178,23 @@ export async function tangani(req: Request, env: Env = process.env, fetcher: typ
     const nonce = randomBytes(32).toString('base64url')
     const proof = await tokenGoogle(kunci, env.JURNAL_EMAIL!, 'challenge', 600, nonce)
     return json({ mode: 'google', clientId: env.GOOGLE_CLIENT_ID, nonce }, 200, { 'set-cookie': cookieGoogle(proof, 600) })
+  }
+  // GIS redirect mengirim form langsung dari Google, tanpa callback popup.
+  // Double-submit CSRF Google dan nonce bertanda tangan wajib sebelum sesi dibuat.
+  if (google && req.method === 'POST' && aksi === 'google' &&
+      (req.headers.get('content-type') ?? '').startsWith('application/x-www-form-urlencoded')) {
+    const text = await req.text()
+    const form = new URLSearchParams(text)
+    const csrf = cookieSesi(req, 'g_csrf_token')
+    const bodyCsrf = form.get('g_csrf_token')
+    const result = text.length <= 24000 && csrf && bodyCsrf && sama(csrf, bodyCsrf)
+      ? await masukGoogle(req, env, Object.fromEntries(form), fetcher)
+      : gagal(403, 'Permintaan login tidak sah.')
+    const headers = new Headers(result.headers)
+    headers.delete('content-type')
+    headers.set('location', result.status === 204 ? '/jurnal/' :
+      result.status === 403 && csrf && bodyCsrf && sama(csrf, bodyCsrf) ? '/jurnal/?login=ditolak' : '/jurnal/?login=ulang')
+    return new Response(null, { status: 303, headers })
   }
   if (google && req.method !== 'GET' && req.headers.get('origin') !== new URL(req.url).origin) return gagal(403, 'Asal permintaan tidak sah.')
 

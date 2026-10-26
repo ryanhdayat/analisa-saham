@@ -80,3 +80,29 @@ test('sesi kedaluwarsa, sesi challenge, dan cookie login kunci lama bukan sesi G
     expect((await tangani(req('GET', '', undefined, `jurnal_sesi=${token}`), env, fetcher)).status).toBe(401)
   }
 })
+
+test('redirect Google memverifikasi form dan CSRF lalu mengembalikan sesi ke jurnal', async () => {
+  const c = await persiapan()
+  const body = new URLSearchParams({ credential: await credential(c.nonce), g_csrf_token: 'csrf-browser' })
+  const request = (cookie: string, csrf = 'csrf-browser') => new Request(url + '?aksi=google', {
+    method: 'POST', headers: { cookie, 'content-type': 'application/x-www-form-urlencoded', origin: 'https://accounts.google.com' },
+    body: new URLSearchParams({ ...Object.fromEntries(body), g_csrf_token: csrf }),
+  })
+  const r = await tangani(request(c.cookie + '; g_csrf_token=csrf-browser'), env, fetcher)
+  expect(r.status).toBe(303)
+  expect(r.headers.get('location')).toBe('/jurnal/')
+  expect(r.headers.get('set-cookie')).toContain('jurnal_sesi=')
+  expect(r.headers.get('cache-control')).toBe('no-store')
+  for (const requestSalah of [request(c.cookie), request(c.cookie + '; g_csrf_token=csrf-browser', 'palsu'), request('g_csrf_token=csrf-browser')]) {
+    const gagal = await tangani(requestSalah, env, fetcher)
+    expect(gagal.status).toBe(303)
+    expect(gagal.headers.get('location')).toBe('/jurnal/?login=ulang')
+    expect(gagal.headers.get('set-cookie')).toBeNull()
+  }
+})
+
+test('cookie challenge terkirim pada POST lintas situs Google, cookie sesi tetap Strict', async () => {
+  const r = await tangani(req('GET', '?aksi=konfigurasi'), env, fetcher)
+  expect(r.headers.get('set-cookie')).toContain('SameSite=None')
+  expect(r.headers.get('set-cookie')).toContain('HttpOnly; Secure')
+})
