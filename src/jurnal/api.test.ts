@@ -54,6 +54,18 @@ async function masuk(fetcher: typeof fetch): Promise<string> {
   return set.split(';')[0]!
 }
 
+test('Stockbit Virtual dan Real tetap privat; jenis akun asing ditolak', async () => {
+  const f = redisPalsu()
+  for (const jenis of ['virtual', 'real']) {
+    expect((await tangani(minta('GET', { query: '?aksi=stockbit&jenis=' + jenis }), ENV, f.fetcher)).status).toBe(401)
+  }
+  expect(f.disentuh()).toBe(0)
+  const cookie = await masuk(f.fetcher)
+  const result = await tangani(minta('GET', { query: '?aksi=stockbit&jenis=asing', cookie }), ENV, f.fetcher)
+  expect(result.status).toBe(400)
+  expect(result.headers.get('cache-control')).toBe('no-store')
+})
+
 describe('akses', () => {
   test('tanpa cookie: 401, Redis tidak disentuh', async () => {
     const r = redisPalsu()

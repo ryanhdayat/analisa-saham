@@ -57,6 +57,18 @@ textarea { resize: vertical; min-height: 44px; }
 .pos { color: var(--up); } .neg { color: var(--down); }
 .empty { padding: 18px; color: var(--muted); text-align: center; }
 footer { color: var(--muted); font-size: 12px; }
+.porto { display: grid; gap: 14px; }
+.akun { display: flex; gap: 8px; flex-wrap: wrap; }
+.akun button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.porto-kepala { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.porto-kepala h2 { margin: 0; font: 700 24px var(--font-display); }
+.sinkron { margin: 0; color: var(--muted); font-size: 13px; }
+.posisi { border-top: 3px solid var(--accent); }
+.posisi .code { font-size: 24px; }
+.order-list { max-height: 440px; overflow-y: auto; display: grid; gap: 8px; }
+.order-list p { margin: 0; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+#isi { border-top: 1px solid var(--line); padding-top: 22px; }
+#isi h2 { font: 700 20px var(--font-display); margin: 0 0 12px; }
 @media (max-width: 480px) {
   .wrap { gap: 16px; padding-bottom: max(32px, env(safe-area-inset-bottom)); }
   .login { margin: 12px auto; padding: 24px 20px; }
@@ -71,7 +83,7 @@ footer { color: var(--muted); font-size: 12px; }
 <main class="wrap">
   <header class="kepala">
     <h1>Jurnal</h1>
-    <div class="status"><span>Catatan transaksi kamu, dibandingkan dengan rencana dan simulasi situs.</span>
+    <div class="status"><span>Portofolio Stockbit dan catatan transaksi kamu.</span>
       <button type="button" id="keluar" hidden>Keluar</button></div>
   </header>
 
@@ -91,12 +103,30 @@ footer { color: var(--muted); font-size: 12px; }
     <p class="privat">Hanya akun pemilik yang bisa membuka catatan ini.</p>
   </form>
 
+  <section class="porto" id="porto" hidden aria-label="Portofolio Stockbit">
+    <div class="akun" role="group" aria-label="Jenis akun Stockbit">
+      <button type="button" id="akun-virtual" aria-pressed="true">Virtual</button>
+      <button type="button" id="akun-real" aria-pressed="false">Real</button>
+    </div>
+    <div class="porto-kepala"><h2 id="judul-porto">Stockbit Virtual</h2><button type="button" id="sinkron-stockbit">Muat ulang</button></div>
+    <p class="sinkron" id="waktu-stockbit" role="status" aria-live="polite">Memuat portofolio…</p>
+    <div class="banner" id="peringatan-stockbit" role="status" hidden></div>
+    <div class="stats" id="stats-stockbit"></div>
+    <div class="daftar" id="posisi-stockbit"></div>
+    <details class="panel"><summary>Order Stockbit</summary>
+      <p class="sinkron">Status dan harga order berasal dari Stockbit. Order terbuka atau ditolak bukan transaksi terisi. Daftar ini bukan riwayat transaksi lengkap.</p>
+      <div class="order-list" id="order-stockbit"></div>
+    </details>
+  </section>
+
   <div id="isi" hidden>
+    <h2>Catatan manual</h2>
+    <p class="sinkron">Terpisah dari akun Virtual dan Real Stockbit; tidak ditambahkan ke saldo portofolio.</p>
     <div class="stats" id="stats"></div>
   </div>
 
   <details class="panel pencatatan" id="pencatatan" hidden>
-  <summary>Catat pembelian</summary>
+  <summary>Catat pembelian manual</summary>
   <form id="catat" hidden>
     <div class="isian">
       <label class="lebar">Rencana<select id="f-rencana"></select></label>
@@ -110,10 +140,10 @@ footer { color: var(--muted); font-size: 12px; }
   </form>
   </details>
 
-  <h2 class="judul-transaksi" id="judul-transaksi" hidden>Transaksi kamu</h2>
+  <h2 class="judul-transaksi" id="judul-transaksi" hidden>Transaksi manual</h2>
   <section class="daftar" id="daftar" hidden aria-label="Transaksi"></section>
 
-  <footer id="catatan-biaya" hidden>Hasil kamu dipotong biaya Stockbit Virtual (0,20% beli, 0,30% jual); simulasi situs memakai biaya akun asli (0,15% beli, 0,25% jual), jadi selisih sekitar 0,1% per transaksi itu wajar. Posisi terbuka dinilai di harga penutupan terakhir dari halaman Hasil. Jual dicatat untuk seluruh lot.</footer>
+  <footer id="catatan-biaya" hidden>Estimasi catatan manual memakai biaya Virtual 0,20% beli dan 0,30% jual. Simulasi situs memakai 0,15% beli dan 0,25% jual. Posisi manual terbuka dinilai di penutupan terakhir dari halaman Hasil; jual dicatat untuk seluruh lot. Angka pada bagian Stockbit mengikuti data akun masing-masing.</footer>
 </main>
 <script>
 const $ = (id) => document.getElementById(id)
@@ -211,8 +241,50 @@ async function api(method, body, query = '') {
 
 function tampil(masuk) {
   $('masuk').hidden = masuk
-  for (const id of ['isi', 'catat', 'pencatatan', 'daftar', 'judul-transaksi', 'catatan-biaya', 'keluar']) $(id).hidden = !masuk
+  for (const id of ['porto', 'isi', 'catat', 'pencatatan', 'daftar', 'judul-transaksi', 'catatan-biaya', 'keluar']) $(id).hidden = !masuk
 }
+
+let jenisAkun = 'virtual'
+let akunStockbit = {}
+let generasiStockbit = 0
+const uang = (v) => v == null ? '—' : `Rp${idr.format(v)}`
+
+function renderStockbit() {
+  for (const jenis of ['virtual', 'real']) $('akun-' + jenis).setAttribute('aria-pressed', String(jenis === jenisAkun))
+  $('judul-porto').textContent = 'Stockbit ' + (jenisAkun === 'real' ? 'Real' : 'Virtual')
+  const data = akunStockbit[jenisAkun]
+  const s = data?.snapshot
+  $('peringatan-stockbit').hidden = !data?.warning
+  $('peringatan-stockbit').textContent = data?.warning ?? ''
+  $('waktu-stockbit').textContent = s ? 'Terakhir sinkron ' + new Date(s.syncedAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) + ' WIB. Harga mengikuti data Stockbit saat sinkron.' : data ? 'Belum ada data tersinkron.' : 'Memuat portofolio…'
+  $('stats-stockbit').innerHTML = s ? [[uang(s.balance), 'Trading balance'], [s.unrealized == null ? '—' : rp(s.unrealized), 'P/L belum terealisasi']].map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('') : ''
+  $('posisi-stockbit').innerHTML = !s ? '' : s.positions.length ? s.positions.map((p) => {
+    const plan = [...picks].filter((x) => x.code === p.kode).sort((a, b) => b.date.localeCompare(a.date))[0]
+    return `<article class="kartu posisi"><div class="atas"><b class="code">${esc(p.kode)}</b><span>${idr.format(p.lot)} lot</span><b class="badge ${cls(p.pnl)}">${p.pnl == null ? '—' : rp(p.pnl)}</b></div>
+      <div class="banding"><div><small>Average Stockbit</small><b>${uang(p.average)}</b></div><div><small>Harga pasar Stockbit</small><b>${uang(p.market)}</b></div></div>
+      <p class="mut">Nilai pasar ${uang(p.marketValue)}</p>
+      <p>${plan ? `Rencana situs terbaru (${tgl(plan.date)}): entry ${idr.format(plan.entry)}, target ${idr.format(plan.target)}, cut ${idr.format(plan.cut)}. <span class="mut">Pembanding; belum ditautkan ke pembelian ini.</span>` : 'Belum ada rencana situs untuk posisi ini.'}</p></article>`
+  }).join('') : '<p class="empty">Tidak ada posisi pada akun ini menurut Stockbit.</p>'
+  $('order-stockbit').innerHTML = !s ? '' : s.orders.length ? s.orders.map((o) => `<p><b>${esc(o.kode)}</b> ${esc(o.side)} <span class="badge">${esc(o.status)}</span><br>${o.lot == null ? '—' : idr.format(o.lot)} lot, terisi ${o.matchedLot == null ? '—' : idr.format(o.matchedLot)} lot · harga order ${uang(o.price)}${o.createdAt ? `<br><small>${esc(new Date(o.createdAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }))} WIB</small>` : ''}</p>`).join('') : '<p class="empty">Tidak ada order dalam respons Stockbit.</p>'
+}
+
+async function muatStockbit() {
+  const generasi = ++generasiStockbit
+  $('sinkron-stockbit').disabled = true
+  renderStockbit()
+  try {
+    await Promise.all(['virtual', 'real'].map(async (jenis) => {
+      let data
+      try { data = await api('GET', undefined, '?aksi=stockbit&jenis=' + jenis) }
+      catch (err) { data = { snapshot: akunStockbit[jenis]?.snapshot ?? null, warning: err.message } }
+      if (generasi !== generasiStockbit) return
+      akunStockbit[jenis] = data
+      renderStockbit()
+    }))
+  } finally { if (generasi === generasiStockbit) $('sinkron-stockbit').disabled = false }
+}
+for (const jenis of ['virtual', 'real']) $('akun-' + jenis).addEventListener('click', () => { jenisAkun = jenis; renderStockbit() })
+$('sinkron-stockbit').addEventListener('click', muatStockbit)
 
 const SITUS = { open: 'Masih berjalan', target: 'Kena target', cut: 'Kena cut loss', dilewati: 'Dilewati', 'tidak-terbeli': 'Tidak terbeli' }
 
@@ -288,6 +360,7 @@ async function muat() {
     tampil(true)
     isiPilihan()
     render()
+    void muatStockbit()
   } catch (err) {
     if (err.status !== 401) { pesan(err.message); $('coba-lagi').hidden = false }
     else await siapkanLogin().catch((e) => { pesan(e.message); $('coba-lagi').hidden = false })
@@ -321,6 +394,9 @@ $('keluar').addEventListener('click', async () => {
   try {
     await api('POST', {}, '?aksi=keluar')
     entri = []
+    generasiStockbit++
+    akunStockbit = {}
+    renderStockbit()
     pesan(null)
     tampil(false)
     window.google?.accounts?.id?.disableAutoSelect()
