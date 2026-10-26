@@ -27,12 +27,13 @@ Files: `src/output/jurnal-template.html`, existing output tests.
 
 ## Task 3: Connection and release
 Files: `scripts/hubungkan-stockbit.ts`, `docs/terbit-vercel.md`.
-- [ ] Connect a dedicated cloud Stockbit login, seal credentials in Redis without logging them; preserve the laptop MCP credential.
-- [ ] Run full tests, typecheck, bundle smoke check and independent review.
-- [ ] Publish through existing main → Terbit harian → site flow, verify authenticated browser portfolio and orders and unauthenticated 401.
+- [x] Connect a dedicated cloud Stockbit Virtual login, seal credentials in Redis without logging them; preserve the laptop MCP credential. Real remains pending owner PIN entry.
+- [x] Run full tests, typecheck, bundle smoke check and independent review.
+- [x] Publish through existing main → Terbit harian → site flow, then rebundle only the function for the header fix. Authenticated production reads and Google browser portfolio verified; unauthenticated Virtual/Real return 401.
 - [ ] Verify cloud refresh/GET from Vercel; if the upstream blocks datacenter access, report the concrete blocker without presenting cached data as live.
 
 ## Verification notes
 - Local Safari fixture: Virtual holdings visible; switching to disconnected Real removes Virtual balance and positions. Fixture uses DEMO data, never production assets.
 - Independent reviewer found an HTTP-200 application-error handling issue; added failing regression, then rejection guard. Structural Real refresh parsing tested with separate bearer/body and persistence before reads.
-- Live Real login/renewal remains unverified: no securities session stored. Dedicated cloud login window opened; waiting for the owner to complete login.
+- Dedicated cloud Virtual login completed. Initial reads returned 403 without the MCP's User-Agent/Accept-Language; adding those headers returned 200. Production Vercel reads now succeed without warnings. Browser Google login and Virtual/Real switching verified against production; manual entries preserved.
+- Live Real login/renewal remains unverified: no securities session stored. Owner has the `--login --real` setup command and must enter the PIN in the local terminal. Renewal fixtures pass; forced production renewal has not been exercised.
