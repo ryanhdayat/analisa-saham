@@ -102,6 +102,23 @@ test('tanpa koneksi menampilkan status belum terhubung, bukan porto kosong palsu
   expect(r.warning).toContain('belum dihubungkan')
   expect(f.calls).toHaveLength(0)
 })
+test('format Real yang teramati: results, status_text, qty lot dan harga order bertingkat', async () => {
+  const f = fixture()
+  f.values.set(kunciStockbit('real').session, segelSesi(secret, session, 'real'))
+  const fetcher = (async (url: string | URL | Request) => {
+    if (String(url).endsWith('/summary')) return Response.json({ data: { aggregated_portfolio_summary: { trading: { balance: 400000 }, profit_loss: { unrealised: 1000, realised: 0 } }, summary_per_portfolios: [{ account_number: 'PRIVATE-ACCOUNT' }] } })
+    if (String(url).includes('/order/')) return Response.json({ data: [{ order_id: 'real456', symbol: 'ABCD', side: 'BUY', status_text: 'Matched',
+      qty: { lot_done: 2, lot_open: 0, lot_total: 2 }, price: { order: 1000, average: { price: 1002, fee: 2 } },
+      action: { can_amend: false, can_cancel: false }, time: { order: '10:00' }, time_utc: { order: '2026-10-26T03:00:00Z' } }] })
+    return Response.json({ data: { summary: {}, results: [{ symbol: 'ABCD', company: { name: 'PRIVATE-NAME' }, qty: { balance: { lot: 2, share: 200 } },
+      price: { latest: 1010, average: { price: 1002, fee: 2 } }, asset: { unrealised: { market_value: 202000, profit_loss: 1600 } } }], day_trade: [] } })
+  }) as typeof fetch
+  const r = await sinkronStockbit(f.redis, secret, fetcher, now, 'real')
+  expect(r.warning).toBeNull()
+  expect(r.snapshot?.positions).toEqual([{ kode: 'ABCD', lot: 2, average: 1002, market: 1010, marketValue: 202000, pnl: 1600 }])
+  expect(r.snapshot?.orders).toEqual([{ id: 'real456', kode: 'ABCD', side: 'BUY', status: 'Matched', lot: 2, matchedLot: 2, price: 1000, createdAt: '2026-10-26T03:00:00Z' }])
+  expect(JSON.stringify(r)).not.toContain('PRIVATE-')
+})
 test('penolakan aplikasi HTTP 200 tidak mengganti snapshot yang sah', async () => {
   const f = fixture()
   const first = await sinkronStockbit(f.redis, secret, f.fetcher, now)
