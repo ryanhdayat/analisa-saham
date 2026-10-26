@@ -27,6 +27,8 @@ function fixture(expired = false) {
   const fetcher = (async (url: string | URL | Request, init?: RequestInit) => {
     calls.push(String(url))
     expect(init?.redirect).toBe('error')
+    expect(new Headers(init?.headers).get('user-agent')).toContain('Mozilla/5.0')
+    expect(new Headers(init?.headers).get('accept-language')).toBe('en-US,en;q=0.9')
     if (String(url).endsWith('/login/refresh')) {
       expect(init?.method).toBe('POST')
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer refresh-rahasia')
