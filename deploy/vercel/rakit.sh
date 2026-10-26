@@ -98,11 +98,9 @@ jalankan hasil tidak bun run src/hasil.ts
 bun run src/beranda.ts "$STAGE/index.html" >&2
 bun run src/jurnal.ts "$STAGE/jurnal/index.html" >&2
 
-# Satu-satunya bagian dinamis: fungsi jurnal pribadi. Berdiri sendiri tanpa
-# dependensi, jadi Vercel tidak perlu langkah install. Env-nya (JURNAL_KUNCI,
-# KV_REST_API_*) disetel di proyek Vercel, bukan di sini.
+# Bundle verifikasi Google bersama fungsi, sehingga deploy Vercel tetap tanpa install.
 mkdir -p "$STAGE/api"
-cp src/jurnal/api.ts "$STAGE/api/jurnal.ts"
+bun build src/jurnal/api.ts --target=node --format=esm --outfile="$STAGE/api/jurnal.mjs"
 
 # Tanpa build: Vercel menyajikan berkas apa adanya (api/ dijalankan sebagai
 # fungsi, di sin1 supaya dekat dengan Redis-nya). no-cache karena nama berkas

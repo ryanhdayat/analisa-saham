@@ -10,15 +10,18 @@
  *   PATCH  /api/jurnal              {id, jual}    → catat jual, sekali per entri
  *   DELETE /api/jurnal              {id}
  *
- * Disalin apa adanya ke situs/api/jurnal.ts oleh deploy/vercel/rakit.sh dan
- * dijalankan Vercel Functions tanpa langkah install, jadi berkas ini berdiri
- * sendiri: tanpa impor dari repo dan tanpa dependensi.
+ * Dibundle bersama jose ke situs/api/jurnal.mjs oleh deploy/vercel/rakit.sh.
+ * Vercel menjalankannya tanpa langkah install.
  *
  * Env: JURNAL_KUNCI (minimal 32 karakter, acak), KV_REST_API_URL dan
  * KV_REST_API_TOKEN dari integrasi Upstash di Vercel (UPSTASH_REDIS_REST_*
  * juga diterima).
+ * GOOGLE_CLIENT_ID + JURNAL_EMAIL mengaktifkan Google dan mematikan login kunci.
+ * GET ?aksi=konfigurasi memberi client ID dan nonce; POST ?aksi=google memverifikasi
+ * credential Google dan nonce dari cookie HttpOnly sebelum membuat sesi 30 hari.
  */
-import { createHmac, timingSafeEqual } from 'node:crypto'
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { createRemoteJWKSet, customFetch, jwtVerify, SignJWT } from 'jose'
 
 export interface Entri {
   /** Dibuat peramban (crypto.randomUUID). */
@@ -38,6 +41,8 @@ type Env = Record<string, string | undefined>
 // menghidupkan entri yang sudah dihapus atau menimpa jual yang dicatat dari HP.
 const KEY = 'jurnal:entri'
 const COOKIE = 'jurnal_sesi'
+const CHALLENGE = 'jurnal_google'
+const keys = new WeakMap<typeof fetch, ReturnType<typeof createRemoteJWKSet>>()
 const UMUR_SESI = 180 * 86400
 const ID = /^[a-z0-9-]{8,40}$/
 
@@ -64,13 +69,56 @@ function sama(a: string, b: string): boolean {
   return x.length === y.length && timingSafeEqual(x, y)
 }
 
-function cookieSesi(req: Request): string | null {
-  const m = (req.headers.get('cookie') ?? '').match(new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]*)`))
+function cookieSesi(req: Request, nama = COOKIE): string | null {
+  const m = (req.headers.get('cookie') ?? '').match(new RegExp(`(?:^|;\\s*)${nama}=([^;]*)`))
   return m?.[1] ?? null
 }
 
 const setCookie = (nilai: string, umur: number) =>
   `${COOKIE}=${nilai}; Path=/api/jurnal; Max-Age=${umur}; HttpOnly; Secure; SameSite=Strict`
+
+const cookieGoogle = (nilai: string, umur: number) =>
+  `${CHALLENGE}=${nilai}; Path=/api/jurnal; Max-Age=${umur}; HttpOnly; Secure; SameSite=Strict`
+
+async function tokenGoogle(kunci: string, email: string, subject: string, umur: number, nonce?: string) {
+  return new SignJWT({ email, ...(nonce ? { nonce } : {}) }).setProtectedHeader({ alg: 'HS256' })
+    .setIssuer('jurnal').setAudience(nonce ? 'google-challenge' : 'jurnal-sesi').setSubject(subject)
+    .setIssuedAt().setExpirationTime(Math.floor(Date.now() / 1000) + umur).sign(new TextEncoder().encode(kunci))
+}
+
+async function bacaToken(token: string, kunci: string, audience: string) {
+  return (await jwtVerify(token, new TextEncoder().encode(kunci), {
+    algorithms: ['HS256'], issuer: 'jurnal', audience, requiredClaims: ['exp', 'iat', 'sub', 'email'],
+  })).payload
+}
+
+async function masukGoogle(req: Request, env: Env, body: Record<string, unknown>, fetcher: typeof fetch): Promise<Response> {
+  try {
+    const challenge = cookieSesi(req, CHALLENGE)
+    if (!challenge || typeof body.credential !== 'string' || body.credential.length > 16384) return gagal(401, 'Ulangi masuk dengan Google.')
+    const proof = await bacaToken(challenge, env.JURNAL_KUNCI!, 'google-challenge')
+    if (proof.email !== env.JURNAL_EMAIL) return gagal(401, 'Ulangi masuk dengan Google.')
+    let jwks = keys.get(fetcher)
+    if (!jwks) {
+      jwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'), { [customFetch]: fetcher })
+      keys.set(fetcher, jwks)
+    }
+    const { payload } = await jwtVerify(body.credential, jwks, {
+      algorithms: ['RS256'], issuer: ['https://accounts.google.com', 'accounts.google.com'],
+      audience: env.GOOGLE_CLIENT_ID!, requiredClaims: ['exp', 'iat', 'sub', 'email', 'nonce'],
+    })
+    if (typeof proof.nonce !== 'string' || payload.nonce !== proof.nonce) return gagal(401, 'Ulangi masuk dengan Google.')
+    if (payload.email_verified !== true || payload.email !== env.JURNAL_EMAIL) return gagal(403, 'Akun ini tidak memiliki akses jurnal.')
+    const umur = 30 * 86400
+    const token = await tokenGoogle(env.JURNAL_KUNCI!, env.JURNAL_EMAIL!, payload.sub!, umur)
+    const headers = new Headers({ 'cache-control': 'no-store' })
+    headers.append('set-cookie', setCookie(token, umur))
+    headers.append('set-cookie', cookieGoogle('', 0))
+    return new Response(null, { status: 204, headers })
+  } catch {
+    return gagal(401, 'Login Google belum berhasil. Coba lagi.')
+  }
+}
 
 function tanggalSah(s: unknown): s is string {
   if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false
@@ -121,6 +169,16 @@ export async function tangani(req: Request, env: Env = process.env, fetcher: typ
   const kunci = env.JURNAL_KUNCI
   // Tanpa batas percobaan masuk: kunci acak 32+ karakter tidak bisa ditebak lewat jaringan.
   if (!kunci || kunci.length < 32) return gagal(503, 'JURNAL_KUNCI belum disetel di Vercel.')
+  const google = !!(env.GOOGLE_CLIENT_ID || env.JURNAL_EMAIL)
+  if (google && (!env.GOOGLE_CLIENT_ID || !env.JURNAL_EMAIL)) return gagal(503, 'Konfigurasi login Google belum lengkap.')
+  const aksi = new URL(req.url).searchParams.get('aksi')
+  if (req.method === 'GET' && aksi === 'konfigurasi') {
+    if (!google) return json({ mode: 'kunci' })
+    const nonce = randomBytes(32).toString('base64url')
+    const proof = await tokenGoogle(kunci, env.JURNAL_EMAIL!, 'challenge', 600, nonce)
+    return json({ mode: 'google', clientId: env.GOOGLE_CLIENT_ID, nonce }, 200, { 'set-cookie': cookieGoogle(proof, 600) })
+  }
+  if (google && req.method !== 'GET' && req.headers.get('origin') !== new URL(req.url).origin) return gagal(403, 'Asal permintaan tidak sah.')
 
   // Tulis hanya dengan JSON: form dari situs lain tidak bisa mengirim jenis ini
   // tanpa preflight, lapis kedua di samping SameSite=Strict.
@@ -132,17 +190,24 @@ export async function tangani(req: Request, env: Env = process.env, fetcher: typ
     body = isi as Record<string, unknown>
   }
 
-  const aksi = new URL(req.url).searchParams.get('aksi')
+  if (google && req.method === 'POST' && aksi === 'google') return masukGoogle(req, env, body, fetcher)
   if (req.method === 'POST' && aksi === 'masuk') {
+    if (google) return gagal(401, 'Gunakan Masuk dengan Google.')
     if (typeof body.kunci !== 'string' || !sama(body.kunci, kunci)) return gagal(401, 'Kunci salah.')
     return new Response(null, { status: 204, headers: { 'set-cookie': setCookie(tokenSesi(kunci), UMUR_SESI) } })
   }
   if (req.method === 'POST' && aksi === 'keluar') {
-    return new Response(null, { status: 204, headers: { 'set-cookie': setCookie('', 0) } })
+    return new Response(null, { status: 204, headers: { 'set-cookie': setCookie('', 0), 'cache-control': 'no-store' } })
   }
 
   const sesi = cookieSesi(req)
-  if (!sesi || !sama(sesi, tokenSesi(kunci))) return gagal(401, 'Belum masuk.')
+  if (!sesi) return gagal(401, 'Belum masuk.')
+  if (google) {
+    try {
+      const payload = await bacaToken(sesi, kunci, 'jurnal-sesi')
+      if (payload.email !== env.JURNAL_EMAIL) return gagal(401, 'Belum masuk.')
+    } catch { return gagal(401, 'Belum masuk.') }
+  } else if (!sama(sesi, tokenSesi(kunci))) return gagal(401, 'Belum masuk.')
 
   try {
     if (req.method === 'GET') {

@@ -62,8 +62,11 @@ footer { color: var(--muted); font-size: 12px; }
 
   <form class="panel" id="masuk" hidden>
     <h2>Masuk</h2>
-    <label>Kunci jurnal<input type="password" id="kunci" autocomplete="current-password" required></label>
-    <div class="aksi"><button class="utama" type="submit">Masuk</button></div>
+    <div id="google-masuk" hidden></div>
+    <div id="kunci-masuk" hidden>
+      <label>Kunci jurnal<input type="password" id="kunci" autocomplete="current-password"></label>
+      <div class="aksi"><button class="utama" type="submit">Masuk</button></div>
+    </div>
   </form>
 
   <div id="isi" hidden>
@@ -97,6 +100,38 @@ const rp = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}Rp${idr.format(Math.abs(Ma
 const cls = (v) => (v > 0 ? 'pos' : v < 0 ? 'neg' : '')
 const hariIni = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10)
 const API = '/api/jurnal'
+let modeLogin = null
+
+async function siapkanLogin() {
+  const config = await api('GET', undefined, '?aksi=konfigurasi')
+  modeLogin = config.mode
+  $('kunci-masuk').hidden = config.mode !== 'kunci'
+  $('google-masuk').hidden = config.mode !== 'google'
+  if (config.mode !== 'google') return
+  if (!window.google?.accounts?.id) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.onload = resolve
+      script.onerror = () => reject(new Error('Google tidak bisa dimuat. Muat ulang halaman untuk mencoba lagi.'))
+      document.head.appendChild(script)
+    })
+  }
+  google.accounts.id.initialize({ client_id: config.clientId, nonce: config.nonce, auto_select: false,
+    callback: async (response) => {
+      try {
+        pesan(null)
+        await api('POST', { credential: response.credential }, '?aksi=google')
+        await muat()
+      } catch (err) {
+        pesan(err.message)
+        await siapkanLogin().catch(() => {})
+      }
+    },
+  })
+  $('google-masuk').replaceChildren()
+  google.accounts.id.renderButton($('google-masuk'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'id' })
+}
 
 /*<hitung>*/
 function hitung(e, pick) {
@@ -222,6 +257,7 @@ async function muat() {
     render()
   } catch (err) {
     if (err.status !== 401) pesan(err.message)
+    else await siapkanLogin().catch((e) => pesan(e.message))
   }
 }
 
@@ -240,6 +276,7 @@ async function kirim(form, kerja) {
 
 $('masuk').addEventListener('submit', (ev) => {
   ev.preventDefault()
+  if (modeLogin !== 'kunci') return
   kirim(ev.target, async () => {
     await api('POST', { kunci: $('kunci').value }, '?aksi=masuk')
     $('kunci').value = ''
@@ -253,6 +290,8 @@ $('keluar').addEventListener('click', async () => {
     entri = []
     pesan(null)
     tampil(false)
+    window.google?.accounts?.id?.disableAutoSelect()
+    await siapkanLogin()
   } catch (err) {
     pesan(`Gagal keluar: ${err.message}`)
   }
