@@ -96,8 +96,16 @@ jalankan crypto ya bun run src/scan.ts --market crypto --tanpa-idx ${RAKIT_CRYPT
 jalankan hasil tidak bun run src/hasil.ts
 
 bun run src/beranda.ts "$STAGE/index.html" >&2
+bun run src/jurnal.ts "$STAGE/jurnal/index.html" >&2
 
-# Tanpa build: Vercel menyajikan berkas apa adanya. no-cache karena nama berkas
+# Satu-satunya bagian dinamis: fungsi jurnal pribadi. Berdiri sendiri tanpa
+# dependensi, jadi Vercel tidak perlu langkah install. Env-nya (JURNAL_KUNCI,
+# KV_REST_API_*) disetel di proyek Vercel, bukan di sini.
+mkdir -p "$STAGE/api"
+cp src/jurnal/api.ts "$STAGE/api/jurnal.ts"
+
+# Tanpa build: Vercel menyajikan berkas apa adanya (api/ dijalankan sebagai
+# fungsi). no-cache karena nama berkas
 # berulang tiap hari; /idx tanpa garis miring dialihkan supaya fetch relatif
 # `data/...` di halaman screener tidak patah.
 cat >"$STAGE/vercel.json" <<'JSON'
@@ -106,7 +114,7 @@ cat >"$STAGE/vercel.json" <<'JSON'
   "buildCommand": "",
   "installCommand": "",
   "outputDirectory": ".",
-  "redirects": [{ "source": "/:bagian(idx|crypto|hasil)", "destination": "/:bagian/", "permanent": true }],
+  "redirects": [{ "source": "/:bagian(idx|crypto|hasil|jurnal)", "destination": "/:bagian/", "permanent": true }],
   "headers": [
     {
       "source": "/(.*)",

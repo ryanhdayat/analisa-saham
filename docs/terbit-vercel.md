@@ -95,3 +95,27 @@ can show on an exchange holiday.
   Rp100 juta simulation and the pass rule: 30 finished trades, mean return after
   fees above zero (`src/rencana/simulasi.ts`). Results are split into clean,
   caution, and unlabeled picks. Crypto keeps the old percent-based judging.
+
+## Private journal (`/jurnal/`)
+
+The only dynamic part of the site. The page is static; the owner's own trades
+live behind `/api/jurnal`, a Vercel Function that `rakit.sh` copies from
+`src/jurnal/api.ts` into `situs/api/jurnal.ts`. It has no dependencies, so the
+deploy still runs without an install step. Entries are stored in Upstash Redis
+(one hash, one field per entry). The page compares each entry with its plan and
+with the `/hasil/` simulation, read from `hasil/hasil.json`.
+
+Access is a single secret, `JURNAL_KUNCI`. Signing in sets an HttpOnly,
+`SameSite=Strict` cookie that holds an HMAC of the secret and lasts 180 days.
+Changing the secret signs every device out.
+
+One-time setup:
+
+```bash
+vercel integration add upstash          # Upstash for Redis; sets KV_REST_API_URL / KV_REST_API_TOKEN
+openssl rand -base64 33 | tr -d '\n' | vercel env add JURNAL_KUNCI production
+```
+
+Then rerun the "Terbit harian" workflow (or wait for the next scheduled run).
+Keep a copy of the secret in a password manager: it is the only way in, and it
+cannot be read back from Vercel.

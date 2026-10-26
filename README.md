@@ -107,7 +107,9 @@ ini**. Isinya, untuk setiap emiten yang lolos: harga beli, jumlah lot untuk moda
 simulasi (bawaan Rp100 juta, rugi maksimal 1% modal, maksimal 20% modal per
 saham), batas jual rugi, target, dan label bersih/hati-hati. Halaman `/hasil/`
 mensimulasikan rencana itu sebagai Buy limit pagi berikutnya, sudah dipotong
-biaya, dengan aturan lulus 30 transaksi. Lihat `docs/terbit-vercel.md`.
+biaya, dengan aturan lulus 30 transaksi. Halaman `/jurnal/` mencatat transaksi
+pemilik sendiri (privat, perlu kunci) dan membandingkannya dengan rencana dan
+simulasi. Lihat `docs/terbit-vercel.md`.
 
 ### Isi berkas Excel
 
