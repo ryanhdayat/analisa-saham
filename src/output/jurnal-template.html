@@ -12,12 +12,23 @@
 /*__TEMA__*/
 .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 56px; display: grid; gap: 18px; }
 .kepala .status button { margin-left: auto; }
-button { font: 500 14px var(--font-body); border-radius: 7px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button { font: 500 14px var(--font-body); min-height: 44px; border-radius: 7px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 button.utama { background: var(--accent); border-color: var(--accent); color: var(--surface); }
 button.hapus { color: var(--down); }
 button:disabled { opacity: .6; cursor: progress; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 12px; }
 .panel h2 { font: 700 19px/1.1 var(--font-display); font-stretch: 85%; margin: 0; }
+.login { width: 100%; max-width: 440px; margin: 24px auto; padding: 28px 24px; border-top: 4px solid var(--accent); gap: 18px; }
+.login h2 { font-size: 27px; line-height: 1.15; }
+.login p { margin: 0; max-width: 36ch; color: var(--muted); }
+.login .privat { font-size: 13px; padding-top: 14px; border-top: 1px solid var(--line); }
+.proses { color: var(--muted); padding: 12px 0; font-size: 14px; }
+#coba-lagi { justify-self: start; }
+.pencatatan summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; color: var(--accent); }
+.pencatatan summary::after { content: '+'; font-size: 24px; }
+.pencatatan[open] summary::after { content: '−'; }
+.pencatatan form { display: grid; gap: 14px; margin-top: 14px; }
+.judul-transaksi { margin: 6px 0 0; font: 700 22px var(--font-display); }
 .isian { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
 label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
 input, select, textarea { font: 16px var(--font-body); color: var(--ink); background: var(--sunk); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; width: 100%; min-width: 0; }
@@ -46,6 +57,13 @@ textarea { resize: vertical; min-height: 44px; }
 .pos { color: var(--up); } .neg { color: var(--down); }
 .empty { padding: 18px; color: var(--muted); text-align: center; }
 footer { color: var(--muted); font-size: 12px; }
+@media (max-width: 480px) {
+  .wrap { gap: 16px; padding-bottom: max(32px, env(safe-area-inset-bottom)); }
+  .login { margin: 12px auto; padding: 24px 20px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat { padding: 12px; }
+  .stat b { font-size: 21px; }
+}
 </style>
 </head>
 <body>
@@ -58,37 +76,44 @@ footer { color: var(--muted); font-size: 12px; }
   </header>
 
   <div id="pesan" class="banner" role="status" hidden></div>
+  <div id="proses" class="proses" role="status" aria-live="polite">Memeriksa sesi jurnal…</div>
+  <button type="button" id="coba-lagi" hidden>Coba lagi</button>
   <div id="pesan-rencana" class="banner" hidden>Rencana dari halaman Hasil tidak terbaca, jadi kartu belum bisa dibandingkan dengan rencana dan simulasi situs. Muat ulang halaman untuk mencoba lagi.</div>
 
-  <form class="panel" id="masuk" hidden>
-    <h2>Masuk</h2>
+  <form class="panel login" id="masuk" hidden>
+    <h2>Jurnal pribadi kamu</h2>
+    <p>Masuk untuk melihat posisi, mencatat transaksi, dan membandingkan hasilmu dengan rencana.</p>
     <div id="google-masuk" hidden></div>
     <div id="kunci-masuk" hidden>
       <label>Kunci jurnal<input type="password" id="kunci" autocomplete="current-password"></label>
       <div class="aksi"><button class="utama" type="submit">Masuk</button></div>
     </div>
+    <p class="privat">Hanya akun pemilik yang bisa membuka catatan ini.</p>
   </form>
 
   <div id="isi" hidden>
     <div class="stats" id="stats"></div>
   </div>
 
-  <form class="panel" id="catat" hidden>
-    <h2>Catat beli</h2>
+  <details class="panel pencatatan" id="pencatatan" hidden>
+  <summary>Catat pembelian</summary>
+  <form id="catat" hidden>
     <div class="isian">
       <label class="lebar">Rencana<select id="f-rencana"></select></label>
       <label id="l-kode" hidden>Kode<input id="f-kode" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="BBRI"></label>
       <label>Tanggal beli<input type="date" id="f-tanggal" required></label>
-      <label>Harga isi<input type="number" id="f-harga" inputmode="numeric" min="1" step="1" required></label>
+      <label>Harga beli per lembar<input type="number" id="f-harga" inputmode="numeric" min="1" step="1" required></label>
       <label>Lot<input type="number" id="f-lot" inputmode="numeric" min="1" step="1" required></label>
       <label class="lebar">Catatan<textarea id="f-catatan" maxlength="500" rows="2"></textarea></label>
     </div>
-    <div class="aksi"><button class="utama" type="submit">Simpan</button></div>
+    <div class="aksi"><button class="utama" type="submit">Simpan pembelian</button></div>
   </form>
+  </details>
 
+  <h2 class="judul-transaksi" id="judul-transaksi" hidden>Transaksi kamu</h2>
   <section class="daftar" id="daftar" hidden aria-label="Transaksi"></section>
 
-  <footer>Hasil kamu dipotong biaya Stockbit Virtual (0,20% beli, 0,30% jual); simulasi situs memakai biaya akun asli (0,15% beli, 0,25% jual), jadi selisih sekitar 0,1% per transaksi itu wajar. Posisi terbuka dinilai di harga penutupan terakhir dari halaman Hasil. Jual dicatat untuk seluruh lot.</footer>
+  <footer id="catatan-biaya" hidden>Hasil kamu dipotong biaya Stockbit Virtual (0,20% beli, 0,30% jual); simulasi situs memakai biaya akun asli (0,15% beli, 0,25% jual), jadi selisih sekitar 0,1% per transaksi itu wajar. Posisi terbuka dinilai di harga penutupan terakhir dari halaman Hasil. Jual dicatat untuk seluruh lot.</footer>
 </main>
 <script>
 const $ = (id) => document.getElementById(id)
@@ -103,6 +128,7 @@ const API = '/api/jurnal'
 let modeLogin = null
 
 async function siapkanLogin() {
+  proses('Menyiapkan login Google…')
   const config = await api('GET', undefined, '?aksi=konfigurasi')
   modeLogin = config.mode
   $('kunci-masuk').hidden = config.mode !== 'kunci'
@@ -112,25 +138,30 @@ async function siapkanLogin() {
     await new Promise((resolve, reject) => {
       const script = document.createElement('script')
       script.src = 'https://accounts.google.com/gsi/client'
-      script.onload = resolve
-      script.onerror = () => reject(new Error('Google tidak bisa dimuat. Muat ulang halaman untuk mencoba lagi.'))
+      const timeout = setTimeout(() => reject(new Error('Google belum merespons. Tekan Coba lagi.')), 12000)
+      script.onload = () => { clearTimeout(timeout); resolve() }
+      script.onerror = () => { clearTimeout(timeout); reject(new Error('Google tidak bisa dimuat. Periksa koneksi, lalu tekan Coba lagi.')) }
       document.head.appendChild(script)
     })
   }
   google.accounts.id.initialize({ client_id: config.clientId, nonce: config.nonce, auto_select: false,
-    callback: async (response) => {
-      try {
-        pesan(null)
-        await api('POST', { credential: response.credential }, '?aksi=google')
-        await muat()
-      } catch (err) {
-        pesan(err.message)
-        await siapkanLogin().catch(() => {})
-      }
-    },
+    ux_mode: 'redirect', login_uri: window.location.origin + API + '?aksi=google',
   })
   $('google-masuk').replaceChildren()
   google.accounts.id.renderButton($('google-masuk'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'id' })
+}
+
+function proses(teks) {
+  $('proses').textContent = teks ?? ''
+  $('proses').hidden = !teks
+}
+
+async function ambil(url, options = {}) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 20000)
+  try { return await fetch(url, { ...options, signal: controller.signal }) }
+  catch { throw new Error('Koneksi belum berhasil. Periksa internet, lalu tekan Coba lagi.') }
+  finally { clearTimeout(timeout) }
 }
 
 /*<hitung>*/
@@ -163,7 +194,7 @@ function pesan(teks) {
 }
 
 async function api(method, body, query = '') {
-  const res = await fetch(API + query, {
+  const res = await ambil(API + query, {
     method,
     credentials: 'same-origin',
     headers: body === undefined ? {} : { 'content-type': 'application/json' },
@@ -180,7 +211,7 @@ async function api(method, body, query = '') {
 
 function tampil(masuk) {
   $('masuk').hidden = masuk
-  for (const id of ['isi', 'catat', 'daftar', 'keluar']) $(id).hidden = !masuk
+  for (const id of ['isi', 'catat', 'pencatatan', 'daftar', 'judul-transaksi', 'catatan-biaya', 'keluar']) $(id).hidden = !masuk
 }
 
 const SITUS = { open: 'Masih berjalan', target: 'Kena target', cut: 'Kena cut loss', dilewati: 'Dilewati', 'tidak-terbeli': 'Tidak terbeli' }
@@ -244,10 +275,12 @@ function pilihRencana() {
 }
 
 async function muat() {
+  $('coba-lagi').hidden = true
+  proses('Memuat catatan jurnal…')
   try {
     const [j, h] = await Promise.all([
       api('GET'),
-      fetch('../hasil/hasil.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      ambil('../hasil/hasil.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ])
     picks = h?.pasar?.find((p) => p.id === 'idx')?.picks ?? []
     $('pesan-rencana').hidden = !!h
@@ -256,9 +289,9 @@ async function muat() {
     isiPilihan()
     render()
   } catch (err) {
-    if (err.status !== 401) pesan(err.message)
-    else await siapkanLogin().catch((e) => pesan(e.message))
-  }
+    if (err.status !== 401) { pesan(err.message); $('coba-lagi').hidden = false }
+    else await siapkanLogin().catch((e) => { pesan(e.message); $('coba-lagi').hidden = false })
+  } finally { proses(null) }
 }
 
 /** Setelah server menolak karena data di tab ini basi (409/404): ambil ulang daftarnya. */
@@ -294,8 +327,11 @@ $('keluar').addEventListener('click', async () => {
     await siapkanLogin()
   } catch (err) {
     pesan(`Gagal keluar: ${err.message}`)
-  }
+    $('coba-lagi').hidden = false
+  } finally { proses(null) }
 })
+
+$('coba-lagi').addEventListener('click', async () => { pesan(null); await muat() })
 
 $('f-rencana').addEventListener('change', pilihRencana)
 
@@ -363,6 +399,11 @@ $('daftar').addEventListener('submit', (ev) => {
 })
 
 $('f-tanggal').value = hariIni()
+const hasilLogin = new URLSearchParams(window.location.search).get('login')
+if (hasilLogin) {
+  pesan(hasilLogin === 'ditolak' ? 'Akun ini belum diizinkan. Pilih akun Google pemilik jurnal.' : 'Login belum selesai atau sudah kedaluwarsa. Silakan masuk lagi.')
+  window.history.replaceState(null, '', window.location.pathname)
+}
 muat()
 </script>
 </body>

@@ -138,8 +138,10 @@ working. Existing entries stay in the same Redis hash.
    configure branding/audience, then create an OAuth client of type **Web
    application**. While in testing, add the owner's email as a test user.
 2. Add the exact production origin (scheme + domain, no `/jurnal/` path) to
-   **Authorized JavaScript origins**. This uses the Google Identity Services
-   JavaScript callback, so no redirect URI or client secret is needed.
+   **Authorized JavaScript origins**, and
+   `https://<production-domain>/api/jurnal?aksi=google` to **Authorized redirect
+   URIs**. The button uses a full-page Google Identity Services redirect, required
+   on iOS, rather than a popup callback. No client secret is needed.
 3. Add `GOOGLE_CLIENT_ID` (the public `…apps.googleusercontent.com` value) and
    `JURNAL_EMAIL` to Vercel Production. Keep `JURNAL_KUNCI` and Redis variables.
    Configure both before deploying: partial Google configuration returns 503
@@ -148,7 +150,9 @@ working. Existing entries stay in the same Redis hash.
    rejection of a different Google account. The public site stays accessible.
 
 Google signatures, issuer, audience, expiry, verified email and a 10-minute
-browser-bound nonce are checked server-side. Sessions use signed HttpOnly,
+browser-bound nonce and Google's double-submit CSRF token are checked server-side.
+The short-lived challenge cookie uses SameSite=None so Google's cross-site POST
+can deliver it; it grants no access to entries. Sessions use signed HttpOnly,
 Secure, SameSite=Strict cookies with a server-checked 30-day expiry. Changing
 `JURNAL_EMAIL` or `JURNAL_KUNCI` invalidates existing sessions. Sign-out clears
 the current browser's session; a copied session stays valid until expiry or
@@ -157,3 +161,7 @@ key/email rotation.
 Until both Google variables are configured, the existing secret login remains
 available for an orderly rollout. Reverting to it requires removing **both**
 Google variables and redeploying.
+
+Google redirect failures return to `/jurnal/` with a short error code, never
+credentials in the URL. The page shows a recovery message and a retry button
+for network/script failures. Session and Google requests have bounded waits.

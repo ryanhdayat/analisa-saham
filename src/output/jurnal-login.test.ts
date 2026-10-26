@@ -13,7 +13,8 @@ test('pengguna yang membuka ulang sesi aktif dapat keluar lalu masuk lagi', asyn
         addEventListener(type: string, fn: () => Promise<void>) { this.listeners[type] = fn }, replaceChildren() { this.innerHTML = '' } }
       nodes.set(tag[1]!, node)
     }
-    const google = { accounts: { id: { initialize() {}, renderButton(node: { innerHTML: string }) { node.innerHTML = 'Masuk dengan Google' }, disableAutoSelect() {} } } }
+    let config: Record<string, unknown> = {}
+    const google = { accounts: { id: { initialize(c: Record<string, unknown>) { config = c }, renderButton(node: { innerHTML: string }) { node.innerHTML = 'Masuk dengan Google' }, disableAutoSelect() {} } } }
     const fetcher = async (url: string, init?: RequestInit) => {
       if (url.includes('konfigurasi')) return Response.json({ mode, clientId: 'tes', nonce: 'tes' })
       if (url.includes('keluar')) return new Response(null, { status: 204 })
@@ -21,12 +22,17 @@ test('pengguna yang membuka ulang sesi aktif dapat keluar lalu masuk lagi', asyn
       if (init?.method === 'GET') return Response.json({ entri: [] })
       throw new Error('Permintaan tidak diharapkan')
     }
-    runInNewContext(script, { document: { getElementById: (id: string) => nodes.get(id) }, window: { google }, google, crypto, fetch: fetcher, Intl, Date })
+    runInNewContext(script, { document: { getElementById: (id: string) => nodes.get(id) }, window: { google, location: { origin: 'https://situs.tes', search: '' } }, google, crypto, fetch: fetcher, Intl, Date, URLSearchParams, AbortController, setTimeout, clearTimeout })
     await new Promise<void>((resolve) => setImmediate(resolve))
     expect(nodes.get('keluar')!.hidden).toBe(false)
     await nodes.get('keluar')!.listeners.click!()
     expect(nodes.get('masuk')!.hidden).toBe(false)
     expect(nodes.get(mode === 'google' ? 'google-masuk' : 'kunci-masuk')!.hidden).toBe(false)
-    if (mode === 'google') expect(nodes.get('google-masuk')!.innerHTML).toBe('Masuk dengan Google')
+    if (mode === 'google') {
+      expect(nodes.get('google-masuk')!.innerHTML).toBe('Masuk dengan Google')
+      expect(config.ux_mode).toBe('redirect')
+      expect(config.login_uri).toBe('https://situs.tes/api/jurnal?aksi=google')
+      expect(config.callback).toBeUndefined()
+    }
   }
 })
