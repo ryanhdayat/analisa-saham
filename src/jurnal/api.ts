@@ -22,6 +22,7 @@
  */
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import { createRemoteJWKSet, customFetch, jwtVerify, SignJWT } from 'jose'
+import { sinkronStockbit } from './stockbit.ts'
 
 export interface Entri {
   /** Dibuat peramban (crypto.randomUUID). */
@@ -228,6 +229,11 @@ export async function tangani(req: Request, env: Env = process.env, fetcher: typ
   } else if (!sama(sesi, tokenSesi(kunci))) return gagal(401, 'Belum masuk.')
 
   try {
+    if (req.method === 'GET' && aksi === 'stockbit') {
+      const jenis = new URL(req.url).searchParams.get('jenis') ?? 'virtual'
+      if (jenis !== 'virtual' && jenis !== 'real') return gagal(400, 'Jenis akun tidak sah.')
+      return json(await sinkronStockbit((cmd) => redis(env, fetcher, cmd), kunci, fetcher, Date.now(), jenis))
+    }
     if (req.method === 'GET') {
       const flat = ((await redis(env, fetcher, ['HGETALL', KEY])) ?? []) as string[]
       const entri: Entri[] = []

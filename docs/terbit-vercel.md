@@ -1,5 +1,29 @@
 # Publishing to Vercel (saham.ryanhdayat.biz.id)
 
+## Private Stockbit journal connection
+
+The journal keeps Virtual and Real credentials and snapshots in separate Redis keys.
+Google owner authentication is required before either account can be read. Manual
+entries are independent of both portfolios. These routes never submit orders.
+
+Setup uses a dedicated Stockbit profile (`~/.stockbit-jurnal-cloud`), so server
+refresh rotation does not consume the laptop MCP's session. Pull production Redis
+configuration into an ignored file, then run:
+
+```sh
+vercel env pull .env.stockbit.local --environment=production --yes
+bun --env-file=.env.stockbit.local scripts/hubungkan-stockbit.ts --login
+# Optional Real account: enter the trading PIN in the terminal's hidden prompt.
+bun --env-file=.env.stockbit.local scripts/hubungkan-stockbit.ts --login --real
+```
+
+The sealing key is `JURNAL_KUNCI`, or the owner's macOS Keychain item
+`analisa-saham JURNAL_KUNCI`. No password or PIN is sent to the journal. Do not
+use the dedicated profile for ordinary browsing after import: the cloud owns
+its refresh-token rotation. Reconnect using `--login` after authentication expires.
+An upstream failure retains the last snapshot and its original timestamp with a
+warning; missing Real credentials are shown as disconnected, never zero assets.
+
 _Fork-only setup. Upstream keeps its own cron + nginx flow (`deploy/terbit.sh`)._
 
 Same pattern as the owner's other Vercel projects: the Vercel GitHub integration
