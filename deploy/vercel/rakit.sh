@@ -106,7 +106,8 @@ cp src/jurnal/api.ts "$STAGE/api/jurnal.ts"
 
 # Tanpa build: Vercel menyajikan berkas apa adanya (api/ dijalankan sebagai
 # fungsi, di sin1 supaya dekat dengan Redis-nya). no-cache karena nama berkas
-# berulang tiap hari; /idx tanpa garis miring dialihkan supaya fetch relatif
+# berulang tiap hari, kecuali api/: jurnal mengirim no-store sendiri supaya data
+# pribadi tidak tersimpan di cache peramban. /idx tanpa garis miring dialihkan supaya fetch relatif
 # `data/...` di halaman screener tidak patah.
 cat >"$STAGE/vercel.json" <<'JSON'
 {
@@ -118,9 +119,12 @@ cat >"$STAGE/vercel.json" <<'JSON'
   "redirects": [{ "source": "/:bagian(idx|crypto|hasil|jurnal)", "destination": "/:bagian/", "permanent": true }],
   "headers": [
     {
+      "source": "/((?!api/).*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    },
+    {
       "source": "/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
