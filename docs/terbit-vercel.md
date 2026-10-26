@@ -112,10 +112,16 @@ Changing the secret signs every device out.
 One-time setup:
 
 ```bash
-vercel integration add upstash          # Upstash for Redis; sets KV_REST_API_URL / KV_REST_API_TOKEN
-openssl rand -base64 33 | tr -d '\n' | vercel env add JURNAL_KUNCI production
+# Upstash for Redis in sin1 (functions run there too, see "regions" in rakit.sh).
+# Eviction off, so entries are never dropped; auto-upgrade off, so the free plan never bills.
+vercel integration add upstash/upstash-kv --plan free -n jurnal -e production --no-env-pull \
+  -m primaryRegion=sin1 -m eviction=false -m autoUpgrade=false -m prodPack=false
+K="$(openssl rand -base64 33 | tr -d '\n')"
+printf %s "$K" | vercel env add JURNAL_KUNCI production --sensitive
+security add-generic-password -U -a "$USER" -s "analisa-saham JURNAL_KUNCI" -w "$K"
 ```
 
 Then rerun the "Terbit harian" workflow (or wait for the next scheduled run).
-Keep a copy of the secret in a password manager: it is the only way in, and it
-cannot be read back from Vercel.
+The secret cannot be read back from Vercel. Get it from the Keychain with
+`security find-generic-password -s "analisa-saham JURNAL_KUNCI" -w`, and keep a
+copy in a password manager for the phone.

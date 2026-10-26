@@ -105,7 +105,7 @@ mkdir -p "$STAGE/api"
 cp src/jurnal/api.ts "$STAGE/api/jurnal.ts"
 
 # Tanpa build: Vercel menyajikan berkas apa adanya (api/ dijalankan sebagai
-# fungsi). no-cache karena nama berkas
+# fungsi, di sin1 supaya dekat dengan Redis-nya). no-cache karena nama berkas
 # berulang tiap hari; /idx tanpa garis miring dialihkan supaya fetch relatif
 # `data/...` di halaman screener tidak patah.
 cat >"$STAGE/vercel.json" <<'JSON'
@@ -114,6 +114,7 @@ cat >"$STAGE/vercel.json" <<'JSON'
   "buildCommand": "",
   "installCommand": "",
   "outputDirectory": ".",
+  "regions": ["sin1"],
   "redirects": [{ "source": "/:bagian(idx|crypto|hasil|jurnal)", "destination": "/:bagian/", "permanent": true }],
   "headers": [
     {
