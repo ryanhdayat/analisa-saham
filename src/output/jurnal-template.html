@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Jurnal</title>
+<!--__FONT__-->
+<style>
+/* Layout: jurnal pribadi. Satu kolom untuk HP: ringkasan, form catat beli, lalu kartu tiap transaksi
+   yang membandingkan harga dan hasil kamu dengan rencana dan simulasi situs. */
+/*__TEMA__*/
+.wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 56px; display: grid; gap: 18px; }
+.kepala .status button { margin-left: auto; }
+button { font: 500 14px var(--font-body); border-radius: 7px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button.utama { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+button.hapus { color: var(--down); }
+button:disabled { opacity: .6; cursor: progress; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 12px; }
+.panel h2 { font: 700 19px/1.1 var(--font-display); font-stretch: 85%; margin: 0; }
+.isian { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+input, select, textarea { font: 16px var(--font-body); color: var(--ink); background: var(--sunk); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; width: 100%; min-width: 0; }
+textarea { resize: vertical; min-height: 44px; }
+.lebar { grid-column: 1 / -1; }
+.aksi { display: flex; flex-wrap: wrap; gap: 8px; }
+.banner { padding: 10px 14px; border-radius: 6px; font-size: 14px; background: var(--warn-soft); color: var(--ink); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.stat b { display: block; font: 700 22px/1.1 var(--font-display); font-stretch: 85%; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+
+.daftar { display: grid; gap: 10px; }
+.kartu { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 8px; }
+.kartu .atas { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.kartu .code { font: 700 18px var(--font-display); font-stretch: 85%; }
+.kartu .atas .badge { margin-left: auto; }
+.kartu p { margin: 0; font-size: 14px; }
+.kartu .banding { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+.kartu .banding div { display: grid; gap: 2px; }
+.kartu .banding small { color: var(--muted); font-size: 12.5px; }
+.kartu .catatan { color: var(--muted); white-space: pre-wrap; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 500; background: var(--sunk); color: var(--muted); border: 1px solid var(--line); }
+.badge.selesai { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.pos { color: var(--up); } .neg { color: var(--down); }
+.empty { padding: 18px; color: var(--muted); text-align: center; }
+footer { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<!--__NAV__-->
+<main class="wrap">
+  <header class="kepala">
+    <h1>Jurnal</h1>
+    <div class="status"><span>Catatan transaksi kamu, dibandingkan dengan rencana dan simulasi situs.</span>
+      <button type="button" id="keluar" hidden>Keluar</button></div>
+  </header>
+
+  <div id="pesan" class="banner" role="status" hidden></div>
+  <div id="pesan-rencana" class="banner" hidden>Rencana dari halaman Hasil tidak terbaca, jadi kartu belum bisa dibandingkan dengan rencana dan simulasi situs. Muat ulang halaman untuk mencoba lagi.</div>
+
+  <form class="panel" id="masuk" hidden>
+    <h2>Masuk</h2>
+    <label>Kunci jurnal<input type="password" id="kunci" autocomplete="current-password" required></label>
+    <div class="aksi"><button class="utama" type="submit">Masuk</button></div>
+  </form>
+
+  <div id="isi" hidden>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <form class="panel" id="catat" hidden>
+    <h2>Catat beli</h2>
+    <div class="isian">
+      <label class="lebar">Rencana<select id="f-rencana"></select></label>
+      <label id="l-kode" hidden>Kode<input id="f-kode" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="BBRI"></label>
+      <label>Tanggal beli<input type="date" id="f-tanggal" required></label>
+      <label>Harga isi<input type="number" id="f-harga" inputmode="numeric" min="1" step="1" required></label>
+      <label>Lot<input type="number" id="f-lot" inputmode="numeric" min="1" step="1" required></label>
+      <label class="lebar">Catatan<textarea id="f-catatan" maxlength="500" rows="2"></textarea></label>
+    </div>
+    <div class="aksi"><button class="utama" type="submit">Simpan</button></div>
+  </form>
+
+  <section class="daftar" id="daftar" hidden aria-label="Transaksi"></section>
+
+  <footer>Hasil kamu dipotong biaya Stockbit Virtual (0,20% beli, 0,30% jual); simulasi situs memakai biaya akun asli (0,15% beli, 0,25% jual), jadi selisih sekitar 0,1% per transaksi itu wajar. Posisi terbuka dinilai di harga penutupan terakhir dari halaman Hasil. Jual dicatat untuk seluruh lot.</footer>
+</main>
+<script>
+const $ = (id) => document.getElementById(id)
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const idr = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
+const pct = (x) => `${x > 0 ? '+' : ''}${(x * 100).toFixed(1).replace('.', ',')}%`
+const tgl = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+const rp = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}Rp${idr.format(Math.abs(Math.round(v)))}`
+const cls = (v) => (v > 0 ? 'pos' : v < 0 ? 'neg' : '')
+const hariIni = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10)
+const API = '/api/jurnal'
+
+/*<hitung>*/
+function hitung(e, pick) {
+  // Biaya Stockbit Virtual yang teramati di order 26 Okt 2026: 0,20% beli, 0,30% jual.
+  const BIAYA_BELI = 0.002, BIAYA_JUAL = 0.003
+  const lembar = e.beli.lot * 100
+  const modal = lembar * e.beli.harga * (1 + BIAYA_BELI)
+  const keluar = e.jual ? e.jual.harga : pick && pick.last ? pick.last.close : null
+  const hasil = keluar == null ? null : lembar * keluar * (1 - BIAYA_JUAL) - modal
+  return {
+    modal,
+    keluar,
+    rp: hasil,
+    ret: hasil == null ? null : hasil / modal,
+    selisihBeli: pick ? e.beli.harga / pick.entry - 1 : null,
+  }
+}
+/*</hitung>*/
+
+let entri = []
+let picks = []
+// Satu id per isian form: kirim ulang setelah sinyal putus tidak membuat entri kedua.
+let idBaru = crypto.randomUUID()
+const pickDari = (e) => (e.rencana ? picks.find((p) => p.code === e.kode && p.date === e.rencana) : undefined)
+
+function pesan(teks) {
+  $('pesan').textContent = teks ?? ''
+  $('pesan').hidden = !teks
+}
+
+async function api(method, body, query = '') {
+  const res = await fetch(API + query, {
+    method,
+    credentials: 'same-origin',
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  if (res.status === 401 && !query) tampil(false)
+  if (!res.ok) {
+    const err = new Error((await res.json().catch(() => ({}))).pesan ?? `Gagal (${res.status}).`)
+    err.status = res.status
+    throw err
+  }
+  return res.status === 204 ? null : res.json()
+}
+
+function tampil(masuk) {
+  $('masuk').hidden = masuk
+  for (const id of ['isi', 'catat', 'daftar', 'keluar']) $(id).hidden = !masuk
+}
+
+const SITUS = { open: 'Masih berjalan', target: 'Kena target', cut: 'Kena cut loss', dilewati: 'Dilewati', 'tidak-terbeli': 'Tidak terbeli' }
+
+function situs(pick) {
+  if (!pick) return '<span class="mut">di luar rencana</span>'
+  if (pick.isi == null) return pick.status === 'open' ? '<span class="mut">menunggu hari bursa pertama</span>' : SITUS[pick.status]
+  const r = pick.sim ? pick.sim.retBersih : pick.ret
+  return `${SITUS[pick.status]} <b class="${cls(r)}">${pct(r)}</b><br><small>isi ${idr.format(pick.isi)}${pick.exit ? ` → ${idr.format(pick.exit)}` : ''}</small>`
+}
+
+function kartu(e) {
+  const pick = pickDari(e)
+  const h = hitung(e, pick)
+  const kamu = h.rp == null
+    ? '<span class="mut">belum ada harga</span>'
+    : `<b class="${cls(h.rp)}">${rp(h.rp)}</b> <span class="${cls(h.ret)}">${pct(h.ret)}</span><br><small>${e.jual ? `jual ${tgl(e.jual.tanggal)} di ${idr.format(e.jual.harga)}` : `close ${tgl(pick.last.date)} ${idr.format(h.keluar)}`}</small>`
+  return `<article class="kartu" data-id="${esc(e.id)}">
+    <div class="atas"><span class="code">${esc(e.kode)}</span>${e.rencana ? `<span class="mut">rencana ${tgl(e.rencana)}</span>` : ''}
+      <span class="badge ${e.jual ? 'selesai' : ''}">${e.jual ? 'Selesai' : 'Terbuka'}</span></div>
+    <p>Beli ${tgl(e.beli.tanggal)}: ${e.beli.lot} lot di <b>${idr.format(e.beli.harga)}</b>${pick ? ` <span class="mut">(rencana ${idr.format(pick.entry)}, ${pct(h.selisihBeli)})</span>` : ''}</p>
+    ${pick ? `<p class="mut">Target ${idr.format(pick.target)} · cut loss ${idr.format(pick.cut)}</p>` : ''}
+    <div class="banding"><div><small>Kamu</small><span>${kamu}</span></div><div><small>Simulasi situs</small><span>${situs(pick)}</span></div></div>
+    ${e.catatan ? `<p class="catatan">${esc(e.catatan)}</p>` : ''}
+    <div class="aksi">${e.jual ? '' : '<button type="button" data-aksi="jual">Catat jual</button>'}<button type="button" class="hapus" data-aksi="hapus">Hapus</button></div>
+  </article>`
+}
+
+function render() {
+  const hasil = entri.map((e) => hitung(e, pickDari(e)))
+  const selesai = hasil.filter((_, i) => entri[i].jual)
+  const terbuka = hasil.filter((h, i) => !entri[i].jual && h.rp != null)
+  const jumlah = (xs) => xs.reduce((a, h) => a + h.rp, 0)
+  const selisih = hasil.filter((h) => h.selisihBeli != null).map((h) => h.selisihBeli)
+  $('stats').innerHTML = [
+    [entri.length, 'transaksi tercatat'],
+    [selesai.length ? rp(jumlah(selesai)) : '—', `hasil ${selesai.length} yang selesai`, selesai.length ? cls(jumlah(selesai)) : ''],
+    [terbuka.length ? rp(jumlah(terbuka)) : '—', `${terbuka.length} yang terbuka, di close terakhir`, terbuka.length ? cls(jumlah(terbuka)) : ''],
+    [selisih.length ? pct(selisih.reduce((a, b) => a + b, 0) / selisih.length) : '—', 'rata-rata harga beli vs rencana'],
+  ].map(([v, l, c = '']) => `<div class="stat"><b class="${c}">${v}</b><span>${l}</span></div>`).join('')
+  $('daftar').innerHTML = entri.length ? entri.map(kartu).join('') : '<p class="empty">Belum ada transaksi. Catat beli pertama di atas.</p>'
+}
+
+function isiPilihan() {
+  const urut = [...picks].sort((a, b) => b.date.localeCompare(a.date) || a.code.localeCompare(b.code))
+  $('f-rencana').innerHTML = urut.map((p) =>
+    `<option value="${esc(p.code)}|${esc(p.date)}">${esc(p.code)} · ${tgl(p.date)} · beli ${idr.format(p.entry)}</option>`).join('') +
+    '<option value="">Di luar rencana</option>'
+  pilihRencana()
+}
+
+function pilihRencana() {
+  const [kode, tanggal] = $('f-rencana').value.split('|')
+  const pick = picks.find((p) => p.code === kode && p.date === tanggal)
+  $('l-kode').hidden = !!pick
+  $('f-kode').required = !pick
+  if (pick) {
+    $('f-harga').value = pick.entry
+    $('f-lot').value = pick.lot ?? ''
+  }
+}
+
+async function muat() {
+  try {
+    const [j, h] = await Promise.all([
+      api('GET'),
+      fetch('../hasil/hasil.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ])
+    picks = h?.pasar?.find((p) => p.id === 'idx')?.picks ?? []
+    $('pesan-rencana').hidden = !!h
+    entri = j.entri
+    tampil(true)
+    isiPilihan()
+    render()
+  } catch (err) {
+    if (err.status !== 401) pesan(err.message)
+  }
+}
+
+/** Setelah server menolak karena data di tab ini basi (409/404): ambil ulang daftarnya. */
+async function segarkan(err) {
+  if (err.status !== 409 && err.status !== 404) throw err
+  entri = (await api('GET')).entri
+  render()
+}
+
+async function kirim(form, kerja) {
+  const tombol = form.querySelector('button[type=submit]')
+  if (tombol) tombol.disabled = true
+  try { pesan(null); await kerja() } catch (err) { pesan(err.message) } finally { if (tombol) tombol.disabled = false }
+}
+
+$('masuk').addEventListener('submit', (ev) => {
+  ev.preventDefault()
+  kirim(ev.target, async () => {
+    await api('POST', { kunci: $('kunci').value }, '?aksi=masuk')
+    $('kunci').value = ''
+    await muat()
+  })
+})
+
+$('keluar').addEventListener('click', async () => {
+  try {
+    await api('POST', {}, '?aksi=keluar')
+    entri = []
+    pesan(null)
+    tampil(false)
+  } catch (err) {
+    pesan(`Gagal keluar: ${err.message}`)
+  }
+})
+
+$('f-rencana').addEventListener('change', pilihRencana)
+
+$('catat').addEventListener('submit', (ev) => {
+  ev.preventDefault()
+  kirim(ev.target, async () => {
+    const [kode, rencana] = $('f-rencana').value.split('|')
+    const e = {
+      id: idBaru,
+      kode: kode || $('f-kode').value.trim().toUpperCase(),
+      rencana: rencana || null,
+      beli: { tanggal: $('f-tanggal').value, harga: Number($('f-harga').value), lot: Number($('f-lot').value) },
+      jual: null,
+      catatan: $('f-catatan').value.trim(),
+    }
+    try {
+      await api('PUT', { entri: e })
+      entri = [e, ...entri]
+      render()
+    } catch (err) {
+      await segarkan(err) // 409: kiriman sebelumnya sudah masuk
+    }
+    idBaru = crypto.randomUUID()
+    $('f-catatan').value = ''
+  })
+})
+
+$('daftar').addEventListener('click', (ev) => {
+  const tombol = ev.target.closest('button[data-aksi]')
+  if (!tombol) return
+  const kartuEl = tombol.closest('.kartu')
+  const e = entri.find((x) => x.id === kartuEl.dataset.id)
+  if (tombol.dataset.aksi === 'hapus') {
+    if (!confirm(`Hapus ${e.kode} ${tgl(e.beli.tanggal)}?`)) return
+    kirim(kartuEl, async () => {
+      await api('DELETE', { id: e.id })
+      entri = entri.filter((x) => x !== e)
+      render()
+    })
+  }
+  if (tombol.dataset.aksi === 'jual') {
+    const pick = pickDari(e)
+    tombol.closest('.aksi').outerHTML = `<form class="isian" data-jual>
+      <label>Tanggal jual<input type="date" name="tanggal" value="${hariIni()}" min="${e.beli.tanggal}" required></label>
+      <label>Harga jual<input type="number" name="harga" inputmode="numeric" min="1" step="1" value="${pick ? pick.target : ''}" required></label>
+      <div class="aksi lebar"><button class="utama" type="submit">Simpan jual</button><button type="button" data-aksi="batal">Batal</button></div></form>`
+  }
+  if (tombol.dataset.aksi === 'batal') render()
+})
+
+$('daftar').addEventListener('submit', (ev) => {
+  ev.preventDefault()
+  const form = ev.target
+  const e = entri.find((x) => x.id === form.closest('.kartu').dataset.id)
+  kirim(form, async () => {
+    try {
+      const { entri: baru } = await api('PATCH', { id: e.id, jual: { tanggal: form.tanggal.value, harga: Number(form.harga.value) } })
+      entri = entri.map((x) => (x === e ? baru : x))
+      render()
+    } catch (err) {
+      await segarkan(err)
+      pesan(err.message)
+    }
+  })
+})
+
+$('f-tanggal').value = hariIni()
+muat()
+</script>
+</body>
+</html>

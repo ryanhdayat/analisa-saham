@@ -5,6 +5,7 @@ import { writeHasilPage, type HasilPasar } from './output/hasil-page.ts'
 import { CRYPTO, IDX, type Market } from './market.ts'
 import { fetchBars } from './yahoo.ts'
 import { posisi, ringkasSimulasi } from './rencana/simulasi.ts'
+import { rencanaIdx } from './rencana/rencana.ts'
 import type { Bar } from './types.ts'
 
 /**
@@ -59,7 +60,7 @@ async function nilaiPasar(market: Market, label: string, now: Date) {
     id: market.id,
     label,
     currency: idx ? 'IDR' : 'USD',
-    picks: idx ? picks.map((h) => ({ ...h, sim: posisi(h) })) : picks,
+    picks: idx ? picks.map((h) => ({ ...h, lot: rencanaIdx(h.entry, h.stop, h.target).lot, sim: posisi(h) })) : picks,
     ringkasan,
     gagal,
     ...(idx ? { simulasi: ringkasSimulasi(picks) } : {}),

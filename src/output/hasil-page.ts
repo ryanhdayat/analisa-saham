@@ -17,8 +17,11 @@ export interface HasilPasar {
   label: string
   /** Kode mata uang untuk format harga di halaman: IDR atau USD. */
   currency: string
-  /** `sim` hanya untuk IDX: posisi simulasi Rp100 juta per pilihan. */
-  picks: (Hasil & { sim?: PosisiSim | null })[]
+  /**
+   * Hanya IDX: `lot` dari kartu rencana (ada walau belum terbeli, dipakai jurnal
+   * untuk mengisi form) dan `sim`, posisi simulasi Rp100 juta per pilihan.
+   */
+  picks: (Hasil & { lot?: number; sim?: PosisiSim | null })[]
   ringkasan: Ringkasan
   /** Hanya IDX. */
   simulasi?: RingkasanSimulasi

@@ -1,6 +1,6 @@
 /**
  * Tema dan navigasi bersama untuk semua halaman situs (beranda, IDX, crypto,
- * hasil). Ditanam ke tiap template saat halaman dibangun, supaya tiap halaman
+ * hasil, jurnal). Ditanam ke tiap template saat halaman dibangun, supaya tiap halaman
  * tetap satu berkas utuh tanpa CSS eksternal.
  *
  * Arah visual: meja kerja harian yang tenang — latar abu dingin, satu aksen
@@ -9,7 +9,7 @@
  * dipadatkan.
  */
 
-export type Halaman = 'beranda' | 'idx' | 'crypto' | 'hasil'
+export type Halaman = 'beranda' | 'idx' | 'crypto' | 'hasil' | 'jurnal'
 
 export const FONT_LINK =
   '<link rel="preconnect" href="https://fonts.googleapis.com">' +
@@ -52,6 +52,7 @@ nav.situs .tautan { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: 
 nav.situs .tautan a { padding: 6px 12px; border-radius: 99px; color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; white-space: nowrap; }
 nav.situs .tautan a:hover { color: var(--ink); background: var(--surface); }
 nav.situs .tautan a[aria-current="page"] { background: var(--ink); color: var(--bg); }
+@media (max-width: 480px) { nav.situs .tautan a { padding: 6px 9px; font-size: 13.5px; } }
 
 .kepala { display: grid; gap: 6px; }
 .kepala h1 { font-family: var(--font-display); font-stretch: 80%; font-weight: 800; font-size: clamp(30px, 6vw, 46px); line-height: 1; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
@@ -69,6 +70,7 @@ export function navHtml(aktif: Halaman, akar: string): string {
     ['idx', `${akar}idx/`, 'Rencana IDX'],
     ['crypto', `${akar}crypto/`, 'Crypto'],
     ['hasil', `${akar}hasil/`, 'Hasil'],
+    ['jurnal', `${akar}jurnal/`, 'Jurnal'],
   ]
   const a = tautan
     .map(([id, href, teks]) => `<a href="${href}"${id === aktif ? ' aria-current="page"' : ''}>${teks}</a>`)
