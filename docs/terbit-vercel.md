@@ -99,9 +99,9 @@ can show on an exchange holiday.
 ## Private journal (`/jurnal/`)
 
 The only dynamic part of the site. The page is static; the owner's own trades
-live behind `/api/jurnal`, a Vercel Function that `rakit.sh` copies from
-`src/jurnal/api.ts` into `situs/api/jurnal.ts`. It has no dependencies, so the
-deploy still runs without an install step. Entries are stored in Upstash Redis
+live behind `/api/jurnal`, a Vercel Function that `rakit.sh` bundles from
+`src/jurnal/api.ts` into `situs/api/jurnal.mjs`, including `jose` for Google token
+verification. The deploy still runs without an install step. Entries are stored in Upstash Redis
 (one hash, one field per entry). The page compares each entry with its plan and
 with the `/hasil/` simulation, read from `hasil/hasil.json`.
 
@@ -125,3 +125,35 @@ Then rerun the "Terbit harian" workflow (or wait for the next scheduled run).
 The secret cannot be read back from Vercel. Get it from the Keychain with
 `security find-generic-password -s "analisa-saham JURNAL_KUNCI" -w`, and keep a
 copy in a password manager for the phone.
+
+### Google sign-in (owner only)
+
+Set both `GOOGLE_CLIENT_ID` and `JURNAL_EMAIL` in Vercel Production to replace
+secret sign-in with Google. `JURNAL_KUNCI` stays server-side as the signing key.
+The email must be the owner's verified Google email. It is never embedded in
+the static page. Other Google accounts get 403; old secret-login cookies stop
+working. Existing entries stay in the same Redis hash.
+
+1. In [Google Auth Platform](https://console.cloud.google.com/auth/clients),
+   configure branding/audience, then create an OAuth client of type **Web
+   application**. While in testing, add the owner's email as a test user.
+2. Add the exact production origin (scheme + domain, no `/jurnal/` path) to
+   **Authorized JavaScript origins**. This uses the Google Identity Services
+   JavaScript callback, so no redirect URI or client secret is needed.
+3. Add `GOOGLE_CLIENT_ID` (the public `…apps.googleusercontent.com` value) and
+   `JURNAL_EMAIL` to Vercel Production. Keep `JURNAL_KUNCI` and Redis variables.
+   Configure both before deploying: partial Google configuration returns 503
+   rather than falling back to the secret login.
+4. Deploy via Terbit harian. Verify owner sign-in on the phone, sign-out, and
+   rejection of a different Google account. The public site stays accessible.
+
+Google signatures, issuer, audience, expiry, verified email and a 10-minute
+browser-bound nonce are checked server-side. Sessions use signed HttpOnly,
+Secure, SameSite=Strict cookies with a server-checked 30-day expiry. Changing
+`JURNAL_EMAIL` or `JURNAL_KUNCI` invalidates existing sessions. Sign-out clears
+the current browser's session; a copied session stays valid until expiry or
+key/email rotation.
+
+Until both Google variables are configured, the existing secret login remains
+available for an orderly rollout. Reverting to it requires removing **both**
+Google variables and redeploying.
