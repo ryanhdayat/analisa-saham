@@ -1,0 +1,47 @@
+[
+ {
+  "code": "AADI",
+  "name": "PT Adaro Andalan Indonesia Tbk",
+  "date": "2026-10-27",
+  "entry": 11700,
+  "stop": 10567.461644004405,
+  "target": 12450,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ASGR",
+  "name": "PT Astra Graphia Tbk",
+  "date": "2026-10-27",
+  "entry": 2460,
+  "stop": 2346.3492287620447,
+  "target": 2580,
+  "label": "hati-hati"
+ },
+ {
+  "code": "AUTO",
+  "name": "PT Astra Otoparts Tbk",
+  "date": "2026-10-27",
+  "entry": 3340,
+  "stop": 2886.585773888301,
+  "target": 3430,
+  "label": "hati-hati"
+ },
+ {
+  "code": "BSSR",
+  "name": "PT Baramulti Suksessarana Tbk",
+  "date": "2026-10-27",
+  "entry": 5200,
+  "stop": 4936.4526279685815,
+  "target": 5500,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ULTJ",
+  "name": "PT Ultrajaya Milk Industry & Trading Company Tbk",
+  "date": "2026-10-27",
+  "entry": 2100,
+  "stop": 2023.6212214415111,
+  "target": 2190,
+  "label": "hati-hati"
+ }
+]
