@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hasil Analisa</title>
+<meta name="description" content="Rekam jejak pilihan screener: berapa yang kena target, kena cut loss, dan masih terbuka.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: hasil simulasi. IDX: vonis aturan lulus + angka simulasi Rp100 juta, pembanding bersih/hati-hati,
+   lalu daftar terbuka dan selesai (kartu di HP, tabel di laptop). Crypto: ringkasan persen dan daftar saja. */
+/* tema bersama — src/output/tema.ts */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --sunk: #f6f8fa; --ink: #16202b; --muted: #5b6875; --line: #d9e0e7;
+  --accent: #0e6b73; --accent-soft: #dcefef;
+  --up: #12805c; --up-soft: #ddf1e8; --down: #c0392b; --down-soft: #f8e1de; --warn: #a56a12; --warn-soft: #f6ead3;
+  --ma20: #c27c0e; --ma50: #2f6fd0; --ma200: #8a4fbf;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: var(--font-body);
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
+  --accent: #56b8c0; --accent-soft: #163338;
+  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
+  --ma20: #e0a23a; --ma50: #6ea2f0; --ma200: #b88ae6; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e141a; --surface: #151d25; --sunk: #111820; --ink: #e2e8ee; --muted: #93a1ae; --line: #25313c;
+  --accent: #56b8c0; --accent-soft: #163338;
+  --up: #3dbb8a; --up-soft: #12302a; --down: #ef7362; --down-soft: #3a1e1c; --warn: #e3a74c; --warn-soft: #3a2c15;
+  --ma20: #e0a23a; --ma50: #6ea2f0; --ma200: #b88ae6; color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.num, td.n { font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible, th:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.up { color: var(--up); } .down { color: var(--down); } .mut { color: var(--muted); }
+
+nav.situs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px max(16px, env(safe-area-inset-left, 0px)) 0;
+  max-width: 1180px; margin: 0 auto; }
+nav.situs .merek { font: 800 17px/1 var(--font-display); font-stretch: 85%; color: var(--ink); text-decoration: none; margin-right: auto; }
+nav.situs .tautan { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+nav.situs .tautan a { padding: 6px 12px; border-radius: 99px; color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; white-space: nowrap; }
+nav.situs .tautan a:hover { color: var(--ink); background: var(--surface); }
+nav.situs .tautan a[aria-current="page"] { background: var(--ink); color: var(--bg); }
+@media (max-width: 480px) { nav.situs .tautan a { padding: 6px 9px; font-size: 13.5px; } }
+
+.kepala { display: grid; gap: 6px; }
+.kepala h1 { font-family: var(--font-display); font-stretch: 80%; font-weight: 800; font-size: clamp(30px, 6vw, 46px); line-height: 1; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+.kepala .status { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; color: var(--muted); font-size: 14px; }
+.lencana { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 500; background: var(--accent-soft); color: var(--accent); }
+.lencana.basi { background: var(--warn-soft); color: var(--warn); }
+.lencana.simulasi::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 18px 16px 56px; display: grid; gap: 18px; }
+
+.bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--surface); }
+.tabs button { border: 0; background: none; padding: 8px 14px; font: 500 13px var(--font-body); color: var(--muted); cursor: pointer; }
+.tabs button + button { border-left: 1px solid var(--line); }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--surface); }
+input[type=search] { font: 13px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; width: 220px; max-width: 100%; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.stat b { display: block; font: 700 24px/1.1 var(--font-display); font-stretch: 85%; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat.up b { color: var(--up); }
+.stat.down b { color: var(--down); }
+
+.banner { padding: 10px 14px; border-radius: 6px; font-size: 13px; border: 1px solid; }
+.banner.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+details.rules { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; color: var(--muted); font-size: 14px; }
+details.rules summary { cursor: pointer; color: var(--ink); font-weight: 500; }
+details.rules ul { margin: 8px 0 0; padding-left: 18px; }
+
+section { display: grid; gap: 10px; }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+th { font: 600 12.5px/1.2 var(--font-body); color: var(--muted); background: var(--sunk); position: sticky; top: 0; }
+td.n, th.n { text-align: right; }
+td.n { font-variant-numeric: tabular-nums; }
+tbody tr:last-child td { border-bottom: 0; }
+.code { font: 700 15px var(--font-display); font-stretch: 85%; }
+.name { display: block; font-size: 12px; color: var(--muted); max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.pos { color: var(--up); }
+.neg { color: var(--down); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+.badge.target { background: var(--up-soft); color: var(--up); }
+.badge.cut { background: var(--down-soft); color: var(--down); }
+.badge.batal { background: var(--sunk); color: var(--muted); border: 1px solid var(--line); }
+.badge.bersih { background: var(--up-soft); color: var(--up); }
+.badge.hati { background: var(--warn-soft); color: var(--warn); }
+.meter { display: grid; gap: 4px; min-width: 150px; }
+.meter .track { position: relative; height: 6px; background: var(--sunk); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+.meter .fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 99px; }
+.meter .fill.pos { background: var(--up); }
+.meter .fill.neg { background: var(--down); }
+.meter small { font-size: 12px; color: var(--muted); }
+.empty { padding: 18px; color: var(--muted); text-align: center; }
+
+/* Ponsel: sembilan kolom tidak muat, dan yang tersembunyi di kanan justru return dan posisinya.
+   Tiap baris jadi kartu dua kolom; label kolom dibawa sel lewat data-l. */
+@media (max-width: 640px) {
+  .scroll { overflow: visible; background: none; border: 0; border-radius: 0; }
+  table, tbody { display: block; }
+  thead { display: none; }
+  tbody tr { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  td { display: block; padding: 0; border: 0; white-space: normal; min-width: 0; }
+  td.n { text-align: left; }
+  td[data-l]::before { content: attr(data-l); display: block; font-size: 12.5px; color: var(--muted); }
+  td.full, td.empty { grid-column: 1 / -1; }
+  .name { max-width: none; }
+  .meter { min-width: 0; }
+  input[type=search] { width: 100%; }
+}
+footer { color: var(--muted); font-size: 12px; }
+
+/* simulasi */
+.sim { display: grid; gap: 14px; }
+.sim-utama { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; display: grid; gap: 10px; }
+.sim-utama .vonis { font: 800 30px/1 var(--font-display); font-stretch: 80%; }
+.sim-utama .vonis.lulus { color: var(--up); } .sim-utama .vonis.belum-lulus { color: var(--down); } .sim-utama .vonis.kurang-data { color: var(--ink); }
+.sim-utama p { margin: 0; color: var(--muted); max-width: 70ch; }
+.kemajuan { height: 10px; border-radius: 99px; background: var(--sunk); border: 1px solid var(--line); overflow: hidden; }
+.kemajuan span { display: block; height: 100%; background: var(--accent); }
+.sim-angka { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 18px; margin: 0; }
+.sim-angka dt { font-size: 13px; color: var(--muted); }
+.sim-angka dd { margin: 0; font: 700 22px/1.15 var(--font-display); font-stretch: 85%; font-variant-numeric: tabular-nums; }
+.banding { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.banding > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 4px; }
+.banding h3 { margin: 0 0 4px; font: 700 17px var(--font-display); font-stretch: 85%; }
+.banding p { margin: 0; color: var(--muted); font-size: 14px; }
+.banding b { color: var(--ink); font-variant-numeric: tabular-nums; }
+h2 { font: 700 22px/1.1 var(--font-display); font-stretch: 85%; margin: 6px 0 0; }
+</style>
+</head>
+<body>
+<nav class="situs" aria-label="Navigasi situs"><a class="merek" href="../">Analisa Saham</a><div class="tautan"><a href="../">Beranda</a><a href="../idx/">Rencana IDX</a><a href="../crypto/">Crypto</a><a href="../hasil/" aria-current="page">Hasil</a><a href="../jurnal/">Jurnal</a></div></nav>
+<main class="wrap">
+  <header class="kepala">
+    <h1>Hasil simulasi</h1>
+    <div class="status"><span>Semua rencana dinilai ulang dari harga terbaru, terakhir <span id="dibuat" class="num"></span>.</span></div>
+  </header>
+
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <input type="search" id="cari" placeholder="Cari kode atau nama" aria-label="Cari emiten">
+  </div>
+
+  <div id="banners"></div>
+
+  <section class="sim" id="sim" hidden aria-label="Simulasi modal Rp100 juta"></section>
+
+  <div class="stats" id="stats"></div>
+
+  <details class="rules">
+    <summary>Cara menilai</summary>
+    <ul id="aturan"></ul>
+  </details>
+
+  <section>
+    <h2>Masih terbuka</h2>
+    <div class="scroll"><table>
+      <thead><tr id="h-terbuka"></tr></thead>
+      <tbody id="terbuka"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Selesai</h2>
+    <div class="scroll"><table>
+      <thead><tr id="h-selesai"></tr></thead>
+      <tbody id="selesai"></tbody>
+    </table></div>
+  </section>
+
+  <footer>Simulasi, bukan rekomendasi jual/beli. Data harga dari Yahoo Finance.</footer>
+</main>
+<script>
+/*<dataBasi>*/
+function dataBasi(tanggal, pasar, now) {
+  const hari = (d) => d.toISOString().slice(0, 10)
+  if (pasar === 'crypto') return tanggal < hari(new Date(now.getTime() - 86400000))
+  const wib = new Date(now.getTime() + 7 * 3600000)
+  const menit = wib.getUTCHours() * 60 + wib.getUTCMinutes()
+  const kerja = (d) => d.getUTCDay() >= 1 && d.getUTCDay() <= 5
+  let d = new Date(Date.UTC(wib.getUTCFullYear(), wib.getUTCMonth(), wib.getUTCDate()))
+  if (!(kerja(d) && menit >= 16 * 60 + 15)) {
+    do { d = new Date(d.getTime() - 86400000) } while (!kerja(d))
+  }
+  return tanggal < hari(d)
+}
+/*</dataBasi>*/
+const DATA = {"dibuat":"2026-10-31 14:34 WIB","pasar":[{"id":"idx","label":"Saham IDX","currency":"IDR","picks":[{"code":"BDMN","name":"PT Bank Danamon Indonesia Tbk","date":"2026-10-30","entry":4870,"stop":4650.011339518605,"target":5000,"label":"hati-hati","cut":4620,"isi":null,"status":"open","settled":null,"exit":null,"last":null,"ret":0,"progress":0,"days":0,"lot":40,"sim":null},{"code":"PRDA","name":"PT Prodia Widyahusada Tbk","date":"2026-10-30","entry":3600,"stop":2790.498561121026,"target":3760,"label":"hati-hati","cut":3240,"isi":null,"status":"open","settled":null,"exit":null,"last":null,"ret":0,"progress":0,"days":0,"lot":27,"sim":null},{"code":"AADI","name":"PT Adaro Andalan Indonesia Tbk","date":"2026-10-27","entry":11700,"stop":10567.461644004405,"target":12450,"label":"hati-hati","cut":10550,"isi":11700,"status":"open","settled":null,"exit":null,"last":{"date":"2026-10-30","close":11475},"ret":-0.019230769230769273,"progress":-0.3,"days":3,"lot":8,"sim":{"lot":8,"rp":-216990,"retBersih":-0.023147970352164204}},{"code":"ASGR","name":"PT Astra Graphia Tbk","date":"2026-10-27","entry":2460,"stop":2346.3492287620447,"target":2580,"label":"hati-hati","cut":2330,"isi":2460,"status":"cut","settled":"2026-10-28","exit":2330,"last":{"date":"2026-10-28","close":2360},"ret":-0.05284552845528456,"progress":-1.0833333333333333,"days":1,"lot":76,"sim":{"lot":76,"rp":-1060314,"retBersih":-0.05662847192625686}},{"code":"AUTO","name":"PT Astra Otoparts Tbk","date":"2026-10-27","entry":3340,"stop":2886.585773888301,"target":3430,"label":"hati-hati","cut":3000,"isi":3340,"status":"open","settled":null,"exit":null,"last":{"date":"2026-10-30","close":3280},"ret":-0.017964071856287456,"progress":-0.6666666666666666,"days":3,"lot":29,"sim":{"lot":29,"rp":-212309,"retBersih":-0.021886332178379098}},{"code":"AADI","name":"PT Adaro Andalan Indonesia Tbk","date":"2026-10-23","entry":11375,"stop":10560.414096005108,"target":11700,"label":"hati-hati","cut":10550,"isi":11375,"status":"target","settled":"2026-10-27","exit":11700,"last":{"date":"2026-10-27","close":11700},"ret":0.02857142857142847,"progress":1,"days":2,"lot":12,"sim":{"lot":12,"rp":334425,"retBersih":0.024463305042436323}},{"code":"BSSR","name":"PT Baramulti Suksessarana Tbk","date":"2026-10-23","entry":5225,"stop":4929.332633620366,"target":5500,"label":"hati-hati","cut":4920,"isi":5225,"status":"open","settled":null,"exit":null,"last":{"date":"2026-10-30","close":5125},"ret":-0.019138755980861233,"progress":-0.36363636363636365,"days":5,"lot":32,"sim":{"lot":32,"rp":-386080,"retBersih":-0.023056324604003198}},{"code":"MARK","name":"PT Mark Dynamics Indonesia Tbk","date":"2026-10-23","entry":1155,"stop":1083.126298265587,"target":1225,"label":"hati-hati","cut":1080,"isi":1155,"status":"open","settled":null,"exit":null,"last":{"date":"2026-10-30","close":1150},"ret":-0.0043290043290042934,"progress":-0.07142857142857142,"days":5,"lot":133,"sim":{"lot":133,"rp":-127779.75,"retBersih":-0.008305723233331896}},{"code":"ULTJ","name":"PT Ultrajaya Milk Industry & Trading Company Tbk","date":"2026-10-23","entry":2100,"stop":2022.5429550445929,"target":2190,"label":"hati-hati","cut":1995,"isi":2100,"status":"open","settled":null,"exit":null,"last":{"date":"2026-10-30","close":2110},"ret":0.004761904761904745,"progress":0.1111111111111111,"days":5,"lot":95,"sim":{"lot":95,"rp":14962.5,"retBersih":0.000748876684972366}}],"ringkasan":{"total":9,"target":1,"cut":1,"open":7,"dinilai":7,"benar":2,"avgReturn":-0.011453542359839086,"dilewati":0,"tidakTerbeli":0},"gagal":[],"simulasi":{"modal":100000000,"selesai":2,"totalRp":-1654085.25,"rataBersih":-0.01608258344191027,"dilewati":0,"tidakTerbeli":0,"status":"kurang-data","perLabel":{"bersih":{"n":0,"target":0,"cut":0,"rataBersih":null},"hati-hati":{"n":2,"target":1,"cut":1,"rataBersih":-0.01608258344191027},"tanpa-label":{"n":0,"target":0,"cut":0,"rataBersih":null}}}},{"id":"crypto","label":"Crypto","currency":"USD","picks":[{"code":"XMR-USD","name":"Monero USD","date":"2026-10-30","entry":587.2415771484375,"stop":542.4098457625307,"target":630,"label":"hati-hati","cut":542.4098457625307,"isi":587.2415771484375,"status":"open","settled":null,"exit":null,"last":{"date":"2026-10-31","close":595.6593627929688},"ret":0.014334451054039521,"progress":0.19686847837568552,"days":1},{"code":"XMR-USD","name":"Monero USD","date":"2026-10-29","entry":601.9615478515625,"stop":548.4798526781581,"target":630,"label":"hati-hati","cut":548.4798526781581,"isi":601.9615478515625,"status":"target","settled":"2026-10-30","exit":630,"last":{"date":"2026-10-30","close":587.2415771484375},"ret":0.046578477061381074,"progress":1,"days":1},{"code":"COMP5692-USD","name":"Compound USD","date":"2026-10-22","entry":24.431556701660156,"stop":21.18122480105063,"target":26.874712371826174,"label":"hati-hati","cut":21.988401031494142,"isi":24.431556701660156,"status":"cut","settled":"2026-10-25","exit":21.988401031494142,"last":{"date":"2026-10-25","close":21.006591796875},"ret":-0.09999999999999998,"progress":-0.9999999999999986,"days":3},{"code":"XMR-USD","name":"Monero USD","date":"2026-10-22","entry":600.638427734375,"stop":529.2896686404183,"target":630,"label":"hati-hati","cut":540.5745849609375,"isi":600.638427734375,"status":"target","settled":"2026-10-29","exit":630,"last":{"date":"2026-10-29","close":601.9615478515625},"ret":0.048883939005330834,"progress":1,"days":7}],"ringkasan":{"total":4,"target":2,"cut":1,"open":1,"dinilai":4,"benar":3,"avgReturn":0.002449216780187863,"dilewati":0,"tidakTerbeli":0},"gagal":[]}]};
+
+const $ = (id) => document.getElementById(id)
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const idr = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
+const usd2 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const usdSig = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 4 })
+const pct = (x, d = 1) => `${x > 0 ? '+' : ''}${(x * 100).toFixed(d).replace('.', ',')}%`
+const tgl = (d) => (d ? new Date(d + 'T00:00:00Z').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'UTC' }) : '—')
+
+let pasar = DATA.pasar[0]
+try { const t = localStorage.getItem('hasil-tab'); pasar = DATA.pasar.find((p) => p.id === t) ?? pasar } catch {}
+
+function price(v) {
+  if (v == null) return '—'
+  if (pasar.currency === 'IDR') return idr.format(v)
+  return '$' + (Math.abs(v) >= 1 ? usd2.format(v) : usdSig.format(v))
+}
+const signCls = (x) => (x > 0 ? 'pos' : x < 0 ? 'neg' : '')
+const emiten = (h) => `<span class="code">${esc(h.code)}</span><span class="name" title="${esc(h.name)}">${esc(h.name)}</span>`
+
+function meter(h) {
+  // Di atas entry: jarak tempuh menuju target. Di bawah: seberapa dekat ke cut loss.
+  if (h.ret >= 0) {
+    const f = Math.min(1, Math.max(0, h.progress))
+    return `<div class="meter"><div class="track"><div class="fill pos" style="width:${f * 100}%"></div></div><small>${Math.round(h.progress * 100)}% menuju target</small></div>`
+  }
+  const dasar = h.isi ?? h.entry
+  const price = h.last ? h.last.close : dasar
+  const f = Math.min(1, (dasar - price) / (dasar - h.cut))
+  return `<div class="meter"><div class="track"><div class="fill neg" style="width:${f * 100}%"></div></div><small>${Math.round(f * 100)}% menuju cut loss</small></div>`
+}
+
+const rpRingkas = (v) => {
+  if (v === 0) return 'Rp0'
+  const a = Math.abs(v), t = v < 0 ? '−' : v > 0 ? '+' : ''
+  return a >= 1e6 ? `${t}Rp${(a / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 2 })} jt` : `${t}Rp${Math.round(a / 1e3).toLocaleString('id-ID')} rb`
+}
+const VONIS = { 'kurang-data': 'Belum cukup data', 'belum-lulus': 'Belum lulus', lulus: 'Lulus' }
+const STATUS = { target: ['target', 'Kena target'], cut: ['cut', 'Kena cut loss'], dilewati: ['batal', 'Dilewati'], 'tidak-terbeli': ['batal', 'Tidak terbeli'] }
+const labelBadge = (h) => h.label === 'bersih' ? '<span class="badge bersih">Bersih</span>' : h.label === 'hati-hati' ? '<span class="badge hati">Hati-hati</span>' : '<span class="mut">tanpa label</span>'
+
+const ATURAN_IDX = [
+  'Setiap saham yang lolos menjadi satu rencana. Selama rencananya masih berjalan, saham itu tidak dihitung lagi walau lolos lagi.',
+  'Simulasi meniru latihan di Stockbit Virtual: <b>Buy limit</b> di harga beli dipasang pagi setelah scan. Kalau harga pembukaan sudah di atas target atau di bawah batas rugi, rencana <b>dilewati</b>. Kalau harga sepanjang hari tidak turun ke harga beli, rencana <b>tidak terbeli</b>. Keduanya tidak dihitung sebagai transaksi.',
+  'Kalau terbeli, harganya adalah harga pembukaan atau harga beli, mana yang lebih rendah. Sejak hari itu, menyentuh target berarti <b>kena target</b>, menyentuh batas rugi berarti <b>kena cut loss</b>; keduanya di hari yang sama dihitung cut loss.',
+  'Harga beli, batas rugi, dan target sama persis dengan kartu Rencana hari ini (sudah dibulatkan ke fraksi harga BEI). Jumlah lot memakai modal Rp100 juta: rugi maksimal 1% modal, satu saham paling banyak 20% modal. Tiap rencana dihitung sendiri-sendiri, tanpa batas kas bersama.',
+  'Hasil rupiah dan rata-rata sudah dipotong perkiraan biaya broker (0,15% beli, 0,25% jual).',
+  '<b>Aturan lulus:</b> minimal 30 transaksi selesai, dan rata-rata hasil setelah biaya di atas nol.',
+]
+const ATURAN_CRYPTO = [
+  'Setiap koin yang lolos menjadi satu pilihan, dibuka pada harga penutupan hari scan. Selama masih terbuka, koin itu tidak dihitung lagi.',
+  '<b>Target</b> adalah target rencana analisa (maksimal +10%). <b>Cut loss</b> adalah stop analisa yang dijepit ke 5–10% di bawah harga masuk. Keduanya di hari yang sama dihitung cut loss.',
+  'Pilihan yang masih terbuka dinilai dari harga penutupan terakhir.',
+]
+
+function simulasi(s) {
+  const bagian = Math.min(1, s.selesai / 30)
+  const rata = s.rataBersih == null ? '—' : pct(s.rataBersih)
+  const kel = (judul, k) => `<div><h3>${judul}</h3>
+    <p><b>${k.n}</b> transaksi selesai</p>
+    <p>Kena target <b>${k.n ? Math.round(k.target / k.n * 100) + '%' : '—'}</b></p>
+    <p>Rata-rata setelah biaya <b class="${signCls(k.rataBersih ?? 0)}">${k.rataBersih == null ? '—' : pct(k.rataBersih)}</b></p></div>`
+  return `<div class="sim-utama">
+      <div class="vonis ${s.status}">${VONIS[s.status]}</div>
+      <div class="kemajuan" role="img" aria-label="${s.selesai} dari 30 transaksi"><span style="width:${(bagian * 100).toFixed(0)}%"></span></div>
+      <p>${s.selesai} dari 30 transaksi selesai, rata-rata ${rata} per transaksi setelah biaya. ${s.status === 'kurang-data' ? 'Simulasi baru bisa dinilai setelah 30 transaksi.' : s.status === 'lulus' ? 'Rata-ratanya positif: boleh mulai mempertimbangkan uang betulan dalam jumlah kecil.' : 'Rata-ratanya belum positif: tetap latihan dengan uang simulasi.'}</p>
+      <dl class="sim-angka">
+        <div><dt>Hasil modal Rp100 juta</dt><dd class="${signCls(s.totalRp)}">${rpRingkas(s.totalRp)}</dd></div>
+        <div><dt>Rata-rata per transaksi</dt><dd class="${signCls(s.rataBersih ?? 0)}">${rata}</dd></div>
+        <div><dt>Dilewati</dt><dd>${s.dilewati}</dd></div>
+        <div><dt>Tidak terbeli</dt><dd>${s.tidakTerbeli}</dd></div>
+      </dl>
+      <p>Hasil rupiah termasuk posisi yang masih terbuka, dinilai di harga penutupan terakhir.</p>
+    </div>
+    <div class="banding">${kel('Bersih', s.perLabel.bersih)}${kel('Hati-hati', s.perLabel['hati-hati'])}${s.perLabel['tanpa-label'].n ? kel('Tanpa label', s.perLabel['tanpa-label']) : ''}</div>`
+}
+
+function render() {
+  const q = $('cari').value.trim().toLowerCase()
+  const match = (h) => !q || h.code.toLowerCase().includes(q) || h.name.toLowerCase().includes(q)
+  const r = pasar.ringkasan
+  const idx = !!pasar.simulasi
+
+  $('tabs').innerHTML = DATA.pasar.map((p) =>
+    `<button role="tab" aria-selected="${p.id === pasar.id}" data-id="${p.id}">${esc(p.label)}</button>`).join('')
+
+  $('banners').innerHTML = pasar.gagal.length
+    ? `<div class="banner warn">Harga ${pasar.gagal.length} emiten tidak bisa diambil di run ini, jadi rencananya dinilai dari data seadanya: ${pasar.gagal.map(esc).join(', ')}.</div>`
+    : ''
+
+  $('sim').hidden = !idx
+  if (idx) $('sim').innerHTML = simulasi(pasar.simulasi)
+
+  const benarPct = r.dinilai ? Math.round((r.benar / r.dinilai) * 100) + '%' : '—'
+  $('stats').innerHTML = [
+    ['', r.total, idx ? 'rencana tercatat' : 'pilihan'],
+    ['up', r.target, 'kena target'],
+    ['down', r.cut, 'kena cut loss'],
+    ['', r.open, 'masih berjalan'],
+    [!r.dinilai ? '' : r.benar / r.dinilai >= 0.5 ? 'up' : 'down', benarPct, `naik dari harga masuk (${r.benar} dari ${r.dinilai})`],
+  ].map(([cls, v, label]) => `<div class="stat ${cls}"><b>${v}</b><span>${label}</span></div>`).join('')
+
+  $('aturan').innerHTML = (idx ? ATURAN_IDX : ATURAN_CRYPTO).map((t) => `<li>${t}</li>`).join('')
+
+  const masuk = (h) => h.isi ?? h.entry
+  const kolomTerbuka = ['Emiten', ...(idx ? ['Label'] : []), 'Tgl scan', 'Masuk', 'Target', 'Cut loss', 'Terakhir', 'Return', ...(idx ? ['Lot', 'Rupiah'] : []), 'Posisi', 'Hari']
+  $('h-terbuka').innerHTML = kolomTerbuka.map((k) => `<th class="${['Masuk', 'Target', 'Cut loss', 'Terakhir', 'Return', 'Lot', 'Rupiah', 'Hari'].includes(k) ? 'n' : ''}">${k}</th>`).join('')
+  const open = pasar.picks.filter((h) => h.status === 'open' && match(h))
+  $('terbuka').innerHTML = open.length
+    ? open.map((h) => `<tr>
+        <td class="full">${emiten(h)}</td>${idx ? `<td data-l="Label">${labelBadge(h)}</td>` : ''}<td data-l="Tgl scan">${tgl(h.date)}</td>
+        <td class="n" data-l="Masuk">${h.isi == null && idx ? '<span class="mut">menunggu</span>' : price(masuk(h))}</td><td class="n" data-l="Target">${price(h.target)}</td><td class="n" data-l="Cut loss">${price(h.cut)}</td>
+        <td class="n" data-l="Terakhir">${h.last ? price(h.last.close) : '—'}</td>
+        <td class="n ${signCls(h.ret)}" data-l="Return">${pct(h.ret)}</td>
+        ${idx ? `<td class="n" data-l="Lot">${h.sim ? h.sim.lot : '—'}</td><td class="n ${signCls(h.sim?.rp ?? 0)}" data-l="Rupiah">${h.sim ? rpRingkas(h.sim.rp) : '—'}</td>` : ''}
+        <td class="full">${h.isi == null && idx ? '<small class="mut">Menunggu hari bursa berikutnya</small>' : meter(h)}</td><td class="n" data-l="Hari">${h.days}</td></tr>`).join('')
+    : `<tr><td colspan="${kolomTerbuka.length}" class="empty">${q ? 'Tidak ada yang cocok.' : 'Belum ada rencana yang berjalan.'}</td></tr>`
+
+  const kolomSelesai = ['Emiten', ...(idx ? ['Label'] : []), 'Tgl scan', 'Masuk', 'Hasil', 'Tgl selesai', 'Keluar', 'Return', ...(idx ? ['Rupiah'] : []), 'Hari']
+  $('h-selesai').innerHTML = kolomSelesai.map((k) => `<th class="${['Masuk', 'Keluar', 'Return', 'Rupiah', 'Hari'].includes(k) ? 'n' : ''}">${k}</th>`).join('')
+  const done = pasar.picks.filter((h) => h.status !== 'open' && match(h))
+    .sort((a, b) => b.settled.localeCompare(a.settled))
+  $('selesai').innerHTML = done.length
+    ? done.map((h) => {
+        const [cls, teks] = STATUS[h.status]
+        const batal = cls === 'batal'
+        return `<tr>
+        <td class="full">${emiten(h)}</td>${idx ? `<td data-l="Label">${labelBadge(h)}</td>` : ''}<td data-l="Tgl scan">${tgl(h.date)}</td><td class="n" data-l="Masuk">${batal ? '—' : price(masuk(h))}</td>
+        <td data-l="Hasil"><span class="badge ${cls}">${teks}</span></td>
+        <td data-l="Tgl selesai">${tgl(h.settled)}</td><td class="n" data-l="Keluar">${batal ? '—' : price(h.exit)}</td>
+        <td class="n ${signCls(h.ret)}" data-l="Return">${batal ? '—' : pct(h.ret)}</td>
+        ${idx ? `<td class="n ${signCls(h.sim?.rp ?? 0)}" data-l="Rupiah">${h.sim ? rpRingkas(h.sim.rp) : '—'}</td>` : ''}<td class="n" data-l="Hari">${h.days}</td></tr>`
+      }).join('')
+    : `<tr><td colspan="${kolomSelesai.length}" class="empty">${q ? 'Tidak ada yang cocok.' : 'Belum ada rencana yang selesai.'}</td></tr>`
+}
+
+$('dibuat').textContent = DATA.dibuat
+$('tabs').addEventListener('click', (e) => {
+  const id = e.target.closest('button')?.dataset.id
+  if (!id) return
+  pasar = DATA.pasar.find((p) => p.id === id)
+  try { localStorage.setItem('hasil-tab', id) } catch {}
+  render()
+})
+$('cari').addEventListener('input', render)
+render()
+</script>
+</body>
+</html>

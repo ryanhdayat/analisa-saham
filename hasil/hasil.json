@@ -1,0 +1,385 @@
+{
+ "dibuat": "2026-10-31 14:34 WIB",
+ "pasar": [
+  {
+   "id": "idx",
+   "label": "Saham IDX",
+   "currency": "IDR",
+   "picks": [
+    {
+     "code": "BDMN",
+     "name": "PT Bank Danamon Indonesia Tbk",
+     "date": "2026-10-30",
+     "entry": 4870,
+     "stop": 4650.011339518605,
+     "target": 5000,
+     "label": "hati-hati",
+     "cut": 4620,
+     "isi": null,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": null,
+     "ret": 0,
+     "progress": 0,
+     "days": 0,
+     "lot": 40,
+     "sim": null
+    },
+    {
+     "code": "PRDA",
+     "name": "PT Prodia Widyahusada Tbk",
+     "date": "2026-10-30",
+     "entry": 3600,
+     "stop": 2790.498561121026,
+     "target": 3760,
+     "label": "hati-hati",
+     "cut": 3240,
+     "isi": null,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": null,
+     "ret": 0,
+     "progress": 0,
+     "days": 0,
+     "lot": 27,
+     "sim": null
+    },
+    {
+     "code": "AADI",
+     "name": "PT Adaro Andalan Indonesia Tbk",
+     "date": "2026-10-27",
+     "entry": 11700,
+     "stop": 10567.461644004405,
+     "target": 12450,
+     "label": "hati-hati",
+     "cut": 10550,
+     "isi": 11700,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-10-30",
+      "close": 11475
+     },
+     "ret": -0.019230769230769273,
+     "progress": -0.3,
+     "days": 3,
+     "lot": 8,
+     "sim": {
+      "lot": 8,
+      "rp": -216990,
+      "retBersih": -0.023147970352164204
+     }
+    },
+    {
+     "code": "ASGR",
+     "name": "PT Astra Graphia Tbk",
+     "date": "2026-10-27",
+     "entry": 2460,
+     "stop": 2346.3492287620447,
+     "target": 2580,
+     "label": "hati-hati",
+     "cut": 2330,
+     "isi": 2460,
+     "status": "cut",
+     "settled": "2026-10-28",
+     "exit": 2330,
+     "last": {
+      "date": "2026-10-28",
+      "close": 2360
+     },
+     "ret": -0.05284552845528456,
+     "progress": -1.0833333333333333,
+     "days": 1,
+     "lot": 76,
+     "sim": {
+      "lot": 76,
+      "rp": -1060314,
+      "retBersih": -0.05662847192625686
+     }
+    },
+    {
+     "code": "AUTO",
+     "name": "PT Astra Otoparts Tbk",
+     "date": "2026-10-27",
+     "entry": 3340,
+     "stop": 2886.585773888301,
+     "target": 3430,
+     "label": "hati-hati",
+     "cut": 3000,
+     "isi": 3340,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-10-30",
+      "close": 3280
+     },
+     "ret": -0.017964071856287456,
+     "progress": -0.6666666666666666,
+     "days": 3,
+     "lot": 29,
+     "sim": {
+      "lot": 29,
+      "rp": -212309,
+      "retBersih": -0.021886332178379098
+     }
+    },
+    {
+     "code": "AADI",
+     "name": "PT Adaro Andalan Indonesia Tbk",
+     "date": "2026-10-23",
+     "entry": 11375,
+     "stop": 10560.414096005108,
+     "target": 11700,
+     "label": "hati-hati",
+     "cut": 10550,
+     "isi": 11375,
+     "status": "target",
+     "settled": "2026-10-27",
+     "exit": 11700,
+     "last": {
+      "date": "2026-10-27",
+      "close": 11700
+     },
+     "ret": 0.02857142857142847,
+     "progress": 1,
+     "days": 2,
+     "lot": 12,
+     "sim": {
+      "lot": 12,
+      "rp": 334425,
+      "retBersih": 0.024463305042436323
+     }
+    },
+    {
+     "code": "BSSR",
+     "name": "PT Baramulti Suksessarana Tbk",
+     "date": "2026-10-23",
+     "entry": 5225,
+     "stop": 4929.332633620366,
+     "target": 5500,
+     "label": "hati-hati",
+     "cut": 4920,
+     "isi": 5225,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-10-30",
+      "close": 5125
+     },
+     "ret": -0.019138755980861233,
+     "progress": -0.36363636363636365,
+     "days": 5,
+     "lot": 32,
+     "sim": {
+      "lot": 32,
+      "rp": -386080,
+      "retBersih": -0.023056324604003198
+     }
+    },
+    {
+     "code": "MARK",
+     "name": "PT Mark Dynamics Indonesia Tbk",
+     "date": "2026-10-23",
+     "entry": 1155,
+     "stop": 1083.126298265587,
+     "target": 1225,
+     "label": "hati-hati",
+     "cut": 1080,
+     "isi": 1155,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-10-30",
+      "close": 1150
+     },
+     "ret": -0.0043290043290042934,
+     "progress": -0.07142857142857142,
+     "days": 5,
+     "lot": 133,
+     "sim": {
+      "lot": 133,
+      "rp": -127779.75,
+      "retBersih": -0.008305723233331896
+     }
+    },
+    {
+     "code": "ULTJ",
+     "name": "PT Ultrajaya Milk Industry & Trading Company Tbk",
+     "date": "2026-10-23",
+     "entry": 2100,
+     "stop": 2022.5429550445929,
+     "target": 2190,
+     "label": "hati-hati",
+     "cut": 1995,
+     "isi": 2100,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-10-30",
+      "close": 2110
+     },
+     "ret": 0.004761904761904745,
+     "progress": 0.1111111111111111,
+     "days": 5,
+     "lot": 95,
+     "sim": {
+      "lot": 95,
+      "rp": 14962.5,
+      "retBersih": 0.000748876684972366
+     }
+    }
+   ],
+   "ringkasan": {
+    "total": 9,
+    "target": 1,
+    "cut": 1,
+    "open": 7,
+    "dinilai": 7,
+    "benar": 2,
+    "avgReturn": -0.011453542359839086,
+    "dilewati": 0,
+    "tidakTerbeli": 0
+   },
+   "gagal": [],
+   "simulasi": {
+    "modal": 100000000,
+    "selesai": 2,
+    "totalRp": -1654085.25,
+    "rataBersih": -0.01608258344191027,
+    "dilewati": 0,
+    "tidakTerbeli": 0,
+    "status": "kurang-data",
+    "perLabel": {
+     "bersih": {
+      "n": 0,
+      "target": 0,
+      "cut": 0,
+      "rataBersih": null
+     },
+     "hati-hati": {
+      "n": 2,
+      "target": 1,
+      "cut": 1,
+      "rataBersih": -0.01608258344191027
+     },
+     "tanpa-label": {
+      "n": 0,
+      "target": 0,
+      "cut": 0,
+      "rataBersih": null
+     }
+    }
+   }
+  },
+  {
+   "id": "crypto",
+   "label": "Crypto",
+   "currency": "USD",
+   "picks": [
+    {
+     "code": "XMR-USD",
+     "name": "Monero USD",
+     "date": "2026-10-30",
+     "entry": 587.2415771484375,
+     "stop": 542.4098457625307,
+     "target": 630,
+     "label": "hati-hati",
+     "cut": 542.4098457625307,
+     "isi": 587.2415771484375,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-10-31",
+      "close": 595.6593627929688
+     },
+     "ret": 0.014334451054039521,
+     "progress": 0.19686847837568552,
+     "days": 1
+    },
+    {
+     "code": "XMR-USD",
+     "name": "Monero USD",
+     "date": "2026-10-29",
+     "entry": 601.9615478515625,
+     "stop": 548.4798526781581,
+     "target": 630,
+     "label": "hati-hati",
+     "cut": 548.4798526781581,
+     "isi": 601.9615478515625,
+     "status": "target",
+     "settled": "2026-10-30",
+     "exit": 630,
+     "last": {
+      "date": "2026-10-30",
+      "close": 587.2415771484375
+     },
+     "ret": 0.046578477061381074,
+     "progress": 1,
+     "days": 1
+    },
+    {
+     "code": "COMP5692-USD",
+     "name": "Compound USD",
+     "date": "2026-10-22",
+     "entry": 24.431556701660156,
+     "stop": 21.18122480105063,
+     "target": 26.874712371826174,
+     "label": "hati-hati",
+     "cut": 21.988401031494142,
+     "isi": 24.431556701660156,
+     "status": "cut",
+     "settled": "2026-10-25",
+     "exit": 21.988401031494142,
+     "last": {
+      "date": "2026-10-25",
+      "close": 21.006591796875
+     },
+     "ret": -0.09999999999999998,
+     "progress": -0.9999999999999986,
+     "days": 3
+    },
+    {
+     "code": "XMR-USD",
+     "name": "Monero USD",
+     "date": "2026-10-22",
+     "entry": 600.638427734375,
+     "stop": 529.2896686404183,
+     "target": 630,
+     "label": "hati-hati",
+     "cut": 540.5745849609375,
+     "isi": 600.638427734375,
+     "status": "target",
+     "settled": "2026-10-29",
+     "exit": 630,
+     "last": {
+      "date": "2026-10-29",
+      "close": 601.9615478515625
+     },
+     "ret": 0.048883939005330834,
+     "progress": 1,
+     "days": 7
+    }
+   ],
+   "ringkasan": {
+    "total": 4,
+    "target": 2,
+    "cut": 1,
+    "open": 1,
+    "dinilai": 4,
+    "benar": 3,
+    "avgReturn": 0.002449216780187863,
+    "dilewati": 0,
+    "tidakTerbeli": 0
+   },
+   "gagal": []
+  }
+ ]
+}
