@@ -1,0 +1,47 @@
+[
+ {
+  "code": "PRDA",
+  "name": "PT Prodia Widyahusada Tbk",
+  "date": "2026-10-30",
+  "entry": 3600,
+  "stop": 2790.498561121026,
+  "target": 3760,
+  "label": "hati-hati"
+ },
+ {
+  "code": "AADI",
+  "name": "PT Adaro Andalan Indonesia Tbk",
+  "date": "2026-10-30",
+  "entry": 11475,
+  "stop": 10561.078983920435,
+  "target": 12450,
+  "label": "hati-hati"
+ },
+ {
+  "code": "MARK",
+  "name": "PT Mark Dynamics Indonesia Tbk",
+  "date": "2026-10-30",
+  "entry": 1150,
+  "stop": 1084.011484541271,
+  "target": 1225,
+  "label": "hati-hati"
+ },
+ {
+  "code": "BDMN",
+  "name": "PT Bank Danamon Indonesia Tbk",
+  "date": "2026-10-30",
+  "entry": 4870,
+  "stop": 4650.011339518605,
+  "target": 5000,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ULTJ",
+  "name": "PT Ultrajaya Milk Industry & Trading Company Tbk",
+  "date": "2026-10-30",
+  "entry": 2110,
+  "stop": 2036.529090199344,
+  "target": 2190,
+  "label": "hati-hati"
+ }
+]
