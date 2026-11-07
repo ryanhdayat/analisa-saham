@@ -1,0 +1,460 @@
+{
+ "dibuat": "2026-11-07 14:50 WIB",
+ "pasar": [
+  {
+   "id": "idx",
+   "label": "Saham IDX",
+   "currency": "IDR",
+   "picks": [
+    {
+     "code": "AALI",
+     "name": "PT Astra Agro Lestari Tbk",
+     "date": "2026-11-06",
+     "entry": 9450,
+     "stop": 8388.353047092261,
+     "target": 9900,
+     "label": "hati-hati",
+     "cut": 8500,
+     "isi": null,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": null,
+     "ret": 0,
+     "progress": 0,
+     "days": 0,
+     "lot": 10,
+     "sim": null
+    },
+    {
+     "code": "ASGR",
+     "name": "PT Astra Graphia Tbk",
+     "date": "2026-11-06",
+     "entry": 2500,
+     "stop": 2344.290987539927,
+     "target": 2580,
+     "label": "hati-hati",
+     "cut": 2340,
+     "isi": null,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": null,
+     "ret": 0,
+     "progress": 0,
+     "days": 0,
+     "lot": 62,
+     "sim": null
+    },
+    {
+     "code": "BDMN",
+     "name": "PT Bank Danamon Indonesia Tbk",
+     "date": "2026-10-30",
+     "entry": 4870,
+     "stop": 4650.011339518605,
+     "target": 5000,
+     "label": "hati-hati",
+     "cut": 4620,
+     "isi": 4870,
+     "status": "cut",
+     "settled": "2026-11-03",
+     "exit": 4620,
+     "last": {
+      "date": "2026-11-03",
+      "close": 4600
+     },
+     "ret": -0.05133470225872694,
+     "progress": -1.9230769230769231,
+     "days": 2,
+     "lot": 40,
+     "sim": {
+      "lot": 40,
+      "rp": -1075420,
+      "retBersih": -0.05512367998310552
+     }
+    },
+    {
+     "code": "PRDA",
+     "name": "PT Prodia Widyahusada Tbk",
+     "date": "2026-10-30",
+     "entry": 3600,
+     "stop": 2790.498561121026,
+     "target": 3760,
+     "label": "hati-hati",
+     "cut": 3240,
+     "isi": 3600,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-11-06",
+      "close": 3690
+     },
+     "ret": 0.02499999999999991,
+     "progress": 0.5625,
+     "days": 5,
+     "lot": 27,
+     "sim": {
+      "lot": 27,
+      "rp": 203512.5,
+      "retBersih": 0.020906140788816696
+     }
+    },
+    {
+     "code": "AADI",
+     "name": "PT Adaro Andalan Indonesia Tbk",
+     "date": "2026-10-27",
+     "entry": 11700,
+     "stop": 10567.461644004405,
+     "target": 12450,
+     "label": "hati-hati",
+     "cut": 10550,
+     "isi": 11700,
+     "status": "cut",
+     "settled": "2026-11-03",
+     "exit": 10550,
+     "last": {
+      "date": "2026-11-03",
+      "close": 10425
+     },
+     "ret": -0.09829059829059827,
+     "progress": -1.5333333333333334,
+     "days": 5,
+     "lot": 8,
+     "sim": {
+      "lot": 8,
+      "rp": -955140,
+      "retBersih": -0.10189203374425548
+     }
+    },
+    {
+     "code": "ASGR",
+     "name": "PT Astra Graphia Tbk",
+     "date": "2026-10-27",
+     "entry": 2460,
+     "stop": 2346.3492287620447,
+     "target": 2580,
+     "label": "hati-hati",
+     "cut": 2330,
+     "isi": 2460,
+     "status": "cut",
+     "settled": "2026-10-28",
+     "exit": 2330,
+     "last": {
+      "date": "2026-10-28",
+      "close": 2360
+     },
+     "ret": -0.05284552845528456,
+     "progress": -1.0833333333333333,
+     "days": 1,
+     "lot": 76,
+     "sim": {
+      "lot": 76,
+      "rp": -1060314,
+      "retBersih": -0.05662847192625686
+     }
+    },
+    {
+     "code": "AUTO",
+     "name": "PT Astra Otoparts Tbk",
+     "date": "2026-10-27",
+     "entry": 3340,
+     "stop": 2886.585773888301,
+     "target": 3430,
+     "label": "hati-hati",
+     "cut": 3000,
+     "isi": 3340,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-11-06",
+      "close": 3220
+     },
+     "ret": -0.0359281437125748,
+     "progress": -1.3333333333333333,
+     "days": 8,
+     "lot": 29,
+     "sim": {
+      "lot": 29,
+      "rp": -385874,
+      "retBersih": -0.03977865537023806
+     }
+    },
+    {
+     "code": "AADI",
+     "name": "PT Adaro Andalan Indonesia Tbk",
+     "date": "2026-10-23",
+     "entry": 11375,
+     "stop": 10560.414096005108,
+     "target": 11700,
+     "label": "hati-hati",
+     "cut": 10550,
+     "isi": 11375,
+     "status": "target",
+     "settled": "2026-10-27",
+     "exit": 11700,
+     "last": {
+      "date": "2026-10-27",
+      "close": 11700
+     },
+     "ret": 0.02857142857142847,
+     "progress": 1,
+     "days": 2,
+     "lot": 12,
+     "sim": {
+      "lot": 12,
+      "rp": 334425,
+      "retBersih": 0.024463305042436323
+     }
+    },
+    {
+     "code": "BSSR",
+     "name": "PT Baramulti Suksessarana Tbk",
+     "date": "2026-10-23",
+     "entry": 5225,
+     "stop": 4929.332633620366,
+     "target": 5500,
+     "label": "hati-hati",
+     "cut": 4920,
+     "isi": 5225,
+     "status": "cut",
+     "settled": "2026-11-06",
+     "exit": 4920,
+     "last": {
+      "date": "2026-11-06",
+      "close": 4990
+     },
+     "ret": -0.058373205741626744,
+     "progress": -1.1090909090909091,
+     "days": 10,
+     "lot": 32,
+     "sim": {
+      "lot": 32,
+      "rp": -1040440,
+      "retBersih": -0.06213407161984308
+     }
+    },
+    {
+     "code": "MARK",
+     "name": "PT Mark Dynamics Indonesia Tbk",
+     "date": "2026-10-23",
+     "entry": 1155,
+     "stop": 1083.126298265587,
+     "target": 1225,
+     "label": "hati-hati",
+     "cut": 1080,
+     "isi": 1155,
+     "status": "cut",
+     "settled": "2026-11-03",
+     "exit": 1080,
+     "last": {
+      "date": "2026-11-03",
+      "close": 1055
+     },
+     "ret": -0.06493506493506496,
+     "progress": -1.0714285714285714,
+     "days": 7,
+     "lot": 133,
+     "sim": {
+      "lot": 133,
+      "rp": -1056452.25,
+      "retBersih": -0.06866972268869431
+     }
+    },
+    {
+     "code": "ULTJ",
+     "name": "PT Ultrajaya Milk Industry & Trading Company Tbk",
+     "date": "2026-10-23",
+     "entry": 2100,
+     "stop": 2022.5429550445929,
+     "target": 2190,
+     "label": "hati-hati",
+     "cut": 1995,
+     "isi": 2100,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-11-06",
+      "close": 2050
+     },
+     "ret": -0.023809523809523836,
+     "progress": -0.5555555555555556,
+     "days": 10,
+     "lot": 95,
+     "sim": {
+      "lot": 95,
+      "rp": -553612.5,
+      "retBersih": -0.027708437343984094
+     }
+    }
+   ],
+   "ringkasan": {
+    "total": 11,
+    "target": 1,
+    "cut": 5,
+    "open": 5,
+    "dinilai": 9,
+    "benar": 2,
+    "avgReturn": -0.03688281540355241,
+    "dilewati": 0,
+    "tidakTerbeli": 0
+   },
+   "gagal": [],
+   "simulasi": {
+    "modal": 100000000,
+    "selesai": 6,
+    "totalRp": -5589315.25,
+    "rataBersih": -0.05333077915328649,
+    "dilewati": 0,
+    "tidakTerbeli": 0,
+    "status": "kurang-data",
+    "perLabel": {
+     "bersih": {
+      "n": 0,
+      "target": 0,
+      "cut": 0,
+      "rataBersih": null
+     },
+     "hati-hati": {
+      "n": 6,
+      "target": 1,
+      "cut": 5,
+      "rataBersih": -0.05333077915328649
+     },
+     "tanpa-label": {
+      "n": 0,
+      "target": 0,
+      "cut": 0,
+      "rataBersih": null
+     }
+    }
+   }
+  },
+  {
+   "id": "crypto",
+   "label": "Crypto",
+   "currency": "USD",
+   "picks": [
+    {
+     "code": "XMR-USD",
+     "name": "Monero USD",
+     "date": "2026-11-05",
+     "entry": 616.6630249023438,
+     "stop": 529.34131246015,
+     "target": 645,
+     "label": "hati-hati",
+     "cut": 554.9967224121094,
+     "isi": 616.6630249023438,
+     "status": "open",
+     "settled": null,
+     "exit": null,
+     "last": {
+      "date": "2026-11-07",
+      "close": 612.5112915039062
+     },
+     "ret": -0.006732580405797717,
+     "progress": -0.14651293527730452,
+     "days": 2
+    },
+    {
+     "code": "XMR-USD",
+     "name": "Monero USD",
+     "date": "2026-10-30",
+     "entry": 587.2415771484375,
+     "stop": 542.4098457625307,
+     "target": 630,
+     "label": "hati-hati",
+     "cut": 542.4098457625307,
+     "isi": 587.2415771484375,
+     "status": "target",
+     "settled": "2026-11-03",
+     "exit": 630,
+     "last": {
+      "date": "2026-11-03",
+      "close": 630.4266967773438
+     },
+     "ret": 0.07281232207568022,
+     "progress": 1,
+     "days": 4
+    },
+    {
+     "code": "XMR-USD",
+     "name": "Monero USD",
+     "date": "2026-10-29",
+     "entry": 601.9615478515625,
+     "stop": 548.4798526781581,
+     "target": 630,
+     "label": "hati-hati",
+     "cut": 548.4798526781581,
+     "isi": 601.9615478515625,
+     "status": "target",
+     "settled": "2026-10-30",
+     "exit": 630,
+     "last": {
+      "date": "2026-10-30",
+      "close": 587.2415771484375
+     },
+     "ret": 0.046578477061381074,
+     "progress": 1,
+     "days": 1
+    },
+    {
+     "code": "COMP5692-USD",
+     "name": "Compound USD",
+     "date": "2026-10-22",
+     "entry": 24.431556701660156,
+     "stop": 21.18122480105063,
+     "target": 26.874712371826174,
+     "label": "hati-hati",
+     "cut": 21.988401031494142,
+     "isi": 24.431556701660156,
+     "status": "cut",
+     "settled": "2026-10-25",
+     "exit": 21.988401031494142,
+     "last": {
+      "date": "2026-10-25",
+      "close": 21.006591796875
+     },
+     "ret": -0.09999999999999998,
+     "progress": -0.9999999999999986,
+     "days": 3
+    },
+    {
+     "code": "XMR-USD",
+     "name": "Monero USD",
+     "date": "2026-10-22",
+     "entry": 600.638427734375,
+     "stop": 529.2896686404183,
+     "target": 630,
+     "label": "hati-hati",
+     "cut": 540.5745849609375,
+     "isi": 600.638427734375,
+     "status": "target",
+     "settled": "2026-10-29",
+     "exit": 630,
+     "last": {
+      "date": "2026-10-29",
+      "close": 601.9615478515625
+     },
+     "ret": 0.048883939005330834,
+     "progress": 1,
+     "days": 7
+    }
+   ],
+   "ringkasan": {
+    "total": 5,
+    "target": 3,
+    "cut": 1,
+    "open": 1,
+    "dinilai": 5,
+    "benar": 3,
+    "avgReturn": 0.012308431547318888,
+    "dilewati": 0,
+    "tidakTerbeli": 0
+   },
+   "gagal": []
+  }
+ ]
+}
