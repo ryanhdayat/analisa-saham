@@ -1,0 +1,20 @@
+[
+ {
+  "code": "AALI",
+  "name": "PT Astra Agro Lestari Tbk",
+  "date": "2026-11-06",
+  "entry": 9450,
+  "stop": 8388.353047092261,
+  "target": 9900,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ASGR",
+  "name": "PT Astra Graphia Tbk",
+  "date": "2026-11-06",
+  "entry": 2500,
+  "stop": 2344.290987539927,
+  "target": 2580,
+  "label": "hati-hati"
+ }
+]
