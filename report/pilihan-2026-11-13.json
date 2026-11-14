@@ -1,0 +1,29 @@
+[
+ {
+  "code": "MPMX",
+  "name": "PT Mitra Pinasthika Mustika Tbk",
+  "date": "2026-11-13",
+  "entry": 1075,
+  "stop": 984.692940636331,
+  "target": 1100,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ASGR",
+  "name": "PT Astra Graphia Tbk",
+  "date": "2026-11-13",
+  "entry": 2440,
+  "stop": 2191.4990287466944,
+  "target": 2510,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ULTJ",
+  "name": "PT Ultrajaya Milk Industry & Trading Company Tbk",
+  "date": "2026-11-13",
+  "entry": 2090,
+  "stop": 1984.412472933231,
+  "target": 2130,
+  "label": "hati-hati"
+ }
+]
