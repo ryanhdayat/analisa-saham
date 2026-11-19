@@ -1,0 +1,29 @@
+[
+ {
+  "code": "MPMX",
+  "name": "PT Mitra Pinasthika Mustika Tbk",
+  "date": "2026-11-19",
+  "entry": 1065,
+  "stop": 985.2700717803584,
+  "target": 1095,
+  "label": "hati-hati"
+ },
+ {
+  "code": "AALI",
+  "name": "PT Astra Agro Lestari Tbk",
+  "date": "2026-11-19",
+  "entry": 9725,
+  "stop": 8418.045966972437,
+  "target": 9900,
+  "label": "hati-hati"
+ },
+ {
+  "code": "TMPO",
+  "name": "PT Tempo Inti Media Tbk",
+  "date": "2026-11-19",
+  "entry": 272,
+  "stop": 243.39867643021626,
+  "target": 292,
+  "label": "hati-hati"
+ }
+]
