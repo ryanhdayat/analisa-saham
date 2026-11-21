@@ -1,0 +1,29 @@
+[
+ {
+  "code": "MPMX",
+  "name": "PT Mitra Pinasthika Mustika Tbk",
+  "date": "2026-11-20",
+  "entry": 1070,
+  "stop": 985.6079237960471,
+  "target": 1095,
+  "label": "hati-hati"
+ },
+ {
+  "code": "AALI",
+  "name": "PT Astra Agro Lestari Tbk",
+  "date": "2026-11-20",
+  "entry": 9750,
+  "stop": 8417.649826474406,
+  "target": 10100,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ASGR",
+  "name": "PT Astra Graphia Tbk",
+  "date": "2026-11-20",
+  "entry": 2550,
+  "stop": 2361.5469537998424,
+  "target": 2650,
+  "label": "hati-hati"
+ }
+]
