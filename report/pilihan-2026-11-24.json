@@ -1,0 +1,29 @@
+[
+ {
+  "code": "ASGR",
+  "name": "PT Astra Graphia Tbk",
+  "date": "2026-11-24",
+  "entry": 2570,
+  "stop": 2456.104261184558,
+  "target": 2670,
+  "label": "hati-hati"
+ },
+ {
+  "code": "BDMN",
+  "name": "PT Bank Danamon Indonesia Tbk",
+  "date": "2026-11-24",
+  "entry": 4760,
+  "stop": 4528.18034994459,
+  "target": 5000,
+  "label": "hati-hati"
+ },
+ {
+  "code": "MPMX",
+  "name": "PT Mitra Pinasthika Mustika Tbk",
+  "date": "2026-11-24",
+  "entry": 1070,
+  "stop": 986.3787710282243,
+  "target": 1095,
+  "label": "hati-hati"
+ }
+]
