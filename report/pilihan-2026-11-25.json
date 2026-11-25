@@ -1,0 +1,38 @@
+[
+ {
+  "code": "DEWI",
+  "name": "PT Dewi Shri Farmindo Tbk.",
+  "date": "2026-11-25",
+  "entry": 250,
+  "stop": 193.6521082573197,
+  "target": 262,
+  "label": "hati-hati"
+ },
+ {
+  "code": "BDMN",
+  "name": "PT Bank Danamon Indonesia Tbk",
+  "date": "2026-11-25",
+  "entry": 4780,
+  "stop": 4247.596039234262,
+  "target": 5000,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ASGR",
+  "name": "PT Astra Graphia Tbk",
+  "date": "2026-11-25",
+  "entry": 2560,
+  "stop": 2355.668242528518,
+  "target": 2670,
+  "label": "hati-hati"
+ },
+ {
+  "code": "MPMX",
+  "name": "PT Mitra Pinasthika Mustika Tbk",
+  "date": "2026-11-25",
+  "entry": 1075,
+  "stop": 991.280287383351,
+  "target": 1095,
+  "label": "hati-hati"
+ }
+]
