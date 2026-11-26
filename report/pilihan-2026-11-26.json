@@ -1,0 +1,29 @@
+[
+ {
+  "code": "AYAM",
+  "name": "PT Janu Putra Sejahtera Tbk.",
+  "date": "2026-11-26",
+  "entry": 520,
+  "stop": 473.0346808957441,
+  "target": 530,
+  "label": "hati-hati"
+ },
+ {
+  "code": "MPMX",
+  "name": "PT Mitra Pinasthika Mustika Tbk",
+  "date": "2026-11-26",
+  "entry": 1070,
+  "stop": 991.3674097131117,
+  "target": 1095,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ASGR",
+  "name": "PT Astra Graphia Tbk",
+  "date": "2026-11-26",
+  "entry": 2520,
+  "stop": 2356.3347966336237,
+  "target": 2580,
+  "label": "hati-hati"
+ }
+]
