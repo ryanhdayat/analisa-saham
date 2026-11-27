@@ -1,0 +1,20 @@
+[
+ {
+  "code": "AYAM",
+  "name": "PT Janu Putra Sejahtera Tbk.",
+  "date": "2026-11-27",
+  "entry": 515,
+  "stop": 473.13934654604805,
+  "target": 525,
+  "label": "hati-hati"
+ },
+ {
+  "code": "ASGR",
+  "name": "PT Astra Graphia Tbk",
+  "date": "2026-11-27",
+  "entry": 2590,
+  "stop": 2457.310882588365,
+  "target": 2670,
+  "label": "hati-hati"
+ }
+]
