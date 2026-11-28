@@ -1,0 +1,21 @@
+{
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": ".",
+  "regions": ["sin1"],
+  "redirects": [{ "source": "/:bagian(idx|crypto|hasil|jurnal)", "destination": "/:bagian/", "permanent": true }],
+  "headers": [
+    {
+      "source": "/((?!api/).*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
+}
